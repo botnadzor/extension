@@ -1,0 +1,27 @@
+@source ".";
+@source not "./in-page-app";
+
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme) prefix(bn) source(none);
+@import "tailwindcss/utilities.css" layer(utilities) prefix(bn) source(none);
+
+@theme inline {
+  --color-background: var(--vkui--color_field_background);
+  --color-foreground: var(--vkui--color_text_primary);
+
+  --color-muted: var(--vkui--color_background_content);
+  --color-muted-foreground: var(--vkui--color_text_secondary);
+
+  --color-action-icon: var(--vkui--color_text_accent_themed);
+  --color-action-hover: var(--vkui--color_background_accent_themed);
+
+  --color-text-link: var(--vkui--color_text_link);
+
+  --color-followers-other: rgba(95, 180, 188, 0.8);
+  --color-followers-bots: rgba(232, 104, 133, 0.8);
+
+  --color-border-link: rgb(60 130 246);
+}
+
+@custom-variant dark ([scheme="vkcom_dark"] &);

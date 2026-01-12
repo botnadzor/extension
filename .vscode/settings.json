@@ -1,0 +1,21 @@
+{
+  "cSpell.diagnosticLevel": "Warning",
+  "cSpell.userWords": [],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    ".git": false
+  },
+  "redhat.telemetry.enabled": false,
+  "tailwindCSS.classAttributes": ["class", "className", ".*ClassName"],
+  "tailwindCSS.experimental.configFile": "src/entrypoints/content/tailwindcss-for-content.css",
+  "tailwindCSS.experimental.classRegex": [
+    ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ],
+  "tailwindCSS.lint.suggestCanonicalClasses": "ignore", // Handled by ESLint rule better-tailwindcss/enforce-canonical-classes
+  "typescript.tsdk": "node_modules/typescript/lib"
+}

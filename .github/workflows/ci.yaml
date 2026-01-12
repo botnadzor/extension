@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+
+      - uses: actions/setup-node@v6
+        with:
+          cache: pnpm
+          node-version-file: .tool-versions
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Load CSpell cache
+        uses: actions/cache@v5
+        with:
+          key: cspell-${{ github.run_id }}
+          path: node_modules/.cache/cspell
+          restore-keys: |
+            cspell-
+
+      - name: Run pnpm lint:cspell
+        if: ${{ success() || failure() }}
+        run: |
+          if ! pnpm lint:cspell; then
+            echo ''
+            echo ''
+            echo 'ℹ️ ℹ️ ℹ️'
+            echo 'Please fix the above errors locally for the check to pass.'
+            echo 'If you don’t see them, try merging target branch into yours.'
+            echo 'You can add exceptions to `cspell-words.txt`, if necessary.'
+            echo 'ℹ️ ℹ️ ℹ️'
+            exit 1
+          fi
+
+      - name: Run pnpm lint:eslint
+        if: ${{ success() || failure() }}
+        run: |
+          if ! pnpm lint:eslint; then
+            echo ''
+            echo ''
+            echo 'ℹ️ ℹ️ ℹ️'
+            echo 'Try running `pnpm fix:eslint` locally to apply autofixes.'
+            echo 'ℹ️ ℹ️ ℹ️'
+            exit 1
+          fi
+
+      - name: Run pnpm lint:knip
+        if: ${{ success() || failure() }}
+        run: |
+          if ! pnpm lint:knip; then
+            echo ''
+            echo ''
+            echo 'ℹ️ ℹ️ ℹ️'
+            echo 'Try running `pnpm fix:knip` locally to apply autofixes.'
+            echo 'ℹ️ ℹ️ ℹ️'
+            exit 1
+          fi
+
+      - name: Run pnpm lint:pnpm-dedupe
+        if: ${{ success() || failure() }}
+        run: |
+          if ! pnpm lint:pnpm-dedupe; then
+            echo ''
+            echo ''
+            echo 'ℹ️ ℹ️ ℹ️'
+            echo 'Some dependencies can be deduplicated, which will make pnpm-lock.yaml'
+            echo 'lighter and potentially save us from unexplainable bugs.'
+            echo 'Please run `pnpm fix:pnpm-dedupe` locally and commit pnpm-lock.yaml.'
+            echo 'ℹ️ ℹ️ ℹ️'
+            exit 1
+          fi
+
+      - name: Load Prettier cache
+        if: ${{ success() || failure() }}
+        uses: actions/cache@v5
+        with:
+          key: prettier-${{ github.run_id }}
+          path: node_modules/.cache/prettier
+          restore-keys: |
+            prettier-
+
+      - name: Run pnpm lint:prettier
+        if: ${{ success() || failure() }}
+        run: |
+          if ! pnpm lint:prettier; then
+            echo ''
+            echo ''
+            echo 'ℹ️ ℹ️ ℹ️'
+            echo 'Try running `pnpm fix:prettier` locally to apply autofixes.'
+            echo 'ℹ️ ℹ️ ℹ️'
+            exit 1
+          fi
+
+      - name: Run pnpm lint:tsc
+        if: ${{ success() || failure() }}
+        run: |
+          if ! pnpm lint:tsc; then
+            echo ''
+            echo ''
+            echo 'ℹ️ ℹ️ ℹ️'
+            echo 'Please fix the above errors locally for the check to pass.'
+            echo 'If you don’t see them, try merging target branch into yours.'
+            echo 'ℹ️ ℹ️ ℹ️'
+            exit 1
+          fi
+
+      - name: Run pnpm test:unit
+        if: ${{ success() || failure() }}
+        run: |
+          if ! pnpm test:unit; then
+            echo ''
+            echo ''
+            echo 'ℹ️ ℹ️ ℹ️'
+            echo 'Please fix the above errors locally for the check to pass.'
+            echo 'ℹ️ ℹ️ ℹ️'
+            exit 1
+          fi

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if command -v mise 1> /dev/null; then
+  mise install
+fi
+
+pnpm install

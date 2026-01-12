@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "austenc.tailwind-docs",
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "github.vscode-github-actions",
+    "mikestead.dotenv",
+    "redhat.vscode-commons",
+    "redhat.vscode-yaml",
+    "streetsidesoftware.code-spell-checker",
+    "yoavbls.pretty-ts-errors"
+  ]
+}

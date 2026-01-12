@@ -1,0 +1,235 @@
+import { formatTimeOrDate } from "@/lib/formatting";
+import type {
+  ContentId,
+  IsoDate,
+  IsoTime,
+  VkDomain,
+} from "@/lib/primitive-values";
+import {
+  inspectorService,
+  notificationService,
+  regDateService,
+} from "@/lib/proxy-services";
+import { generateCardUrl, generateUrl } from "@/lib/urls";
+import { cn, cnl } from "@/lib/utils";
+import type { AccountAffiliation } from "@/services/affiliation-service";
+import type { InspectorInstancePayload } from "@/services/inspector-service";
+import type { TriggeredNotificationPayload } from "@/services/notification-service/triggered-notifications";
+import type { FailedRegDateInfo } from "@/services/reg-date-service";
+
+import {
+  type IconSpec,
+  renderActionButton,
+  type TooltipConfig,
+} from "./ui-action-buttons";
+
+type DesignVariant = "desktop" | "mobile";
+
+const regDateNotificationTypeByFailureReason: Record<
+  FailedRegDateInfo["reason"],
+  TriggeredNotificationPayload["type"]
+> = {
+  methodQuotaExceeded: "regDateTooManyRequests",
+  missingPermission: "regDateMissingPermission",
+  noAliasToUse: "regDateNoAliasToUse",
+  notFound: "regDateAccountNotFound",
+  notYetKnown: "regDateNotYetKnown",
+  tooManyRequests: "regDateTooManyRequests",
+  unauthorized: "regDateUnauthorized",
+  unexpectedError: "regDateUnexpectedError",
+};
+
+function disableRegDateButton(event: MouseEvent): void {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+  const button = target.closest("button");
+  button?.classList.add(...cnl("bn:opacity-50"));
+  button?.setAttribute("disabled", "true");
+}
+
+function enableRegDateButton(event: MouseEvent): void {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+  const button = target.closest("button");
+  button?.classList.remove(...cnl("bn:opacity-50"));
+  button?.removeAttribute("disabled");
+}
+
+function hideRegDateButton(event: MouseEvent): void {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+  const button = target.closest("button");
+
+  button?.classList.add("bn:hidden");
+  button?.classList.remove("bn:inline-flex");
+}
+
+function injectRegDateText(
+  event: MouseEvent,
+  regDate: IsoDate | IsoTime,
+  registrationDateAnchor: HTMLElement,
+): void {
+  const formattedDate = formatTimeOrDate(regDate).split(" ")[0];
+  const injectionTextContent = `Дата регистрации: ${formattedDate}`;
+
+  const paragraph = document.createElement("p");
+  paragraph.className = "bn:mt-1 bn:mb-0 bn:text-muted-foreground";
+  paragraph.textContent = injectionTextContent;
+  registrationDateAnchor.after(paragraph);
+}
+
+async function handleRegDateResult(
+  result: Awaited<ReturnType<typeof regDateService.obtain>>,
+  event: MouseEvent,
+  contentId: ContentId,
+  registrationDateAnchor: HTMLElement,
+): Promise<void> {
+  if (result.success && result.value !== "notYetKnown") {
+    injectRegDateText(event, result.value, registrationDateAnchor);
+    hideRegDateButton(event);
+    return;
+  }
+
+  enableRegDateButton(event);
+
+  const notificationType = result.success
+    ? "regDateNotYetKnown"
+    : regDateNotificationTypeByFailureReason[result.reason];
+
+  await notificationService.trigger(contentId, {
+    type: notificationType,
+  });
+}
+
+async function handleRegDateClick(
+  event: MouseEvent,
+  vkDomain: VkDomain,
+  contentId: ContentId,
+  registrationDateAnchor: HTMLElement | undefined,
+): Promise<void> {
+  if (!registrationDateAnchor) {
+    return;
+  }
+
+  disableRegDateButton(event);
+
+  const result = await regDateService.obtain(vkDomain);
+
+  // TODO: either hide the button on success or change its action. The button repeats the
+  // action if previous call was an error. Otherwise, the button can hide the resulting reg date text.
+  await handleRegDateResult(result, event, contentId, registrationDateAnchor);
+}
+
+type RenderAccountActionOptions = {
+  design: DesignVariant;
+  vkDomain: VkDomain;
+  accountAffiliation?: AccountAffiliation | undefined;
+  frontendBaseUrl: string;
+  contentId: ContentId;
+  className?: string;
+  actionClassName?: string;
+  registrationDateAnchor: HTMLElement;
+  iconClassName?: string;
+  showTooltip: boolean | TooltipConfig;
+  tooltipClassName?: string;
+  tooltipHoverClassName?: string;
+  inspectorInstancePayload?: InspectorInstancePayload | undefined;
+  badgeAnchor: HTMLElement;
+};
+
+export function renderAccountAction({
+  design,
+  vkDomain,
+  accountAffiliation,
+  frontendBaseUrl,
+  contentId,
+  className,
+  actionClassName,
+  registrationDateAnchor,
+  iconClassName,
+  showTooltip,
+  tooltipClassName,
+  tooltipHoverClassName,
+  inspectorInstancePayload,
+}: RenderAccountActionOptions): {
+  element: HTMLElement;
+  destroy: () => void;
+} {
+  const icons: IconSpec[] = [];
+
+  if (accountAffiliation?.botnadzorPage) {
+    const accountUrl = generateUrl(frontendBaseUrl, `/account/${vkDomain}`);
+    icons.push({
+      id: "squareMenu",
+      kind: "link",
+      href: accountUrl,
+      title: "Комментарии",
+    });
+  }
+
+  if (accountAffiliation?.botnadzorCard) {
+    icons.push({
+      id: "squareUser",
+      kind: "link",
+      href: generateCardUrl({ frontendBaseUrl, vkDomain }),
+      title: "Карточка",
+    });
+  }
+
+  if (inspectorInstancePayload) {
+    icons.push({
+      id: "userSearch",
+      kind: "button",
+      title: "Инспектор",
+      onClick: () => {
+        void inspectorService.trigger(contentId, inspectorInstancePayload);
+      },
+    });
+  }
+
+  icons.push({
+    id: "calendarDays",
+    kind: "button",
+    title: "Дата регистрации",
+    onClick: (event) => {
+      void handleRegDateClick(
+        event,
+        vkDomain,
+        contentId,
+        registrationDateAnchor,
+      );
+    },
+  });
+
+  const desktopDefaults = {
+    containerClassName: cn(className),
+    actionClassName: cn(
+      "bn:size-4 bn:leading-none bn:text-text-link",
+      actionClassName,
+    ),
+    iconClassName: cn("bn:size-4", iconClassName),
+    showTooltip,
+  };
+
+  const mobileDefaults = {
+    containerClassName: cn(className),
+    actionClassName: cn("bn:size-4 bn:text-text-link", actionClassName),
+    iconClassName: cn("bn:size-4", iconClassName),
+    showTooltip,
+  };
+
+  const designConfig = design === "desktop" ? desktopDefaults : mobileDefaults;
+
+  return renderActionButton({
+    icons,
+    ...designConfig,
+    ...(tooltipClassName && { tooltipClassName }),
+    ...(tooltipHoverClassName && { tooltipHoverClassName }),
+  });
+}
