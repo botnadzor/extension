@@ -20,17 +20,10 @@ import { popupTabDefinitionLookup } from "./app/tabs";
 function Version() {
   const versionName = getAppConfig().extensionVersionName;
   const startsWithNumber = /^\d/.test(versionName);
+  const shouldHaveGithubRelease = /^[2-9]/.test(versionName);
 
-  return (
-    <div
-      className={cn(
-        `
-          pr-3 pl-0.75 -indent-0.75 text-balance text-muted-foreground
-          tabular-nums
-        `,
-        !startsWithNumber && "text-xs",
-      )}
-    >
+  const reactNodeWithVersion = (
+    <>
       {startsWithNumber && "v"}
       {versionName.split(".").map((part, index) => (
         // eslint-disable-next-line @eslint-react/no-array-index-key -- value does not change between rerenders
@@ -43,6 +36,31 @@ function Version() {
           {part}
         </React.Fragment>
       ))}
+    </>
+  );
+
+  return (
+    <div
+      className={cn(
+        `
+          pr-3 pl-0.75 -indent-0.75 text-balance text-muted-foreground
+          tabular-nums
+        `,
+        !startsWithNumber && "text-xs",
+      )}
+    >
+      {shouldHaveGithubRelease ? (
+        <a
+          className="u-link-secondary"
+          href={`https://github.com/botnadzor/extension/releases/tag/v${versionName}`}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          {reactNodeWithVersion}
+        </a>
+      ) : (
+        reactNodeWithVersion
+      )}
     </div>
   );
 }

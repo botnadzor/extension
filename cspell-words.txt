@@ -13,11 +13,13 @@ firefox
 github
 HMR
 knip
+lnk
 logtape
 LRUCache
 lucide
 njsproj
 nogit
+noreferrer
 ntvs
 nums
 oxc-resolver
@@ -44,6 +46,7 @@ vkvideo
 webext-core
 wxt
 Ботнадзор
+лайкнувших
 лайков
 Подгрузка
 скроллите

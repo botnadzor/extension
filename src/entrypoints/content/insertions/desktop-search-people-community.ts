@@ -112,7 +112,7 @@ const insertion: Insertion = {
       badgeUI = renderInlineBadge({
         mountAfter: placeholder,
         tags: accountAffiliation.tags,
-        className: cn("bn:items-center bn:px-[2px]"),
+        className: cn("bn:items-center"),
       });
 
       actionUI = renderAccountAction({

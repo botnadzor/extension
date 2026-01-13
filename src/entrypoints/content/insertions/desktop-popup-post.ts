@@ -15,7 +15,9 @@ import type { Insertion } from "../insertion-basics";
 import type { CommentLocation } from "./shared/types";
 import { renderAccountAction } from "./shared/ui-account-action";
 
-function extractVkDomain(authorLink: HTMLAnchorElement): VkDomain | undefined {
+export function extractVkDomain(
+  authorLink: HTMLAnchorElement,
+): VkDomain | undefined {
   const href = authorLink.getAttribute("href");
   if (!href) {
     return;
@@ -25,7 +27,9 @@ function extractVkDomain(authorLink: HTMLAnchorElement): VkDomain | undefined {
   return vkDomainSchema.safeParse(match?.[1]).data;
 }
 
-function extractLocationFromHref(href: string): CommentLocation | undefined {
+export function extractLocationFromHref(
+  href: string,
+): CommentLocation | undefined {
   const wallRegexp = /(?:^|\/)(?:wall|video|photo)(-?\d+)_(\d+)/;
   const wallMatch = wallRegexp.exec(href);
   if (!wallMatch) {
@@ -117,7 +121,7 @@ function extractLocationFromOnclick(
   return;
 }
 
-function extractCommentLocation(
+export function extractCommentLocation(
   root: HTMLElement,
 ): CommentLocation | undefined {
   const linkWithReply =
