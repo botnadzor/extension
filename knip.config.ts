@@ -3,6 +3,7 @@ import type { KnipConfig } from "knip";
 const config: KnipConfig = {
   entry: [
     "src/app.config.ts",
+    "src/components/ui/*.tsx", // shadcn components (may contain unused exports)
     "src/entrypoints/background.ts",
     "src/entrypoints/content.ts",
     "src/entrypoints/popup/main.tsx",

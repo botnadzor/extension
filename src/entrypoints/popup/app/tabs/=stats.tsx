@@ -1,9 +1,12 @@
 import { useFrontendBaseUrl } from "@/hooks/frontend-service";
 import {
+  useNextStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
 } from "@/hooks/static-lists-service";
 import { generateUrl } from "@/lib/urls";
+
+import { UpdatableCount } from "./helpers";
 
 function ListHeader({
   href,
@@ -37,17 +40,26 @@ function ListHeader({
 function ListItem({
   color,
   count,
-  name,
   href,
+  name,
+  nextCount,
 }: {
   color: string | undefined;
-  count: number;
-  name: string;
+  count: number | undefined;
   href: string;
+  name: string;
+  nextCount: number | undefined;
 }) {
   return (
     <>
-      <div className="text-right">{count.toLocaleString("ru-RU")}</div>
+      <div className="text-right">
+        <UpdatableCount
+          className="inline-block"
+          count={count}
+          nextCount={nextCount}
+        />
+      </div>
+
       <div className="flex h-lh items-center justify-center">
         {color && (
           <div
@@ -72,6 +84,7 @@ function ListItem({
 
 export function StatsTabBody() {
   const accountListSummary = useStaticListSummary("accounts");
+  const nextAccountListSummary = useNextStaticListSummary("accounts");
   const tags = useStaticListItems("tags");
   const frontendBaseUrl = useFrontendBaseUrl();
 
@@ -84,7 +97,7 @@ export function StatsTabBody() {
     .toSorted((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <div className="pt-2.5 pr-3 pb-3 pl-1">
+    <div className="px-3 pt-2.5 pb-3">
       <div className="text-sm">Показано количество обнаруженных аккаунтов</div>
 
       <div className="grid grid-cols-[5em_1.5em_1fr] text-sm">
@@ -95,11 +108,20 @@ export function StatsTabBody() {
 
         {regionTags.map((tag) => (
           <ListItem
-            key={tag.id}
             color={tag.color}
-            count={accountListSummary.itemCountByTagId[tag.id] ?? 0}
-            name={tag.name}
+            count={
+              accountListSummary.itemCount > 0
+                ? accountListSummary.itemCountByTagId[tag.id]
+                : undefined
+            }
             href={generateUrl(frontendBaseUrl, `/region/${tag.id}`)}
+            key={tag.id}
+            name={tag.name}
+            nextCount={
+              nextAccountListSummary.itemCount > 0
+                ? (nextAccountListSummary.itemCountByTagId[tag.id] ?? 0)
+                : undefined
+            }
           />
         ))}
 
@@ -107,14 +129,23 @@ export function StatsTabBody() {
 
         {accountSubcategoryTags.map((tag) => (
           <ListItem
-            key={tag.id}
             color={tag.color}
-            count={accountListSummary.itemCountByTagId[tag.id] ?? 0}
-            name={tag.name}
+            count={
+              accountListSummary.itemCount > 0
+                ? accountListSummary.itemCountByTagId[tag.id]
+                : undefined
+            }
             href={generateUrl(
               frontendBaseUrl,
               `/account-subcategory/${tag.id}`,
             )}
+            key={tag.id}
+            name={tag.name}
+            nextCount={
+              nextAccountListSummary.itemCount > 0
+                ? (nextAccountListSummary.itemCountByTagId[tag.id] ?? 0)
+                : undefined
+            }
           />
         ))}
       </div>

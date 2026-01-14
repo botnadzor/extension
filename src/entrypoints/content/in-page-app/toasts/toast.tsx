@@ -8,14 +8,12 @@ import { cn } from "@/lib/utils";
 
 export function Toast({
   children,
-  childrenWrapperClassName,
   extensionName = "default",
   header,
   onClose,
   triggeredAt,
 }: {
   children: React.ReactNode;
-  childrenWrapperClassName?: string | undefined;
   extensionName?: "short" | "default";
   header?: React.ReactNode;
   onClose?: (() => void) | undefined;
@@ -67,13 +65,10 @@ export function Toast({
       )}
 
       <div
-        className={cn(
-          `
-            text-sm
-            [&_a]:text-primary
-          `,
-          childrenWrapperClassName,
-        )}
+        className="
+          text-sm
+          [&_a]:text-primary
+        "
       >
         {children}
       </div>

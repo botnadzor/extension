@@ -3,6 +3,7 @@ import * as React from "react";
 import { useContentId } from "@/hooks/content-id-context";
 import { useFrontendBaseUrl } from "@/hooks/frontend-service";
 import { notificationService, popupService } from "@/lib/proxy-services";
+import { detectVkBaseUrl } from "@/lib/urls";
 import type { TriggeredNotification } from "@/services/notification-service";
 
 import { Toast } from "./toast";
@@ -19,11 +20,13 @@ export function ToastWithTriggeredNotification({
   type,
   triggeredAt,
 }: NonNullable<TriggeredNotification> & {}) {
+  let extensionName: "short" | "default" = "default";
   let header: React.ReactNode;
   let children: React.ReactNode;
 
   const frontendBaseUrl = useFrontendBaseUrl();
   const contentId = useContentId();
+  const vkBaseUrl = detectVkBaseUrl(window.location.href);
 
   const handleClose = React.useCallback(() => {
     void notificationService.trigger(contentId, undefined);
@@ -61,6 +64,31 @@ export function ToastWithTriggeredNotification({
   );
 
   switch (type) {
+    case "dataWarmupComplete": {
+      extensionName = "short";
+      children = (
+        <>
+          Данные для подсветки ботов готовы.{" "}
+          <a href={window.location.href}>Обновите страницу</a>{" "}
+          или&nbsp;попробуйте открыть VK-паблик, где часто бывают боты:{" "}
+          {[
+            // cspell:ignore rt_russian vesti
+            "ria",
+            "rt_russian",
+            "vesti",
+            "mash",
+          ].map((page, index) => (
+            <React.Fragment key={page}>
+              {index > 0 && ", "}
+              <a href={`${vkBaseUrl}/${page}`}>{page}</a>
+            </React.Fragment>
+          ))}
+          .
+        </>
+      );
+      break;
+    }
+
     case "inspectorMissingPermission": {
       children = (
         <>
@@ -186,8 +214,9 @@ export function ToastWithTriggeredNotification({
 
   return (
     <Toast
-      key={type}
+      extensionName={extensionName}
       header={header}
+      key={type}
       onClose={handleClose}
       triggeredAt={triggeredAt}
     >

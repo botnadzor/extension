@@ -76,10 +76,11 @@ function pickAnotherInstance(instance: StaticListInstance): StaticListInstance {
 
 function extractSummaryFromMetadata(
   metadata: StaticListMetadata,
+  mode: "active" | "next" = "active",
 ): StaticListSummary {
   const listId = metadata.listId;
 
-  const rawSummary = metadata.active?.summary;
+  const rawSummary = metadata[mode]?.summary;
   const summaryResult =
     staticListDefinitionLookup[listId].summarySchema.safeParse(rawSummary);
 
@@ -110,6 +111,9 @@ export class StaticListsService {
   >;
 
   private pollableListSummaryByListId: Readonly<
+    Record<StaticListId, Pollable<StaticListSummary | undefined>>
+  >;
+  private pollableNextListSummaryByListId: Readonly<
     Record<StaticListId, Pollable<StaticListSummary | undefined>>
   >;
 
@@ -150,12 +154,20 @@ export class StaticListsService {
       Partial<typeof this.pollableListSummaryByListId>
     > = {};
 
+    const pollableNextListSummaryByListId: Writable<
+      Partial<typeof this.pollableNextListSummaryByListId>
+    > = {};
+
     for (const listId of staticListIds) {
       pollableListMetadataByListId[listId] = new Pollable<
         StaticListMetadata | undefined
       >(undefined);
 
       pollableListSummaryByListId[listId] = new Pollable<
+        StaticListSummary | undefined
+      >(undefined);
+
+      pollableNextListSummaryByListId[listId] = new Pollable<
         StaticListSummary | undefined
       >(undefined);
     }
@@ -167,6 +179,10 @@ export class StaticListsService {
     this.pollableListSummaryByListId =
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- converting partial record to a finished one after a loop
       pollableListSummaryByListId as typeof this.pollableListSummaryByListId;
+
+    this.pollableNextListSummaryByListId =
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- converting partial record to a finished one after a loop
+      pollableNextListSummaryByListId as typeof this.pollableNextListSummaryByListId;
 
     void this.startSyncingMetadataWithDb();
   }
@@ -198,6 +214,10 @@ export class StaticListsService {
 
       this.pollableListMetadataByListId[listId].setValue(metadata);
       this.pollableListSummaryByListId[listId].setValue(
+        extractSummaryFromMetadata(metadata),
+      );
+
+      this.pollableNextListSummaryByListId[listId].setValue(
         extractSummaryFromMetadata(metadata),
       );
     }
@@ -263,6 +283,9 @@ export class StaticListsService {
     this.pollableListSummaryByListId[metadata.listId].setValue(
       extractSummaryFromMetadata(metadata),
     );
+    this.pollableNextListSummaryByListId[metadata.listId].setValue(
+      extractSummaryFromMetadata(metadata, "next"),
+    );
   }
 
   public async pollListSummary(
@@ -287,6 +310,30 @@ export class StaticListsService {
     listId: StaticListId,
   ): Promise<StaticListSummary> {
     const result = await this.pollListSummary(undefined, listId);
+    return result.value;
+  }
+
+  public async pollNextListSummary(
+    lastPollVersion: PollVersion | undefined,
+    listId: StaticListId,
+  ): Promise<PollResult<StaticListSummary>> {
+    let result:
+      | PollResult<StaticListSummary>
+      | PollResult<undefined>
+      | undefined;
+
+    do {
+      result = await this.pollableNextListSummaryByListId[listId].poll(
+        lastPollVersion ?? result?.version,
+      );
+    } while (!result?.value);
+    return result;
+  }
+
+  public async getNextListSummary(
+    listId: StaticListId,
+  ): Promise<StaticListSummary> {
+    const result = await this.pollNextListSummary(undefined, listId);
     return result.value;
   }
 

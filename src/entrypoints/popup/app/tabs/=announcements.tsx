@@ -25,14 +25,16 @@ export function AnnouncementsTabBody() {
     .toReversed();
 
   return (
-    <div className="pt-2 pr-3 pb-4 pl-1">
+    <div className="px-3 pt-2 pb-4">
       <Accordion type="multiple">
         {announcementsToShow.map(({ createdAt, header, content }) => (
           <AccordionItem key={createdAt} value={createdAt}>
             <AccordionTrigger>
               <div className="flex w-full flex-col items-start text-left">
-                <div className="text-sm text-foreground">{header}</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm text-pretty text-foreground">
+                  {header}
+                </div>
+                <div className="pt-0.5 text-xs text-muted-foreground">
                   {formatDate(createdAt)}
                 </div>
               </div>

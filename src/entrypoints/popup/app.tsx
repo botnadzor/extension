@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useFrontendBaseUrl } from "@/hooks/frontend-service";
 import { useActivePopupTab } from "@/hooks/popup-service";
 import { getAppConfig } from "@/lib/app-config";
@@ -103,7 +104,7 @@ function Tabs({ activeTab }: { activeTab?: PopupTab | undefined }) {
   );
 
   return (
-    <nav className="flex flex-col pr-3">
+    <nav className="flex flex-col pr-1">
       {popupTabs.map((tab) => (
         <button
           type="button"
@@ -149,25 +150,27 @@ function ActiveTabBody() {
 
 export function App() {
   return (
-    <div className="absolute inset-0 flex flex-col">
-      <Header />
+    <TooltipProvider>
+      <div className="absolute inset-0 flex flex-col">
+        <Header />
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex w-38 min-w-38 flex-0 flex-col justify-between pb-3">
-          <React.Suspense fallback={<Tabs />}>
-            <StoreAwareTabs />
-          </React.Suspense>
-          <React.Suspense>
-            <LinksBelowNav />
-          </React.Suspense>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex w-36 min-w-36 flex-0 flex-col justify-between pb-3">
+            <React.Suspense fallback={<Tabs />}>
+              <StoreAwareTabs />
+            </React.Suspense>
+            <React.Suspense>
+              <LinksBelowNav />
+            </React.Suspense>
+          </div>
+
+          <ScrollArea className="flex-1 grow">
+            <React.Suspense>
+              <ActiveTabBody />
+            </React.Suspense>
+          </ScrollArea>
         </div>
-
-        <ScrollArea className="flex-1 grow">
-          <React.Suspense>
-            <ActiveTabBody />
-          </React.Suspense>
-        </ScrollArea>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

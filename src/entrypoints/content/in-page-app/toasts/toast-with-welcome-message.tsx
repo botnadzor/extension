@@ -4,10 +4,11 @@ import { notificationService } from "@/lib/proxy-services";
 
 import { Toast } from "./toast";
 
-export function ToastWithWelcomeMessage() {
+export function ToastWithWelcomeMessage({ onClose }: { onClose: () => void }) {
   const handleClose = React.useCallback(() => {
     void notificationService.markWelcomeAnnouncementAsRead();
-  }, []);
+    onClose();
+  }, [onClose]);
 
   React.useEffect(() => {
     void notificationService.markWelcomeAnnouncementAsShown();

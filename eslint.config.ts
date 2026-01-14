@@ -208,10 +208,16 @@ export default defineConfig(
   eslintPluginReact.configs.flat["jsx-runtime"] ?? {},
   {
     rules: {
-      "react/display-name": "off", // Handled by @eslint-react/no-missing-component-display-name
+      "react/display-name": "off", // Done by @eslint-react/no-missing-component-display-name
+      "react/jsx-key": "off", // Done by @eslint-react/no-missing-key
+      "react/no-array-index-key": "off", // Done by @eslint-react/no-array-index-key
+      "react/prop-types": "off", // Done by TypeScript
+
+      "react/function-component-definition": "warn",
+      "react/jsx-boolean-value": ["warn", "always"],
       "react/jsx-curly-brace-presence": "warn",
-      "react/jsx-key": "off", // Handled by @eslint-react/no-missing-key
-      "react/no-array-index-key": "off", // Handled by @eslint-react/no-array-index-key
+      "react/no-unknown-property": "warn",
+      "react/self-closing-comp": "warn",
     },
     settings: { react: { version: "detect" } },
   },

@@ -7,13 +7,11 @@ import {
   useGlobalNotificationsState,
   useTriggeredNotification,
 } from "@/hooks/notification-service";
-import {
-  useStaticListItems,
-  useStaticListMetadata,
-} from "@/hooks/static-lists-service";
+import { useStaticListItems } from "@/hooks/static-lists-service";
 import { getAppConfig } from "@/lib/app-config";
 import { notificationService } from "@/lib/proxy-services";
 
+import { checkIfDataWarmupToastNeeded } from "./toasts/helpers";
 import { ToastWithAnnouncement } from "./toasts/toast-with-announcement";
 import { ToastWithDataWarmup } from "./toasts/toast-with-data-warmup";
 import { ToastWithTriggeredNotification } from "./toasts/toast-with-triggered-notification";
@@ -24,19 +22,15 @@ export function Toasts() {
   const contentId = useContentId();
   const triggeredNotification = useTriggeredNotification();
   const globalNotificationsState = useGlobalNotificationsState();
-  const accountsMetadata = useStaticListMetadata("accounts");
-  const tagsMetadata = useStaticListMetadata("tags");
 
   const [dataWarmupToastNeeded, setDataWarmupToastNeeded] =
     React.useState(false);
 
-  if (
-    (!accountsMetadata.active || !tagsMetadata.active) &&
-    !dataWarmupToastNeeded
-  ) {
-    setDataWarmupToastNeeded(true);
-    return;
-  }
+  React.useEffect(() => {
+    void checkIfDataWarmupToastNeeded().then((needed) => {
+      setDataWarmupToastNeeded(needed);
+    });
+  }, []);
 
   if (triggeredNotification) {
     return (
@@ -50,18 +44,34 @@ export function Toasts() {
     globalNotificationsState;
 
   if (!welcomeMessageReadAt) {
-    return <ToastWithWelcomeMessage />;
+    return (
+      <React.Suspense>
+        <ToastWithWelcomeMessage
+          onClose={() => {
+            void checkIfDataWarmupToastNeeded().then((needed) => {
+              if (needed) {
+                setDataWarmupToastNeeded(true);
+              } else {
+                void notificationService.trigger(contentId, {
+                  type: "dataWarmupComplete",
+                });
+              }
+            });
+          }}
+        />
+      </React.Suspense>
+    );
   }
 
   if (dataWarmupToastNeeded) {
     return (
-      <ToastWithDataWarmup
-        accountsMetadata={accountsMetadata}
-        tagsMetadata={tagsMetadata}
-        onClose={() => {
-          setDataWarmupToastNeeded(false);
-        }}
-      />
+      <React.Suspense>
+        <ToastWithDataWarmup
+          onClose={() => {
+            setDataWarmupToastNeeded(false);
+          }}
+        />
+      </React.Suspense>
     );
   }
 

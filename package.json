@@ -51,6 +51,7 @@
     "@radix-ui/react-select": "2.2.6",
     "@radix-ui/react-slot": "1.2.4",
     "@radix-ui/react-tabs": "1.1.13",
+    "@radix-ui/react-tooltip": "1.2.8",
     "@webext-core/job-scheduler": "1.0.0",
     "@webext-core/proxy-service": "2.0.0",
     "chart.js": "4.5.1",
@@ -98,7 +99,7 @@
     "eslint-plugin-simple-import-sort": "12.1.1",
     "eslint-plugin-unicorn": "62.0.0",
     "husky": "9.1.7",
-    "knip": "5.80.0",
+    "knip": "5.80.2",
     "lint-staged": "16.2.7",
     "npm-run-all2": "8.0.4",
     "prettier": "3.7.4",
@@ -111,5 +112,5 @@
     "typescript-eslint": "8.52.0",
     "wxt": "0.20.13"
   },
-  "packageManager": "pnpm@10.28.0"
+  "packageManager": "pnpm@10.28.0+sha512.05df71d1421f21399e053fde567cea34d446fa02c76571441bfc1c7956e98e363088982d940465fd34480d4d90a0668bc12362f8aa88000a64e83d0b0e47be48"
 }

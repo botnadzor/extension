@@ -31,5 +31,16 @@ type UseStaticListSummary = <ListId extends StaticListId>(
 export const useStaticListSummary = createPollableValueHook(
   (lastPollVersion, listId: StaticListId) =>
     staticListsService.pollListSummary(lastPollVersion, listId),
-  { hookNameForDebugging: "useStaticListSummary" },
+  { hookNameForDebugging: "useStaticListSummary", throttleInterval: 100 },
 ) as UseStaticListSummary;
+
+type UseNextStaticListSummary = <ListId extends StaticListId>(
+  listId: ListId,
+) => StaticListSummary<ListId>;
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Mapping generic list return type to specific list summary shape
+export const useNextStaticListSummary = createPollableValueHook(
+  (lastPollVersion, listId: StaticListId) =>
+    staticListsService.pollNextListSummary(lastPollVersion, listId),
+  { hookNameForDebugging: "useNextStaticListSummary", throttleInterval: 100 },
+) as UseNextStaticListSummary;

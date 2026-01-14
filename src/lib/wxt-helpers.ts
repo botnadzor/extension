@@ -95,7 +95,7 @@ function generateExtensionVersionName(
 
   if (gitInfo) {
     let commitHashSuffix = "";
-    if (mode === "prod" && gitInfo.modifiedSinceCommitting) {
+    if (modeIdentifier === "build" && gitInfo.modifiedSinceCommitting) {
       commitHashSuffix = "-modified";
     } else if (gitInfo.prBehindBase) {
       commitHashSuffix = "-merged-with-base";

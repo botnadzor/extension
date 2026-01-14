@@ -6,6 +6,7 @@ import { defineStoreWithSchema } from "@/lib/store-with-schema";
 const triggeredNotificationSchema = z.readonly(
   z.object({
     type: z.enum([
+      "dataWarmupComplete",
       "inspectorMissingPermission",
       "inspectorUnauthorized",
       "regDateAccountNotFound",

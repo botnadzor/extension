@@ -1,21 +1,18 @@
-import { produce } from "immer";
-import { EyeIcon, EyeOffIcon, InfoIcon, LoaderCircleIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { ButtonWithLoadingState } from "@/components/ui/button-with-loading-state";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { useFrontendBaseUrl } from "@/hooks/frontend-service";
-import {
-  useAuthCheck,
-  useAuthStatus,
-  useUserConfig,
-} from "@/hooks/user-service";
+import { useAuthCheck, useAuthStatus } from "@/hooks/user-service";
 import { formatTime } from "@/lib/formatting";
+import { isoTimeSchema } from "@/lib/primitive-values";
 import { userService } from "@/lib/proxy-services";
+import { useAnimate } from "@/lib/use-animate";
 import { cn } from "@/lib/utils";
 import type { AuthCheck, AuthStatus } from "@/services/user-service";
+
+import { CollectingCommentsCheckbox } from "./helpers";
 
 function UnauthorizedForm({
   authStatus,
@@ -29,40 +26,73 @@ function UnauthorizedForm({
     authStatus.accessCode,
   );
   const [accessCodeShown, setAccessCodeShown] = React.useState(false);
+  const { animationClassName, animate } = useAnimate();
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const [lastSavedAccessCode, setLastSavedAccessCode] = React.useState(
     authStatus.accessCode,
   );
+
   if (lastSavedAccessCode !== authStatus.accessCode) {
     setLastSavedAccessCode(authStatus.accessCode);
     setUnsavedAccessCode(authStatus.accessCode);
   }
 
+  const codeIsInvalid =
+    authStatus.state === "invalid" &&
+    authCheck.state === "idle" &&
+    unsavedAccessCode === authStatus.accessCode;
+
+  const authCheckRef = React.useRef<AuthCheck>(authCheck);
+  const [mountedAt] = React.useState(isoTimeSchema.parse(undefined));
+
+  React.useEffect(() => {
+    if (
+      authCheck.state === "idle" &&
+      authCheckRef.current.state !== "idle" &&
+      authCheckRef.current.startedAt > mountedAt
+    ) {
+      inputRef.current?.focus();
+      animate("shake");
+    }
+    authCheckRef.current = authCheck;
+  }, [animate, authCheck, mountedAt]);
+
   function handleAccessCodeFormSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     const formData = new FormData(event.currentTarget);
     const accessCode = formData.get("accessCode");
-    if (typeof accessCode !== "string") {
-      return;
-    }
-    void userService.setAccessCode(accessCode);
+
+    void userService.setAccessCode(
+      typeof accessCode === "string" ? accessCode : "",
+    );
   }
 
   return (
-    <div className="pt-2.5 pr-3 pb-3 pl-1">
+    <div className="px-3 pt-2.5 pb-3">
       <form
         onSubmit={handleAccessCodeFormSubmit}
-        className="flex items-center gap-2"
+        className="flex items-center gap-3"
         autoComplete="off"
       >
-        <div className="relative flex flex-1 items-center gap-2">
+        <div
+          className={cn(
+            "relative flex flex-1 items-center gap-2",
+            animationClassName,
+          )}
+        >
           <input
+            ref={inputRef}
             placeholder="Код доступа"
             name="accessCode"
             value={unsavedAccessCode}
             disabled={authCheck.state === "ongoing"}
             onChange={(e) => {
               setUnsavedAccessCode(e.target.value);
+            }}
+            onFocus={(e) => {
+              e.target.select();
             }}
             className={cn(
               `
@@ -96,19 +126,13 @@ function UnauthorizedForm({
           </button>
         </div>
 
-        <ButtonWithLoadingState
-          disabled={unsavedAccessCode.length === 0}
-          loading={authCheck.state === "ongoing"}
-        >
+        <ButtonWithLoadingState loading={authCheck.state === "ongoing"}>
           Установить
         </ButtonWithLoadingState>
       </form>
 
       <div className="mt-3 h-lh truncate text-sm text-destructive">
-        {authStatus.state === "invalid" &&
-          authCheck.state === "idle" &&
-          unsavedAccessCode === authStatus.accessCode &&
-          "Код доступа вставлен с ошибкой или просрочен"}
+        {codeIsInvalid && "Код доступа вставлен с ошибкой или просрочен"}
       </div>
 
       <div className="pt-2 text-xs">
@@ -143,20 +167,7 @@ function AuthorizedForm({
   authStatus: AuthStatus & { state: "valid" };
   authCheck: AuthCheck;
 }) {
-  const userConfig = useUserConfig();
   const frontendBaseUrl = useFrontendBaseUrl();
-
-  function handleCollectingCommentsChange() {
-    void userService.setConfig(
-      produce(userConfig, (draft) => {
-        if (draft.collectingComments === undefined) {
-          draft.collectingComments = true;
-        } else {
-          delete draft.collectingComments;
-        }
-      }),
-    );
-  }
 
   return (
     <div className="p-3 pt-2.5 pl-1">
@@ -184,7 +195,7 @@ function AuthorizedForm({
           помечая ботов карточками
         </a>
       </div>
-      <div className="flex max-w-50 flex-col gap-2 pt-6">
+      <div className="flex max-w-50 flex-col gap-2 py-6">
         <ButtonWithLoadingState
           disabled={authCheck.state === "ongoing"}
           loading={authCheck.state === "ongoing"}
@@ -203,21 +214,7 @@ function AuthorizedForm({
           Сбросить код доступа
         </Button>
       </div>
-      <Label className="pt-6">
-        <Checkbox
-          checked={userConfig.collectingComments ?? false}
-          onClick={handleCollectingCommentsChange}
-        />
-        Сбор и отправка комментаторов
-        <a
-          href={`${frontendBaseUrl}/docs/extension#replies-collecting`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="u-link rounded-full"
-        >
-          <InfoIcon className="size-4" />
-        </a>
-      </Label>
+      <CollectingCommentsCheckbox />
     </div>
   );
 }

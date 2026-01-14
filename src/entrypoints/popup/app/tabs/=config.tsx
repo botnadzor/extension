@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { Label } from "@/components/ui/label";
 import {
+  useNextStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
 } from "@/hooks/static-lists-service";
@@ -17,6 +18,7 @@ import { fallbackHexColor } from "@/services/affiliation-service";
 
 import { Checkbox } from "../../../../components/ui/checkbox";
 import { Reset } from "./=config/reset";
+import { CollectingCommentsCheckbox, UpdatableCount } from "./helpers";
 
 function ColorOverridePicker({
   colorOverride,
@@ -77,22 +79,27 @@ function ColorOverridePicker({
   }, [colorPickerValue, defaultColor, onOverrideChange, tagId]);
 
   return (
-    <div className="flex flex-none shrink items-center gap-1.5 text-sm">
+    <div className="flex flex-none shrink items-center gap-1.5">
       <input
         type="color"
         value={colorPickerValue}
         className={cn(
           `
-            relative inline-flex size-4 flex-none rounded-full border
-            border-input p-0 u-ring
-            [&::-moz-color-swatch]:absolute [&::-moz-color-swatch]:size-full
+            relative inline-flex size-4 flex-none overflow-hidden rounded-full
+            border p-0 u-ring
+            [&::-moz-color-swatch]:absolute [&::-moz-color-swatch]:inset-0
+            [&::-moz-color-swatch]:size-full [&::-moz-color-swatch]:rounded-full
             [&::-moz-color-swatch]:border-none [&::-moz-color-swatch]:p-0
+            [&::-moz-color-swatch-wrapper]:absolute
+            [&::-moz-color-swatch-wrapper]:inset-0
             [&::-moz-color-swatch-wrapper]:size-full
             [&::-moz-color-swatch-wrapper]:p-0
-            [&::-webkit-color-swatch]:absolute
+            [&::-webkit-color-swatch]:absolute [&::-webkit-color-swatch]:inset-0
             [&::-webkit-color-swatch]:size-full
             [&::-webkit-color-swatch]:rounded-full
             [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:p-0
+            [&::-webkit-color-swatch-wrapper]:absolute
+            [&::-webkit-color-swatch-wrapper]:inset-0
             [&::-webkit-color-swatch-wrapper]:size-full
             [&::-webkit-color-swatch-wrapper]:p-0
           `,
@@ -129,7 +136,8 @@ function ColorOverridePicker({
 export function ConfigTabBody() {
   const userConfig = useUserConfig();
   const tags = useStaticListItems("tags");
-  const accountSummary = useStaticListSummary("accounts");
+  const accountListSummary = useStaticListSummary("accounts");
+  const nextAccountListSummary = useNextStaticListSummary("accounts");
 
   const tagsToShow = tags.filter((tag) => tag.type === "accountCategory");
 
@@ -195,7 +203,7 @@ export function ConfigTabBody() {
   );
 
   return (
-    <div className="space-y-5 pt-3 pr-3 pl-1">
+    <div className="space-y-5 px-3 pt-3 text-sm">
       <Label>
         <Checkbox
           checked={userConfig.likesDisplay === "table"}
@@ -217,7 +225,7 @@ export function ConfigTabBody() {
           const visible = tag.visibilityLock ?? !override.hidden;
 
           return (
-            <div key={tag.id} className="flex items-center gap-3">
+            <div key={tag.id} className="flex items-center gap-1">
               <ColorOverridePicker
                 colorOverride={override.color}
                 defaultColor={tag.color ?? fallbackHexColor}
@@ -225,7 +233,7 @@ export function ConfigTabBody() {
                 tagId={tag.id}
               />
 
-              <Label>
+              <Label className="ml-2 flex-1">
                 <Checkbox
                   disabled={tag.visibilityLock}
                   checked={visible}
@@ -233,18 +241,26 @@ export function ConfigTabBody() {
                   onClick={handleTagVisibilityClick}
                 />
 
-                <span className="flex-1">
-                  {tag.name} (
-                  {(
-                    accountSummary.itemCountByTagId[tag.id] ?? 0
-                  ).toLocaleString("ru-RU")}
-                  )
-                </span>
+                <span className="flex-1 truncate">{tag.name}</span>
               </Label>
+              <UpdatableCount
+                className="text-muted-foreground"
+                count={
+                  accountListSummary.itemCount > 0
+                    ? accountListSummary.itemCountByTagId[tag.id]
+                    : undefined
+                }
+                nextCount={
+                  nextAccountListSummary.itemCount > 0
+                    ? (nextAccountListSummary.itemCountByTagId[tag.id] ?? 0)
+                    : undefined
+                }
+              />
             </div>
           );
         })}
       </div>
+      <CollectingCommentsCheckbox />
       <Reset />
     </div>
   );
