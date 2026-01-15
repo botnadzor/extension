@@ -1,6 +1,6 @@
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: ".reply_field.submit_post_field",
 
@@ -11,6 +11,4 @@ const insertion: Insertion = {
       element.style.backgroundColor = "";
     };
   },
-};
-
-export default insertion;
+});

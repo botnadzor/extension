@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/tailwindcss-helpers";
 
 export type ChartDomShell = {
   wrapper: HTMLElement;

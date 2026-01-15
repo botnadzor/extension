@@ -1,9 +1,9 @@
-import { affiliationService, frontendService } from "@/lib/proxy-services";
+import { affiliationService, frontendService } from "@/shared/proxy-services";
 
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 import { extractVkDomain, renderPostUI } from "./shared/ui-page-post";
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: ".PostHeader",
 
@@ -61,6 +61,4 @@ const insertion: Insertion = {
       }
     };
   },
-};
-
-export default insertion;
+});

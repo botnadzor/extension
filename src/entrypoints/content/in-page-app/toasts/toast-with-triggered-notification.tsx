@@ -1,11 +1,11 @@
 import * as React from "react";
 
-import { useContentId } from "@/hooks/content-id-context";
-import { useFrontendBaseUrl } from "@/hooks/frontend-service";
-import { notificationService, popupService } from "@/lib/proxy-services";
-import { detectVkBaseUrl } from "@/lib/urls";
-import type { TriggeredNotification } from "@/services/notification-service";
+import type { TriggeredNotification } from "@/shared/@model/triggered-notification";
+import { useFrontendBaseUrl } from "@/shared/pollable-value-hooks";
+import { notificationService, popupService } from "@/shared/proxy-services";
+import { detectVkBaseUrl } from "@/shared/urls";
 
+import { useContentId } from "../../content-id-context";
 import { Toast } from "./toast";
 
 const closeAfterInMilliseconds = 60_000;

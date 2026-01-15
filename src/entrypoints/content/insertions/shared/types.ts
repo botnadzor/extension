@@ -1,4 +1,4 @@
-import type { VkId } from "@/lib/primitive-values";
+import type { VkId } from "@/shared/primitive-values";
 
 export type CommentLocation = {
   wallVkId: VkId;

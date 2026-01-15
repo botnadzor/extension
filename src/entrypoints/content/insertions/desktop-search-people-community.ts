@@ -1,8 +1,8 @@
-import { type VkDomain, vkDomainSchema } from "@/lib/primitive-values";
-import { affiliationService, frontendService } from "@/lib/proxy-services";
-import { cn, cnl } from "@/lib/utils";
+import { type VkDomain, vkDomainSchema } from "@/shared/primitive-values";
+import { affiliationService, frontendService } from "@/shared/proxy-services";
+import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 import { renderAccountAction } from "./shared/ui-account-action";
 import { renderInlineBadge } from "./shared/ui-badge";
 
@@ -23,7 +23,7 @@ function extractVkDomain(authorLink: HTMLAnchorElement): VkDomain | undefined {
   return vkDomainSchema.safeParse(match?.[1]).data;
 }
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: '[data-testid="userrichcell"]',
 
@@ -152,6 +152,4 @@ const insertion: Insertion = {
       }
     };
   },
-};
-
-export default insertion;
+});

@@ -2,19 +2,25 @@ import { delay } from "es-toolkit";
 import { SendIcon } from "lucide-react";
 import * as React from "react";
 
-import { ButtonWithLoadingState } from "@/components/ui/button-with-loading-state";
+import { ButtonWithLoadingState } from "@/shared/@ui-primitives/button-with-loading-state";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useAccountInspection } from "@/hooks/inspector-service";
-import { useStaticListItems } from "@/hooks/static-lists-service";
-import { type TagId, tagIdSchema, type VkDomain } from "@/lib/primitive-values";
-import { cn } from "@/lib/utils";
+} from "@/shared/@ui-primitives/select";
+import { Textarea } from "@/shared/@ui-primitives/textarea";
+import {
+  useAccountInspection,
+  useStaticListItems,
+} from "@/shared/pollable-value-hooks";
+import {
+  type TagId,
+  tagIdSchema,
+  type VkDomain,
+} from "@/shared/primitive-values";
+import { cn } from "@/shared/tailwindcss-helpers";
 
 import { Placeholder } from "./placeholder";
 
@@ -101,7 +107,7 @@ export function ReportForm({ vkDomain }: { vkDomain: VkDomain }) {
   return (
     <div className="absolute inset-x-3 top-1.75 bottom-2 flex flex-col gap-2">
       {reportingMistake ? (
-        <div className="text-sm text-muted-foreground">
+        <div className="pl-3 text-sm text-muted-foreground">
           Аккаунт уже маркирован. Если вы считаете это ошибкой, напишите,
           почему.
         </div>
@@ -146,13 +152,13 @@ export function ReportForm({ vkDomain }: { vkDomain: VkDomain }) {
       <input type="hidden" value={vkDomain} />
       <div className="flex h-10 items-center justify-between">
         {reportResult?.success === false ? (
-          <div className="text-sm text-destructive">
+          <div className="pl-3 text-sm text-destructive">
             {reportResult.errorMessage}
           </div>
         ) : (
           <div
             className={cn(
-              "text-sm text-muted-foreground",
+              "pl-3 text-sm text-muted-foreground",
               text.length > maxLength && "text-warning",
             )}
           >

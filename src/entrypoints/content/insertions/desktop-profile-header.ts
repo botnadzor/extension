@@ -1,12 +1,12 @@
-import { frontendService } from "@/lib/proxy-services";
+import { frontendService } from "@/shared/proxy-services";
 
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 import {
   getProfileHeader,
   renderDesktopProfileHeaderUi,
 } from "./shared/ui-profile-header";
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: ".ProfileHeader__wrapper",
 
@@ -34,6 +34,4 @@ const insertion: Insertion = {
       ui.destroy();
     };
   },
-};
-
-export default insertion;
+});

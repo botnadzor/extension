@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { notificationService } from "@/lib/proxy-services";
+import { notificationService } from "@/shared/proxy-services";
 
 import { Toast } from "./toast";
 

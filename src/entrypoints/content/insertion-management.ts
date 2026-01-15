@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 
-import { getContentLogger } from "@/lib/logging";
-import type { ContentId } from "@/lib/primitive-values";
+import { getContentLogger } from "@/shared/logging";
+import type { ContentId } from "@/shared/primitive-values";
 
 import type { DerivedPageInfo } from "./derived-page-info";
 import type {
@@ -9,6 +9,7 @@ import type {
   InsertionCleanupFunction,
   InsertionInstance,
 } from "./insertion-basics";
+import insertionStyling from "./insertion-styling.css?inline";
 import { insertionLookup } from "./insertions";
 
 const insertionInstanceIdKey = "bnInsertionInstanceId";
@@ -21,6 +22,10 @@ export function startManagingInsertions({
   websiteVariant,
 }: DerivedPageInfo & { contentId: ContentId }): void {
   const logger = getContentLogger(["insertion-management"]);
+
+  const style = document.createElement("style");
+  style.textContent = insertionStyling;
+  document.head.append(style);
 
   const pickedInsertionLookup: Record<string, Insertion> = {};
 

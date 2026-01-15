@@ -1,17 +1,20 @@
 import { produce } from "immer";
 import { InfoIcon } from "lucide-react";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/shared/@ui-primitives/checkbox";
+import { Label } from "@/shared/@ui-primitives/label";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useFrontendBaseUrl } from "@/hooks/frontend-service";
-import { useAuthStatus, useUserConfig } from "@/hooks/user-service";
-import { userService } from "@/lib/proxy-services";
-import { cn } from "@/lib/utils";
+} from "@/shared/@ui-primitives/tooltip";
+import {
+  useAuthStatus,
+  useFrontendBaseUrl,
+  useUserConfig,
+} from "@/shared/pollable-value-hooks";
+import { userConfigService } from "@/shared/proxy-services";
+import { cn } from "@/shared/tailwindcss-helpers";
 
 export function CollectingCommentsCheckbox() {
   const userConfig = useUserConfig();
@@ -19,7 +22,7 @@ export function CollectingCommentsCheckbox() {
   const frontendBaseUrl = useFrontendBaseUrl();
 
   function handleCollectingCommentsChange() {
-    void userService.setConfig(
+    void userConfigService.set(
       produce(userConfig, (draft) => {
         if (draft.collectingComments === undefined) {
           draft.collectingComments = true;
@@ -68,12 +71,10 @@ export function UpdatableCount({
   }
 
   const formattedCount =
-    typeof count === "number" ? count.toLocaleString("ru-RU") : undefined;
+    typeof count === "number" ? count.toLocaleString("ru") : undefined;
 
   const formattedNextCount =
-    typeof nextCount === "number"
-      ? nextCount.toLocaleString("ru-RU")
-      : undefined;
+    typeof nextCount === "number" ? nextCount.toLocaleString("ru") : undefined;
 
   const countToShow = formattedCount ?? formattedNextCount;
 

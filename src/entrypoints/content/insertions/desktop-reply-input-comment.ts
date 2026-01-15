@@ -1,8 +1,8 @@
-import { vkDomainSchema } from "@/lib/primitive-values";
-import { affiliationService, frontendService } from "@/lib/proxy-services";
-import { cn } from "@/lib/utils";
+import { vkDomainSchema } from "@/shared/primitive-values";
+import { affiliationService, frontendService } from "@/shared/proxy-services";
+import { cn } from "@/shared/tailwindcss-helpers";
 
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 import { renderAnswerBotAction } from "./shared/ui-answer-bot-button";
 
 function extractTargetCommentId(replyInput: HTMLInputElement): string {
@@ -17,7 +17,7 @@ function getBotAuthorId(
   return commentElement.dataset["answeringId"];
 }
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: ".reply_box_more_attaches",
 
@@ -82,6 +82,4 @@ const insertion: Insertion = {
       answerBotButton.destroy();
     };
   },
-};
-
-export default insertion;
+});

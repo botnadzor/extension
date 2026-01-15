@@ -1,4 +1,4 @@
-import { staticListsService } from "@/lib/proxy-services";
+import { staticListsService } from "@/shared/proxy-services";
 
 export async function checkIfDataWarmupToastNeeded(): Promise<boolean> {
   const [accountsMetadata, tagsMetadata] = await Promise.all([

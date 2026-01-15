@@ -1,17 +1,17 @@
+import type { InspectorInstancePayload } from "@/shared/@model/inspector";
 import {
   type VkDomain,
   vkDomainSchema,
   vkIdSchema,
-} from "@/lib/primitive-values";
+} from "@/shared/primitive-values";
 import {
   affiliationService,
   commentCollectingService,
   frontendService,
-} from "@/lib/proxy-services";
-import { cn } from "@/lib/utils";
-import type { InspectorInstancePayload } from "@/services/inspector-service";
+} from "@/shared/proxy-services";
+import { cn } from "@/shared/tailwindcss-helpers";
 
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 import type { CommentLocation } from "./shared/types";
 import { renderAccountAction } from "./shared/ui-account-action";
 
@@ -226,7 +226,7 @@ function extractPostCommentCount(root: HTMLElement): number | undefined {
 
 const markAttribute = "data-bn-post-popup-actions";
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: ".tt_w.wall_tt.fw_reply_tt",
 
@@ -339,6 +339,4 @@ const insertion: Insertion = {
       actionUI.destroy();
     };
   },
-};
-
-export default insertion;
+});

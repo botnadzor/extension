@@ -158,7 +158,7 @@ export default defineConfig(
       "better-tailwindcss": {
         callees: [...getDefaultCallees(), ["cnl", [{ match: "strings" }]]],
         detectComponentClasses: true,
-        entryPoint: `${import.meta.dirname}/src/assets/tailwindcss-for-isolated-ui.css`,
+        entryPoint: `${import.meta.dirname}/src/shared/isolated-ui-styling.css`,
       },
     },
     rules: {
@@ -226,7 +226,10 @@ export default defineConfig(
 
   {
     ...eslintPluginReactRefresh.configs.vite,
-    ignores: ["src/components/ui/**"], // Shadcn components
+    ignores: [
+      "src/shared/@ui-primitives/**",
+      "src/entrypoints/content/**", // Hot-reloading not supported by WXT
+    ],
   },
 
   eslintPluginRegexp.configs["flat/recommended"],
@@ -299,7 +302,7 @@ export default defineConfig(
     files: ["src/entrypoints/content/insertions/**/*.{ts,tsx}"],
     settings: {
       "better-tailwindcss": {
-        entryPoint: `${import.meta.dirname}/src/entrypoints/content/tailwindcss-for-content.css`,
+        entryPoint: `${import.meta.dirname}/src/entrypoints/content/insertion-styling.css`,
       },
     },
     rules: {

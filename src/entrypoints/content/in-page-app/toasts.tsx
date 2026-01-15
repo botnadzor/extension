@@ -1,26 +1,33 @@
 import * as React from "react";
 import semverSatisfies from "semver/functions/satisfies";
 
-import { Button } from "@/components/ui/button";
-import { useContentId } from "@/hooks/content-id-context";
+import { Button } from "@/shared/@ui-primitives/button";
+import { getAppConfig } from "@/shared/app-config";
+import { createPollableValueHook } from "@/shared/create-pollable-value-hook";
 import {
   useGlobalNotificationsState,
-  useTriggeredNotification,
-} from "@/hooks/notification-service";
-import { useStaticListItems } from "@/hooks/static-lists-service";
-import { getAppConfig } from "@/lib/app-config";
-import { notificationService } from "@/lib/proxy-services";
+  useStaticListItems,
+} from "@/shared/pollable-value-hooks";
+import type { ContentId } from "@/shared/primitive-values";
+import { notificationService } from "@/shared/proxy-services";
 
+import { useContentId } from "../content-id-context";
 import { checkIfDataWarmupToastNeeded } from "./toasts/helpers";
 import { ToastWithAnnouncement } from "./toasts/toast-with-announcement";
 import { ToastWithDataWarmup } from "./toasts/toast-with-data-warmup";
 import { ToastWithTriggeredNotification } from "./toasts/toast-with-triggered-notification";
 import { ToastWithWelcomeMessage } from "./toasts/toast-with-welcome-message";
 
+const useTriggeredNotification = createPollableValueHook(
+  (lastPollVersion, contentId: ContentId) =>
+    notificationService.pollTriggeredNotification(lastPollVersion, contentId),
+  { hookNameForDebugging: "useTriggeredNotification" },
+);
+
 export function Toasts() {
   const announcements = useStaticListItems("announcements");
   const contentId = useContentId();
-  const triggeredNotification = useTriggeredNotification();
+  const triggeredNotification = useTriggeredNotification(contentId);
   const globalNotificationsState = useGlobalNotificationsState();
 
   const [dataWarmupToastNeeded, setDataWarmupToastNeeded] =

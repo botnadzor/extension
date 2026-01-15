@@ -1,14 +1,16 @@
 import * as React from "react";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { useFrontendBaseUrl } from "@/hooks/frontend-service";
-import { useActivePopupTab } from "@/hooks/popup-service";
-import { getAppConfig } from "@/lib/app-config";
-import { type PopupTab, popupTabs } from "@/lib/primitive-values";
-import { popupService } from "@/lib/proxy-services";
-import { generateUrl } from "@/lib/urls";
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/shared/@ui-primitives/scroll-area";
+import { TooltipProvider } from "@/shared/@ui-primitives/tooltip";
+import { getAppConfig } from "@/shared/app-config";
+import {
+  useActivePopupTab,
+  useFrontendBaseUrl,
+} from "@/shared/pollable-value-hooks";
+import { type PopupTab, popupTabs } from "@/shared/primitive-values";
+import { popupService } from "@/shared/proxy-services";
+import { cn } from "@/shared/tailwindcss-helpers";
+import { generateUrl } from "@/shared/urls";
 
 import { Header } from "./app/header";
 import { popupTabDefinitionLookup } from "./app/tabs";

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/tailwindcss-helpers";
 
 import { createIconElement, type IconId } from "./icons";
 import { iconTitles, renderTooltip, type TooltipDirection } from "./ui-tooltip";

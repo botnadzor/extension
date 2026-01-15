@@ -13,7 +13,9 @@ export function OptionalMark({
 
   return (
     <div
-      className="rounded-full bg-gray-200 px-2 text-xs text-black"
+      className="
+        rounded-full bg-gray-200 px-2 text-xs whitespace-nowrap text-black
+      "
       title={markTitle}
       style={{ background: markColor }}
     >

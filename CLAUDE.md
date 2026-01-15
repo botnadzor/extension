@@ -200,7 +200,7 @@ src/
 ├── lib/                      # Utilities (logging, utils, urls)
 ├── hooks/                    # React hooks and service hooks
 ├── components/ui/            # Shadcn UI components
-└── assets/                   # Fonts, CSS files
+└── assets/                   # icon
 ```
 
 ### Tech Stack
@@ -233,8 +233,8 @@ src/
 2. **CSS Injection**:
    - Manual CSS injection mode is used for content scripts
    - Two separate Tailwind configurations:
-     - `src/assets/tailwindcss-for-isolated-ui.css` - For popup and shadow DOM React components (unprefixed)
-     - `src/entrypoints/content/tailwindcss-for-content.css` - For content script insertions (`bn:` prefix)
+     - `src/shared/isolated-ui-styling.css` - For popup and shadow DOM React components (unprefixed)
+     - `src/entrypoints/content/insertion-styling.css` - For content script insertions (`bn:` prefix)
 
 3. **Logging**: Use hierarchical logger categories
 

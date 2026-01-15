@@ -6,11 +6,13 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { useFrontendBaseUrl } from "@/hooks/frontend-service";
-import { useStaticListItems } from "@/hooks/static-lists-service";
-import { getAppConfig } from "@/lib/app-config";
-import { formatDate } from "@/lib/formatting";
+} from "@/shared/@ui-primitives/accordion";
+import { getAppConfig } from "@/shared/app-config";
+import { formatDate } from "@/shared/formatting";
+import {
+  useFrontendBaseUrl,
+  useStaticListItems,
+} from "@/shared/pollable-value-hooks";
 
 export function AnnouncementsTabBody() {
   const announcements = useStaticListItems("announcements");
@@ -31,9 +33,7 @@ export function AnnouncementsTabBody() {
           <AccordionItem key={createdAt} value={createdAt}>
             <AccordionTrigger>
               <div className="flex w-full flex-col items-start text-left">
-                <div className="text-sm text-pretty text-foreground">
-                  {header}
-                </div>
+                <div className="text-sm text-pretty">{header}</div>
                 <div className="pt-0.5 text-xs text-muted-foreground">
                   {formatDate(createdAt)}
                 </div>

@@ -1,12 +1,12 @@
-import { frontendService } from "@/lib/proxy-services";
+import { frontendService } from "@/shared/proxy-services";
 
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 import {
   getProfileHeader,
   renderMobileProfileHeaderUI,
 } from "./shared/ui-profile-header";
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "mobileVkWebsite",
   elementSelector: ".ProfileInfo__main",
 
@@ -35,6 +35,4 @@ const insertion: Insertion = {
       ui.destroy();
     };
   },
-};
-
-export default insertion;
+});

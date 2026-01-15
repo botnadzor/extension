@@ -1,13 +1,12 @@
-import { getAppConfig } from "@/lib/app-config";
-import { configureLogging, getContentLogger } from "@/lib/logging";
-import { type ContentId, contentIdSchema } from "@/lib/primitive-values";
+import { getAppConfig } from "@/shared/app-config";
+import { configureLogging, getContentLogger } from "@/shared/logging";
+import { type ContentId, contentIdSchema } from "@/shared/primitive-values";
 import { browser, defineContentScript } from "#imports";
 
 import { derivePageInfo } from "./content/derived-page-info";
 import { contentScriptHosts } from "./content/hosts";
 import { startInPageApp } from "./content/in-page-app";
 import { startManagingInsertions } from "./content/insertion-management";
-import manualStyle from "./content/tailwindcss-for-content.css?inline";
 
 const logger = getContentLogger();
 
@@ -57,10 +56,6 @@ export default defineContentScript({
     });
 
     const contentId = setupContentId();
-
-    const style = document.createElement("style");
-    style.textContent = manualStyle;
-    document.head.append(style);
 
     logger.debug(
       "Loading content script with content id {contentId} for {url}",

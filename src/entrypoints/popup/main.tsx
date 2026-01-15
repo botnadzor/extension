@@ -1,7 +1,7 @@
 import * as React from "react";
 import ReactDOM from "react-dom/client";
 
-import { configureLogging, getPopupLogger } from "@/lib/logging";
+import { configureLogging, getPopupLogger } from "@/shared/logging";
 import { browser } from "#imports";
 
 import { App } from "./app";

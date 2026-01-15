@@ -1,13 +1,13 @@
+import type { InspectorInstancePayload } from "@/shared/@model/inspector";
 import {
   type VkDomain,
   vkDomainSchema,
   vkIdSchema,
-} from "@/lib/primitive-values";
-import { affiliationService, frontendService } from "@/lib/proxy-services";
-import { cn } from "@/lib/utils";
-import type { InspectorInstancePayload } from "@/services/inspector-service";
+} from "@/shared/primitive-values";
+import { affiliationService, frontendService } from "@/shared/proxy-services";
+import { cn } from "@/shared/tailwindcss-helpers";
 
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 import type { CommentLocation } from "./shared/types";
 import { renderCommentUi } from "./shared/ui-comment";
 
@@ -121,7 +121,7 @@ function extractCommenterAvatarUrl(root: HTMLElement): string | undefined {
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
 }
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: ".group_activity_reply_wrap",
 
@@ -211,6 +211,4 @@ const insertion: Insertion = {
       ui.destroy();
     };
   },
-};
-
-export default insertion;
+});

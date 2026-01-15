@@ -1,10 +1,13 @@
 import { delay, isEqual } from "es-toolkit";
 import * as React from "react";
 
-import { Button } from "@/components/ui/button";
-import { useUserConfig } from "@/hooks/user-service";
-import { userService } from "@/lib/proxy-services";
-import { defaultUserConfig, type UserConfig } from "@/services/user-service";
+import {
+  defaultUserConfig,
+  type UserConfig,
+} from "@/shared/@model/user-config";
+import { Button } from "@/shared/@ui-primitives/button";
+import { useUserConfig } from "@/shared/pollable-value-hooks";
+import { userConfigService } from "@/shared/proxy-services";
 
 function CircleProgress({
   className,
@@ -51,7 +54,7 @@ export function Reset() {
   const configIsDefault = isEqual(userConfig, defaultUserConfig);
 
   const resetUserConfig = React.useCallback(async () => {
-    await userService.setConfig(defaultUserConfig);
+    await userConfigService.set(defaultUserConfig);
     setUserConfigToRestore(userConfig);
     await delay(100);
     actionButtonRef.current?.focus();
@@ -60,7 +63,7 @@ export function Reset() {
   const restoreUserConfig = React.useCallback(async () => {
     setUserConfigToRestore(undefined);
     setTimeRemaining(timeToRestore);
-    await userService.setConfig(userConfigToRestore ?? defaultUserConfig);
+    await userConfigService.set(userConfigToRestore ?? defaultUserConfig);
     await delay(100);
     actionButtonRef.current?.focus();
   }, [userConfigToRestore]);
@@ -78,7 +81,7 @@ export function Reset() {
       setTimeRemaining(newTimeRemaining);
 
       if (newTimeRemaining <= 0) {
-        void userService.setConfig(defaultUserConfig);
+        void userConfigService.set(defaultUserConfig);
         setUserConfigToRestore(undefined);
         clearInterval(interval);
       }

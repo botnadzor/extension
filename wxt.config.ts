@@ -3,9 +3,11 @@ import fs from "node:fs";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "wxt";
 
-import { determineExtensionVersioning } from "./src/lib/wxt-helpers";
+import { determineExtensionVersioning } from "./src/wxt-helpers";
 
 export default defineConfig({
+  autoIcons: { baseIconPath: "icon.png" },
+
   // Prevent clashes with dev servers that use 3000 by default
   dev: { server: { port: 3100 } },
 
@@ -91,6 +93,7 @@ export default defineConfig({
   webExt: {
     startUrls: ["https://vk.com/ria"],
   },
+
   zip: {
     // These files are renamed in "zip:done" hook
     artifactTemplate: "botnadzor-for-{{browser}}-latest.zip",

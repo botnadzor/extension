@@ -1,20 +1,29 @@
 import * as React from "react";
 
-import { Logo } from "@/components/logo";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useContentId } from "@/hooks/content-id-context";
-import { useFrontendBaseUrl } from "@/hooks/frontend-service";
-import { useInspectorInstanceConfig } from "@/hooks/inspector-service";
-import { useAuthStatus } from "@/hooks/user-service";
-import { inspectorService } from "@/lib/proxy-services";
+} from "@/shared/@ui-primitives/dialog";
+import { Logo } from "@/shared/@ui-primitives/logo";
+import { createPollableValueHook } from "@/shared/create-pollable-value-hook";
+import {
+  useAuthStatus,
+  useFrontendBaseUrl,
+} from "@/shared/pollable-value-hooks";
+import type { ContentId } from "@/shared/primitive-values";
+import { inspectorService } from "@/shared/proxy-services";
 
+import { useContentId } from "../content-id-context";
 import { InspectorContent } from "./inspector/inspector-content";
+
+const useInspectorInstanceConfig = createPollableValueHook(
+  (lastPollVersion, contentId: ContentId) =>
+    inspectorService.pollInstanceConfig(lastPollVersion, contentId),
+  { hookNameForDebugging: "useInspectorInstanceConfig" },
+);
 
 function PointsRemaining() {
   const authStatus = useAuthStatus();
@@ -33,7 +42,7 @@ function PointsRemaining() {
       <p>
         Осталось очков:{" "}
         <span className="pl-0.5 tabular-nums">
-          {authStatus.pointCount.toLocaleString("ru-RU")}
+          {authStatus.pointCount.toLocaleString("ru")}
         </span>
       </p>
     </div>
@@ -68,7 +77,7 @@ export function Inspector() {
             <a
               href={frontendBaseUrl}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="-mx-0.5 p-0.5 u-ring"
             >
               <Logo />

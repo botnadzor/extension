@@ -1,7 +1,7 @@
-import { affiliationService, frontendService } from "@/lib/proxy-services";
-import { cn, cnl } from "@/lib/utils";
+import { affiliationService, frontendService } from "@/shared/proxy-services";
+import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 import { renderActionButton } from "./shared/ui-action-buttons";
 import { renderInlineBadge } from "./shared/ui-badge";
 
@@ -15,7 +15,7 @@ function extractVkDomain(link: HTMLAnchorElement): string | undefined {
   return match?.[1];
 }
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: ".fans_fan_row",
 
@@ -90,6 +90,4 @@ const insertion: Insertion = {
       actionUi.destroy();
     };
   },
-};
-
-export default insertion;
+});

@@ -1,13 +1,14 @@
-import { vkIdSchema } from "@/lib/primitive-values";
+import type { InspectorInstancePayload } from "@/shared/@model/inspector";
+import { vkIdSchema } from "@/shared/primitive-values";
 import {
   affiliationService,
   frontendService,
   inspectorService,
-  userService,
-} from "@/lib/proxy-services";
-import type { InspectorInstancePayload } from "@/services/inspector-service";
+  userConfigService,
+} from "@/shared/proxy-services";
+import { cn } from "@/shared/tailwindcss-helpers";
 
-import type { Insertion } from "../insertion-basics";
+import { defineInsertion } from "../insertion-basics";
 import { extractVkDomain } from "./desktop-popup-post";
 import { createChartShell, observeFansRowsUpdates } from "./shared/chart-shell";
 import { renderActionButton } from "./shared/ui-action-buttons";
@@ -65,13 +66,13 @@ function extractVkDomainsAndIds(rows: HTMLElement[]): {
   return { vkDomains, vkNumericIds };
 }
 
-const insertion: Insertion = {
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: ".fans_rows",
 
   init: async ({ contentId, element, logger }) => {
     const frontendBaseUrl = await frontendService.getBaseUrl();
-    const userConfig = await userService.getConfig();
+    const userConfig = await userConfigService.get();
 
     const chartModule = await import("chart.js/auto");
     const {
@@ -251,8 +252,9 @@ const insertion: Insertion = {
       container.textContent = "";
 
       const table = document.createElement("table");
-      table.className =
-        "bn:w-full bn:border-collapse bn:color-[var(--vkui--color_text_primary)]";
+      table.className = cn(
+        "bn:w-full bn:border-collapse bn:text-(--vkui--color_text_primary)",
+      );
       const tbody = document.createElement("tbody");
 
       for (const [index, item] of dataset.entries()) {
@@ -260,28 +262,36 @@ const insertion: Insertion = {
 
         // Column 1: Index
         const indexCell = document.createElement("td");
-        indexCell.className = "bn:font-mono";
+        indexCell.className = cn("bn:font-mono");
         indexCell.textContent = String(index + 1);
         row.append(indexCell);
 
         // Column 2: VK Numeric ID
         const idCell = document.createElement("td");
-        idCell.className = "bn:font-mono bn:text-center";
+        idCell.className = cn("bn:text-center bn:font-mono");
         idCell.textContent = item?.numericId ?? "";
         row.append(idCell);
 
         // Column 3: Avatar + Name
         const nameCell = document.createElement("td");
         const nameWrapper = document.createElement("div");
-        nameWrapper.className = "bn:flex bn:items-center bn:gap-2";
+        nameWrapper.className = cn("bn:flex bn:items-center bn:gap-2");
 
         const avatarWrapper = document.createElement("div");
-        avatarWrapper.className =
-          "bn:w-6 bn:h-6 bn:flex bn:items-center bn:group/avatar";
+        avatarWrapper.className = cn(
+          `
+            bn:group/avatar
+            bn:flex bn:size-6 bn:items-center
+          `,
+        );
 
         const avatarImg = document.createElement("img");
-        avatarImg.className =
-          "bn:w-full bn:pointer-events-none group-hover/avatar:bn:scale-[10]";
+        avatarImg.className = cn(
+          `
+            bn:pointer-events-none bn:w-full
+            bn:group-hover/avatar:scale-[10]
+          `,
+        );
         avatarImg.src = item?.image ?? "";
         avatarWrapper.append(avatarImg);
 
@@ -299,7 +309,7 @@ const insertion: Insertion = {
         // Column 4: Affiliation
         const affiliationCell = document.createElement("td");
         const affiliationDiv = document.createElement("div");
-        affiliationDiv.className = "bn:text-center bn:p-1";
+        affiliationDiv.className = cn("bn:p-1 bn:text-center");
         if (affiliations[index]) {
           affiliationDiv.style.background = affiliations[index].color;
           affiliationDiv.textContent = affiliations[index].tags[0].name;
@@ -309,13 +319,15 @@ const insertion: Insertion = {
 
         // Column 5: Actions
         const actionsCell = document.createElement("td");
-        actionsCell.className = "bn:relative";
+        actionsCell.className = cn("bn:relative");
         const actionsWrapper = document.createElement("div");
-        actionsWrapper.className =
-          "bn:text-center bn:flex bn:gap-2 bn:justify-end bn:h-full";
+        actionsWrapper.className = cn(
+          "bn:flex bn:h-full bn:justify-end bn:gap-2 bn:text-center",
+        );
 
-        const iconClasses =
-          "bn:opacity-50 bn:size-4 bn:!fill-[var(--vkui--color_text_primary)]";
+        const iconClasses = cn(
+          "bn:size-4 bn:fill-(--vkui--color_text_primary)! bn:opacity-50",
+        );
 
         const actionUi = renderActionButton({
           icons: [
@@ -336,8 +348,9 @@ const insertion: Insertion = {
               },
             },
           ],
-          containerClassName:
-            "bn:flex-center bn:flex bn:gap-2 bn:justify-end bn:h-full",
+          containerClassName: cn(
+            "bn:flex bn:h-full bn:items-center bn:justify-end bn:gap-2",
+          ),
           actionClassName: iconClasses,
         });
 
@@ -496,6 +509,4 @@ const insertion: Insertion = {
       shell.destroy();
     };
   },
-};
-
-export default insertion;
+});

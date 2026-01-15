@@ -1,10 +1,10 @@
 import { XIcon } from "lucide-react";
 import * as React from "react";
 
-import { Button } from "@/components/ui/button";
-import type { IsoTime } from "@/lib/primitive-values";
-import { useAnimate } from "@/lib/use-animate";
-import { cn } from "@/lib/utils";
+import { Button } from "@/shared/@ui-primitives/button";
+import type { IsoTime } from "@/shared/primitive-values";
+import { cn } from "@/shared/tailwindcss-helpers";
+import { useAnimate } from "@/shared/use-animate";
 
 export function Toast({
   children,

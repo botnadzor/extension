@@ -1,6 +1,6 @@
 import type { Logger } from "@logtape/logtape";
 
-import type { ContentId } from "@/lib/primitive-values";
+import type { ContentId } from "@/shared/primitive-values";
 
 import type { WebsiteVariant } from "./derived-page-info";
 
@@ -30,3 +30,7 @@ export type InsertionInstance = {
   element: HTMLElement;
   cleanup?: InsertionCleanupFunction;
 };
+
+export function defineInsertion(insertion: Insertion): Insertion {
+  return insertion;
+}

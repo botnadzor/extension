@@ -1,10 +1,10 @@
-import { useFrontendBaseUrl } from "@/hooks/frontend-service";
 import {
+  useFrontendBaseUrl,
   useNextStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
-} from "@/hooks/static-lists-service";
-import { generateUrl } from "@/lib/urls";
+} from "@/shared/pollable-value-hooks";
+import { generateUrl } from "@/shared/urls";
 
 import { UpdatableCount } from "./helpers";
 

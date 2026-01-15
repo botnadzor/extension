@@ -1,16 +1,19 @@
 import { EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react";
 import * as React from "react";
 
-import { Button } from "@/components/ui/button";
-import { ButtonWithLoadingState } from "@/components/ui/button-with-loading-state";
-import { useFrontendBaseUrl } from "@/hooks/frontend-service";
-import { useAuthCheck, useAuthStatus } from "@/hooks/user-service";
-import { formatTime } from "@/lib/formatting";
-import { isoTimeSchema } from "@/lib/primitive-values";
-import { userService } from "@/lib/proxy-services";
-import { useAnimate } from "@/lib/use-animate";
-import { cn } from "@/lib/utils";
-import type { AuthCheck, AuthStatus } from "@/services/user-service";
+import type { AuthCheck, AuthStatus } from "@/shared/@model/auth";
+import { Button } from "@/shared/@ui-primitives/button";
+import { ButtonWithLoadingState } from "@/shared/@ui-primitives/button-with-loading-state";
+import { formatTime } from "@/shared/formatting";
+import {
+  useAuthCheck,
+  useAuthStatus,
+  useFrontendBaseUrl,
+} from "@/shared/pollable-value-hooks";
+import { isoTimeSchema } from "@/shared/primitive-values";
+import { authService } from "@/shared/proxy-services";
+import { cn } from "@/shared/tailwindcss-helpers";
+import { useAnimate } from "@/shared/use-animate";
 
 import { CollectingCommentsCheckbox } from "./helpers";
 
@@ -64,7 +67,7 @@ function UnauthorizedForm({
     const formData = new FormData(event.currentTarget);
     const accessCode = formData.get("accessCode");
 
-    void userService.setAccessCode(
+    void authService.setAccessCode(
       typeof accessCode === "string" ? accessCode : "",
     );
   }
@@ -182,7 +185,7 @@ function AuthorizedForm({
           <p>Код работает до {formatTime(authStatus.expiresAt)}</p>
         )}
         <p>Уровень доступа: {authStatus.accessLevel}</p>
-        <p>Очки: {authStatus.pointCount.toLocaleString("ru-RU")}</p>
+        <p>Очки: {authStatus.pointCount.toLocaleString("ru")}</p>
       </div>
       <div className="pt-6 text-xs">
         Вы можете зарабатывать очки, <br />
@@ -200,7 +203,7 @@ function AuthorizedForm({
           disabled={authCheck.state === "ongoing"}
           loading={authCheck.state === "ongoing"}
           onClick={() => {
-            void userService.checkAuth();
+            void authService.checkAuth();
           }}
         >
           Обновить информацию
@@ -208,7 +211,7 @@ function AuthorizedForm({
         <Button
           disabled={authCheck.state === "ongoing"}
           onClick={() => {
-            void userService.setAccessCode("");
+            void authService.setAccessCode("");
           }}
         >
           Сбросить код доступа
@@ -238,14 +241,14 @@ function UnknownStateForm({ authCheck }: { authCheck: AuthCheck }) {
       <div className="flex max-w-50 flex-col gap-2">
         <Button
           onClick={() => {
-            void userService.checkAuth();
+            void authService.checkAuth();
           }}
         >
           Проверить код доступа
         </Button>
         <Button
           onClick={() => {
-            void userService.setAccessCode("");
+            void authService.setAccessCode("");
           }}
         >
           Сбросить код доступа

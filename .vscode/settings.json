@@ -11,7 +11,15 @@
   },
   "redhat.telemetry.enabled": false,
   "tailwindCSS.classAttributes": ["class", "className", ".*ClassName"],
-  "tailwindCSS.experimental.configFile": "src/entrypoints/content/tailwindcss-for-content.css",
+  "tailwindCSS.experimental.configFile": {
+    "src/entrypoints/content/insertion-styling.css": [
+      "src/entrypoints/content/insertions/**"
+    ],
+    "src/shared/isolated-ui-styling.css": [
+      "src/**",
+      "!src/entrypoints/content/insertions/**"
+    ]
+  },
   "tailwindCSS.experimental.classRegex": [
     ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
     ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]

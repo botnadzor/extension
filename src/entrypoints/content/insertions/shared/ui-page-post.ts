@@ -1,10 +1,10 @@
+import type { AccountAffiliation } from "@/shared/@model/affiliation";
 import {
   type ContentId,
   type VkDomain,
   vkDomainSchema,
-} from "@/lib/primitive-values";
-import { cn, cnl } from "@/lib/utils";
-import type { AccountAffiliation } from "@/services/affiliation-service";
+} from "@/shared/primitive-values";
+import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
 import { renderAccountAction } from "./ui-account-action";
 import { renderInlineBadge } from "./ui-badge";

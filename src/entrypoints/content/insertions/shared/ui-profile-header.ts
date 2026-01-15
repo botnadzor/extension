@@ -1,13 +1,13 @@
 import type { Logger } from "@logtape/logtape";
 
+import type { AccountAffiliation } from "@/shared/@model/affiliation";
 import {
   type ContentId,
   type VkDomain,
   vkDomainSchema,
-} from "@/lib/primitive-values";
-import { affiliationService } from "@/lib/proxy-services";
-import { cn, cnl } from "@/lib/utils";
-import type { AccountAffiliation } from "@/services/affiliation-service";
+} from "@/shared/primitive-values";
+import { affiliationService } from "@/shared/proxy-services";
+import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
 import { renderAccountAction } from "./ui-account-action";
 import { renderInlineBadge } from "./ui-badge";

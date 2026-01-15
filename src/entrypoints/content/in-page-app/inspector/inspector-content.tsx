@@ -1,16 +1,21 @@
 import { LoaderCircleIcon } from "lucide-react";
 import * as React from "react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useContentId } from "@/hooks/content-id-context";
-import { useAccountInspection } from "@/hooks/inspector-service";
-import type { VkDomain } from "@/lib/primitive-values";
-import { inspectorService } from "@/lib/proxy-services";
 import type {
   InspectorInstanceConfig,
   InspectorTab,
-} from "@/services/inspector-service";
+} from "@/shared/@model/inspector";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/shared/@ui-primitives/tabs";
+import { useAccountInspection } from "@/shared/pollable-value-hooks";
+import type { VkDomain } from "@/shared/primitive-values";
+import { inspectorService } from "@/shared/proxy-services";
 
+import { useContentId } from "../../content-id-context";
 import { AccountActivity } from "./account-activity";
 import { OptionalMark } from "./optional-mark";
 import { ReportForm } from "./report-form";
@@ -63,7 +68,7 @@ export function InspectorContent({
         <img
           src={commenterAvatarUrl}
           alt={commenterName}
-          className="size-5.5 rounded-full bg-border"
+          className="size-5.5 translate-x-0.5 rounded-full bg-border"
         />
         <span className="text-lg">{commenterName}</span>
         <React.Suspense>
@@ -76,7 +81,7 @@ export function InspectorContent({
         onValueChange={(value) => {
           void inspectorService.setTab(
             contentId,
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- protected by `satisfies`
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- protected by `satisfies` below
             value as InspectorTab,
           );
         }}
@@ -88,10 +93,16 @@ export function InspectorContent({
             *:h-8
           "
         >
-          <TabsTrigger value={"activity" satisfies InspectorTab}>
+          <TabsTrigger
+            value={"activity" satisfies InspectorTab}
+            className="px-2.5"
+          >
             обнаруженная активность
           </TabsTrigger>
-          <TabsTrigger value={"report" satisfies InspectorTab}>
+          <TabsTrigger
+            value={"report" satisfies InspectorTab}
+            className="px-2.5"
+          >
             отправить на проверку
           </TabsTrigger>
         </TabsList>

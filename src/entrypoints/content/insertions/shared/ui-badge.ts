@@ -1,5 +1,5 @@
-import type { TagListItem } from "@/lib/static-lists/=tags";
-import { cn } from "@/lib/utils";
+import type { TagListItem } from "@/shared/static-lists/=tags";
+import { cn } from "@/shared/tailwindcss-helpers";
 
 export type InlineBadgeHandle = {
   element: HTMLSpanElement;

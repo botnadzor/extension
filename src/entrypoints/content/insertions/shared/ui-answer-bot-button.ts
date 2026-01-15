@@ -1,6 +1,6 @@
-import type { VkDomain } from "@/lib/primitive-values";
-import { generateCardUrl } from "@/lib/urls";
-import { cn } from "@/lib/utils";
+import type { VkDomain } from "@/shared/primitive-values";
+import { cn } from "@/shared/tailwindcss-helpers";
+import { generateCardUrl } from "@/shared/urls";
 
 import { renderActionButton } from "./ui-action-buttons";
 

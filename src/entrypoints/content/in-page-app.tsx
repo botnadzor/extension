@@ -1,17 +1,16 @@
 import * as React from "react";
 import ReactDOM from "react-dom/client";
 
-import { RadixPortalContainer } from "@/components/ui/radix-portal-container";
-import type { ContentId } from "@/lib/primitive-values";
-import { cn } from "@/lib/utils";
+import { RadixPortalContainer } from "@/shared/@ui-primitives/radix-portal-container";
+import isolatedUiStyling from "@/shared/isolated-ui-styling.css?inline";
+import type { ContentId } from "@/shared/primitive-values";
+import { cn } from "@/shared/tailwindcss-helpers";
 import { type ContentScriptContext, createShadowRootUi } from "#imports";
 
-import css from "../../assets/tailwindcss-for-isolated-ui.css?inline";
-import { ContentIdContext } from "../../hooks/content-id-context";
+import { ContentIdContext } from "./content-id-context";
 import { Inspector } from "./in-page-app/inspector";
 import { Toasts } from "./in-page-app/toasts";
 
-// eslint-disable-next-line react-refresh/only-export-components -- Keeping root component in the same file because HMR is not supported by WXT
 function InPageApp({
   contentId,
   darkTheme,
@@ -42,7 +41,7 @@ export async function startInPageApp(
     name: "botnadzor-in-page-app",
     position: "inline",
     anchor: "body",
-    css,
+    css: isolatedUiStyling,
 
     onMount: (container) => {
       const root = ReactDOM.createRoot(container);

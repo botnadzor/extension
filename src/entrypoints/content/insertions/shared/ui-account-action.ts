@@ -1,21 +1,21 @@
-import { formatTimeOrDate } from "@/lib/formatting";
+import type { AccountAffiliation } from "@/shared/@model/affiliation";
+import type { InspectorInstancePayload } from "@/shared/@model/inspector";
+import type { FailedRegDateInfo } from "@/shared/@model/reg-date";
+import type { TriggeredNotificationPayload } from "@/shared/@model/triggered-notification";
+import { formatTimeOrDate } from "@/shared/formatting";
 import type {
   ContentId,
   IsoDate,
   IsoTime,
   VkDomain,
-} from "@/lib/primitive-values";
+} from "@/shared/primitive-values";
 import {
   inspectorService,
   notificationService,
   regDateService,
-} from "@/lib/proxy-services";
-import { generateCardUrl, generateUrl } from "@/lib/urls";
-import { cn, cnl } from "@/lib/utils";
-import type { AccountAffiliation } from "@/services/affiliation-service";
-import type { InspectorInstancePayload } from "@/services/inspector-service";
-import type { TriggeredNotificationPayload } from "@/services/notification-service/triggered-notifications";
-import type { FailedRegDateInfo } from "@/services/reg-date-service";
+} from "@/shared/proxy-services";
+import { cn, cnl } from "@/shared/tailwindcss-helpers";
+import { generateCardUrl, generateUrl } from "@/shared/urls";
 
 import {
   type IconSpec,
@@ -66,8 +66,8 @@ function hideRegDateButton(event: MouseEvent): void {
   }
   const button = target.closest("button");
 
-  button?.classList.add("bn:hidden");
-  button?.classList.remove("bn:inline-flex");
+  button?.classList.add(...cnl("bn:hidden"));
+  button?.classList.remove(...cnl("bn:inline-flex"));
 }
 
 function injectRegDateText(
@@ -79,7 +79,7 @@ function injectRegDateText(
   const injectionTextContent = `Дата регистрации: ${formattedDate}`;
 
   const paragraph = document.createElement("p");
-  paragraph.className = "bn:mt-1 bn:mb-0 bn:text-muted-foreground";
+  paragraph.className = cn("bn:mt-1 bn:mb-0 bn:text-muted-foreground");
   paragraph.textContent = injectionTextContent;
   registrationDateAnchor.after(paragraph);
 }

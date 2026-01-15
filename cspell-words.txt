@@ -17,6 +17,7 @@ lnk
 logtape
 LRUCache
 lucide
+messageformat
 njsproj
 nogit
 noreferrer

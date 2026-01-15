@@ -1,9 +1,10 @@
 import { defineJobScheduler } from "@webext-core/job-scheduler";
 import { registerService } from "@webext-core/proxy-service";
 
-import { configureLogging, getBackgroundLogger } from "@/lib/logging";
+import { configureLogging, getBackgroundLogger } from "@/shared/logging";
 import {
   affiliationServiceKey,
+  authServiceKey,
   commentCollectingServiceKey,
   frontendServiceKey,
   inspectorServiceKey,
@@ -11,24 +12,25 @@ import {
   popupServiceKey,
   regDateServiceKey,
   staticListsServiceKey,
-  userServiceKey,
-} from "@/lib/proxy-service-keys";
-import { rootConfigSchema } from "@/lib/root-config";
-import { staticListIds } from "@/lib/static-lists";
-import { AffiliationService } from "@/services/affiliation-service";
-import { CommentCollectingService } from "@/services/comment-collecting-service";
-import { FrontendService } from "@/services/frontend-service";
-import { InspectorService } from "@/services/inspector-service";
-import { NotificationService } from "@/services/notification-service";
-import { PopupService } from "@/services/popup-service";
-import { RegDateService } from "@/services/reg-date-service";
-import { StaticListsService } from "@/services/static-lists-service";
-import { UserService } from "@/services/user-service";
+  userConfigServiceKey,
+} from "@/shared/proxy-service-keys";
+import { rootConfigSchema } from "@/shared/root-config";
+import { staticListIds } from "@/shared/static-lists";
 import { browser, defineBackground } from "#imports";
 
-import { AliasManager } from "./background/alias-manager";
-import { fetchFromRemoteSystem } from "./background/fetch-from-remote-system";
-import { VkDomainResolver } from "./background/vk-domain-resolver";
+import { AliasManager } from "./background/@service-helpers/alias-manager";
+import { fetchFromRemoteSystem } from "./background/@service-helpers/fetch-from-remote-system";
+import { VkDomainResolver } from "./background/@service-helpers/vk-domain-resolver";
+import { AffiliationService } from "./background/@services/affiliation-service";
+import { AuthService } from "./background/@services/auth-service";
+import { CommentCollectingService } from "./background/@services/comment-collecting-service";
+import { FrontendService } from "./background/@services/frontend-service";
+import { InspectorService } from "./background/@services/inspector-service";
+import { NotificationService } from "./background/@services/notification-service";
+import { PopupService } from "./background/@services/popup-service";
+import { RegDateService } from "./background/@services/reg-date-service";
+import { StaticListsService } from "./background/@services/static-lists-service";
+import { UserConfigService } from "./background/@services/user-config-service";
 
 const logger = getBackgroundLogger();
 
@@ -111,6 +113,10 @@ export default defineBackground(() => {
     "https://raw.githubusercontent.com/botnadzor/extension-data/main": {},
   });
 
+  const authService = new AuthService({
+    aliasManagerForDynamicApi,
+  });
+
   const frontendService = new FrontendService({
     aliasManagerForFrontend,
   });
@@ -124,9 +130,7 @@ export default defineBackground(() => {
     jobScheduler,
   });
 
-  const userService = new UserService({
-    aliasManagerForDynamicApi,
-  });
+  const userConfigService = new UserConfigService();
 
   const vkDomainResolver = new VkDomainResolver({
     staticListsService,
@@ -134,26 +138,28 @@ export default defineBackground(() => {
 
   const affiliationService = new AffiliationService({
     staticListsService,
-    userService,
+    userConfigService,
   });
 
   const commentCollectingService = new CommentCollectingService({
+    authService,
     staticListsService,
-    userService,
+    userConfigService,
   });
 
   const inspectorService = new InspectorService({
+    authService,
     notificationService,
-    userService,
     vkDomainResolver,
   });
 
   const regDateService = new RegDateService({
-    userService,
+    authService,
     vkDomainResolver,
   });
 
   registerService(affiliationServiceKey, affiliationService);
+  registerService(authServiceKey, authService);
   registerService(commentCollectingServiceKey, commentCollectingService);
   registerService(frontendServiceKey, frontendService);
   registerService(inspectorServiceKey, inspectorService);
@@ -161,7 +167,7 @@ export default defineBackground(() => {
   registerService(popupServiceKey, popupService);
   registerService(regDateServiceKey, regDateService);
   registerService(staticListsServiceKey, staticListsService);
-  registerService(userServiceKey, userService);
+  registerService(userConfigServiceKey, userConfigService);
 
   void populateStaticLists({
     aliasManagerForDynamicApi,

@@ -1,22 +1,22 @@
 import * as React from "react";
 
-import { Label } from "@/components/ui/label";
+import { fallbackHexColor } from "@/shared/@model/affiliation";
+import { Checkbox } from "@/shared/@ui-primitives/checkbox";
+import { Label } from "@/shared/@ui-primitives/label";
 import {
   useNextStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
-} from "@/hooks/static-lists-service";
-import { useUserConfig } from "@/hooks/user-service";
+  useUserConfig,
+} from "@/shared/pollable-value-hooks";
 import {
   type HexColor,
   hexColorSchema,
   type TagId,
-} from "@/lib/primitive-values";
-import { userService } from "@/lib/proxy-services";
-import { cn } from "@/lib/utils";
-import { fallbackHexColor } from "@/services/affiliation-service";
+} from "@/shared/primitive-values";
+import { userConfigService } from "@/shared/proxy-services";
+import { cn } from "@/shared/tailwindcss-helpers";
 
-import { Checkbox } from "../../../../components/ui/checkbox";
 import { Reset } from "./=config/reset";
 import { CollectingCommentsCheckbox, UpdatableCount } from "./helpers";
 
@@ -160,7 +160,7 @@ export function ConfigTabBody() {
 
       const newOverrideHasKeys = Object.keys(newOverride).length > 0;
 
-      void userService.setConfig({
+      void userConfigService.set({
         ...userConfig,
         tagOverrideLookup: {
           ...tagOverrideLookupWithoutCurrentOverride,
@@ -191,7 +191,7 @@ export function ConfigTabBody() {
 
       const newOverrideHasKeys = Object.keys(newOverride).length > 0;
 
-      void userService.setConfig({
+      void userConfigService.set({
         ...userConfig,
         tagOverrideLookup: {
           ...tagOverrideLookupWithoutCurrentOverride,
@@ -208,7 +208,7 @@ export function ConfigTabBody() {
         <Checkbox
           checked={userConfig.likesDisplay === "table"}
           onClick={() => {
-            void userService.setConfig({
+            void userConfigService.set({
               ...userConfig,
               likesDisplay:
                 userConfig.likesDisplay === "table" ? "default" : "table",

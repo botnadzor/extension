@@ -1,11 +1,11 @@
 import { clamp, round } from "es-toolkit";
 import * as React from "react";
 
-import { useContentId } from "@/hooks/content-id-context";
-import { useStaticListMetadata } from "@/hooks/static-lists-service";
-import type { ConfigValue } from "@/lib/primitive-values";
-import { notificationService } from "@/lib/proxy-services";
+import { useStaticListMetadata } from "@/shared/pollable-value-hooks";
+import type { ConfigValue } from "@/shared/primitive-values";
+import { notificationService } from "@/shared/proxy-services";
 
+import { useContentId } from "../../content-id-context";
 import { Toast } from "./toast";
 
 function extractItemCountFromRawSummary(summary: ConfigValue): number {

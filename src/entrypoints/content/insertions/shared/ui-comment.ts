@@ -1,7 +1,7 @@
-import type { ContentId, VkDomain } from "@/lib/primitive-values";
-import { cn, cnl } from "@/lib/utils";
-import type { AccountAffiliation } from "@/services/affiliation-service";
-import type { InspectorInstancePayload } from "@/services/inspector-service";
+import type { AccountAffiliation } from "@/shared/@model/affiliation";
+import type { InspectorInstancePayload } from "@/shared/@model/inspector";
+import type { ContentId, VkDomain } from "@/shared/primitive-values";
+import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
 import { renderAccountAction } from "./ui-account-action";
 import { renderInlineBadge } from "./ui-badge";
