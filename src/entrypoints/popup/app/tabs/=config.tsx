@@ -1,19 +1,19 @@
 import * as React from "react";
 
-import { fallbackHexColor } from "@/shared/@model/affiliation";
-import { Checkbox } from "@/shared/@ui-primitives/checkbox";
-import { Label } from "@/shared/@ui-primitives/label";
+import { fallbackHexColor } from "@/shared/@model/account-affiliation";
+import {
+  type HexColor,
+  hexColorSchema,
+  type TagId,
+} from "@/shared/@model/primitives";
 import {
   useNextStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
   useUserConfig,
-} from "@/shared/pollable-value-hooks";
-import {
-  type HexColor,
-  hexColorSchema,
-  type TagId,
-} from "@/shared/primitive-values";
+} from "@/shared/@ui-helpers/data-hooks";
+import { Checkbox } from "@/shared/@ui-primitives/checkbox";
+import { Label } from "@/shared/@ui-primitives/label";
 import { userConfigService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 

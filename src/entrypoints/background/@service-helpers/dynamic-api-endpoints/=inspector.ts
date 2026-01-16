@@ -5,7 +5,7 @@ import {
   mapLegacyPermissionsToPermissionLookup,
   permissionLookupSchema,
 } from "@/shared/@model/auth";
-import type { VkDomain, VkId } from "@/shared/primitive-values";
+import type { VkDomain, VkId } from "@/shared/@model/primitives";
 
 import { convertLegacyErrorToDynamicApiError } from "./helpers";
 import type { DynamicApiEndpointDefinition } from "./types";

@@ -1,14 +1,14 @@
 import * as React from "react";
 import semverSatisfies from "semver/functions/satisfies";
 
-import { Button } from "@/shared/@ui-primitives/button";
-import { getAppConfig } from "@/shared/app-config";
-import { createPollableValueHook } from "@/shared/create-pollable-value-hook";
+import type { ContentId } from "@/shared/@model/primitives";
+import { createPollableValueHook } from "@/shared/@pollable/react";
 import {
   useGlobalNotificationsState,
   useStaticListItems,
-} from "@/shared/pollable-value-hooks";
-import type { ContentId } from "@/shared/primitive-values";
+} from "@/shared/@ui-helpers/data-hooks";
+import { Button } from "@/shared/@ui-primitives/button";
+import { getAppConfig } from "@/shared/app-config";
 import { notificationService } from "@/shared/proxy-services";
 
 import { useContentId } from "../content-id-context";

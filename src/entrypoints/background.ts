@@ -1,6 +1,8 @@
 import { defineJobScheduler } from "@webext-core/job-scheduler";
 import { registerService } from "@webext-core/proxy-service";
 
+import { rootConfigSchema } from "@/shared/@model/root-config";
+import { staticListIds } from "@/shared/@model/static-lists";
 import { configureLogging, getBackgroundLogger } from "@/shared/logging";
 import {
   affiliationServiceKey,
@@ -14,8 +16,6 @@ import {
   staticListsServiceKey,
   userConfigServiceKey,
 } from "@/shared/proxy-service-keys";
-import { rootConfigSchema } from "@/shared/root-config";
-import { staticListIds } from "@/shared/static-lists";
 import { browser, defineBackground } from "#imports";
 
 import { AliasManager } from "./background/@service-helpers/alias-manager";

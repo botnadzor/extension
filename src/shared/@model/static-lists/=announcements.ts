@@ -4,7 +4,7 @@ import {
   isoTimeSchema,
   itemCountSchema,
   semverRangeSchema,
-} from "../primitive-values";
+} from "../primitives";
 import type { StaticListDefinition } from "../static-list-helpers";
 
 const announcementListItemSchema = z.readonly(
@@ -19,6 +19,8 @@ const announcementListItemSchema = z.readonly(
     z.string(), // content
   ]),
 );
+/** @public */
+export type AnnouncementListItem = z.infer<typeof announcementListItemSchema>;
 
 const storedAnnouncementListItemSchema = z.readonly(
   z.object({

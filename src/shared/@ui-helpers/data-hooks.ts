@@ -1,5 +1,10 @@
-import { createPollableValueHook } from "./create-pollable-value-hook";
-import type { VkDomain } from "./primitive-values";
+import type { VkDomain } from "../@model/primitives";
+import type {
+  StaticListId,
+  StaticListItem,
+  StaticListSummary,
+} from "../@model/static-lists";
+import { createPollableValueHook } from "../@pollable/react";
 import {
   authService,
   frontendService,
@@ -8,12 +13,7 @@ import {
   popupService,
   staticListsService,
   userConfigService,
-} from "./proxy-services";
-import type {
-  StaticListId,
-  StaticListItem,
-  StaticListSummary,
-} from "./static-lists";
+} from "../proxy-services";
 
 export const useAccountInspection = createPollableValueHook(
   (lastPollVersion, vkDomain: VkDomain) =>

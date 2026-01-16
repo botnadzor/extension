@@ -1,11 +1,11 @@
 import { z } from "zod/mini";
 
-import { getBackgroundLogger } from "@/shared/logging";
 import {
   isoDateSchema,
   isoTimeSchema,
   type PositiveVkId,
-} from "@/shared/primitive-values";
+} from "@/shared/@model/primitives";
+import { getBackgroundLogger } from "@/shared/logging";
 
 import { parseLegacyRegisteredAt } from "./=reg-date/parse-legacy-registered-at";
 import type { DynamicApiEndpointDefinition } from "./types";

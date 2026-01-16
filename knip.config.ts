@@ -5,7 +5,7 @@ const config: KnipConfig = {
     "src/app.config.ts",
     "src/entrypoints/background.ts",
     "src/entrypoints/content.ts",
-    "src/entrypoints/popup/main.tsx",
+    "src/entrypoints/popup/app.tsx",
     "src/shared/@ui-primitives/*.tsx", // shadcn components may contain unused exports
     "wxt.config.ts",
   ],

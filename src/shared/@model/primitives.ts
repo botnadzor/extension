@@ -126,14 +126,6 @@ export const semverRangeSchema = z
 /** @public */
 export type SemverRange = z.infer<typeof semverRangeSchema>;
 
-export const popupTabs = [
-  "config",
-  "access",
-  "announcements",
-  "stats",
-] as const;
-export type PopupTab = (typeof popupTabs)[number];
-
 // These types are similar to Json* types from 'type-fest', but they also support `undefined`
 export type ConfigObject = { [Key in string]: ConfigValue } & {
   [Key in string]?: ConfigValue;

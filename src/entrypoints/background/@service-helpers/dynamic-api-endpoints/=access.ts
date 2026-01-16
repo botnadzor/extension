@@ -5,7 +5,7 @@ import {
   mapLegacyPermissionsToPermissionLookup,
   permissionLookupSchema,
 } from "@/shared/@model/auth";
-import { isoTimeSchema } from "@/shared/primitive-values";
+import { isoTimeSchema } from "@/shared/@model/primitives";
 
 import { convertLegacyErrorToDynamicApiError } from "./helpers";
 import type { DynamicApiEndpointDefinition } from "./types";

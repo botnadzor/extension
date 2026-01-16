@@ -1,8 +1,12 @@
 import { produce } from "immer";
 
+import { type IsoTime, isoTimeSchema } from "@/shared/@model/primitives";
+import {
+  Pollable,
+  type PollResult,
+  type PollVersion,
+} from "@/shared/@pollable/core";
 import { getBackgroundLogger } from "@/shared/logging";
-import { Pollable, type PollResult, type PollVersion } from "@/shared/pollable";
-import { type IsoTime, isoTimeSchema } from "@/shared/primitive-values";
 
 type RemoteSystem = "dynamicApi" | "frontend" | "staticApi";
 

@@ -47,7 +47,7 @@ export function renderTooltip({
 
   const arrow = document.createElement("div");
 
-  const arrowClass = cn(
+  arrow.className = cn(
     `
       bn:absolute
       ${isDown ? "bn:bottom-full" : "bn:top-full"}
@@ -57,8 +57,6 @@ export function renderTooltip({
     `,
     arrowClassName,
   );
-
-  arrow.className = cn(arrowClass, arrowClassName);
   tip.append(arrow);
 
   return tip;

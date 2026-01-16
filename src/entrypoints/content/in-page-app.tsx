@@ -1,9 +1,9 @@
 import * as React from "react";
 import ReactDOM from "react-dom/client";
 
+import type { ContentId } from "@/shared/@model/primitives";
 import { RadixPortalContainer } from "@/shared/@ui-primitives/radix-portal-container";
 import isolatedUiStyling from "@/shared/isolated-ui-styling.css?inline";
-import type { ContentId } from "@/shared/primitive-values";
 import { cn } from "@/shared/tailwindcss-helpers";
 import { type ContentScriptContext, createShadowRootUi } from "#imports";
 

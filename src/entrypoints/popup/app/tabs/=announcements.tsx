@@ -2,6 +2,10 @@ import Markdown from "marked-react";
 import semverSatisfies from "semver/functions/satisfies";
 
 import {
+  useFrontendBaseUrl,
+  useStaticListItems,
+} from "@/shared/@ui-helpers/data-hooks";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -9,10 +13,6 @@ import {
 } from "@/shared/@ui-primitives/accordion";
 import { getAppConfig } from "@/shared/app-config";
 import { formatDate } from "@/shared/formatting";
-import {
-  useFrontendBaseUrl,
-  useStaticListItems,
-} from "@/shared/pollable-value-hooks";
 
 export function AnnouncementsTabBody() {
   const announcements = useStaticListItems("announcements");

@@ -1,11 +1,11 @@
 import type { Logger } from "@logtape/logtape";
 
-import type { AccountAffiliation } from "@/shared/@model/affiliation";
+import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
 import {
   type ContentId,
   type VkDomain,
   vkDomainSchema,
-} from "@/shared/primitive-values";
+} from "@/shared/@model/primitives";
 import { affiliationService } from "@/shared/proxy-services";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
 

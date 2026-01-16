@@ -1,5 +1,9 @@
-import { Pollable, type PollResult, type PollVersion } from "@/shared/pollable";
-import { type PopupTab, popupTabs } from "@/shared/primitive-values";
+import { type PopupTab, popupTabs } from "@/shared/@model/popup";
+import {
+  Pollable,
+  type PollResult,
+  type PollVersion,
+} from "@/shared/@pollable/core";
 import { browser } from "#imports";
 
 export class PopupService {

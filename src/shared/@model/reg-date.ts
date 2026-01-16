@@ -1,4 +1,4 @@
-import type { IsoDate, IsoTime } from "../primitive-values";
+import type { IsoDate, IsoTime } from "./primitives";
 
 export type SucceededRegDateInfo = {
   success: true;

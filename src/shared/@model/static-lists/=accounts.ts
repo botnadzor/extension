@@ -5,7 +5,7 @@ import {
   tagIdSchema,
   vkIdSchema,
   vkNicknameSchema,
-} from "../primitive-values";
+} from "../primitives";
 import {
   receivedTagIdSchema,
   type StaticListDefinition,
@@ -30,6 +30,8 @@ const storedAccountListItemSchema = z.readonly(
     tagIds: z.readonly(z.array(tagIdSchema).check(z.minLength(1))),
   }),
 );
+/** @public */
+export type AccountListItem = z.infer<typeof storedAccountListItemSchema>;
 
 const accountListSummarySchema = z.readonly(
   z.object({

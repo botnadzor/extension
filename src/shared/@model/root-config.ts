@@ -4,7 +4,7 @@ import {
   isoTimeSchema,
   itemCountSchema,
   semverRangeSchema,
-} from "./primitive-values";
+} from "./primitives";
 import { staticListIds } from "./static-lists";
 
 export const remoteSystemAliasLookupSchema = z.readonly(

@@ -31,3 +31,8 @@ export type StaticListItem<ListId extends StaticListId> = z.infer<
 
 export type StaticListSummary<ListId extends StaticListId = StaticListId> =
   z.infer<(typeof staticListDefinitionLookup)[ListId]["summarySchema"]>;
+
+export type { AccountListItem } from "./static-lists/=accounts";
+export type { AnnouncementListItem } from "./static-lists/=announcements";
+export type { TagListItem } from "./static-lists/=tags";
+export type { WallListItem } from "./static-lists/=walls";

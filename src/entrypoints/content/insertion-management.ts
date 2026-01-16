@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 
+import type { ContentId } from "@/shared/@model/primitives";
 import { getContentLogger } from "@/shared/logging";
-import type { ContentId } from "@/shared/primitive-values";
 
 import type { DerivedPageInfo } from "./derived-page-info";
 import type {

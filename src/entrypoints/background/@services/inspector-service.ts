@@ -6,14 +6,18 @@ import {
   inspectorInstanceConfigSchema,
   type InspectorInstancePayload,
 } from "@/shared/@model/inspector";
-import { Pollable, type PollResult, type PollVersion } from "@/shared/pollable";
 import {
   type ContentId,
   contentIdSchema,
   isoTimeSchema,
   type VkDomain,
   type VkId,
-} from "@/shared/primitive-values";
+} from "@/shared/@model/primitives";
+import {
+  Pollable,
+  type PollResult,
+  type PollVersion,
+} from "@/shared/@pollable/core";
 
 import type { responseSchema } from "../@service-helpers/dynamic-api-endpoints/=inspector";
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";

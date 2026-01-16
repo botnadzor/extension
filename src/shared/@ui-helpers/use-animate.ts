@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cn } from "./tailwindcss-helpers";
+import { cn } from "../tailwindcss-helpers";
 
 const bounceClassName = cn("animate-bounce");
 const bounceDuration = 800;

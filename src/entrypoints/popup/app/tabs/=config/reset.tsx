@@ -5,8 +5,8 @@ import {
   defaultUserConfig,
   type UserConfig,
 } from "@/shared/@model/user-config";
+import { useUserConfig } from "@/shared/@ui-helpers/data-hooks";
 import { Button } from "@/shared/@ui-primitives/button";
-import { useUserConfig } from "@/shared/pollable-value-hooks";
 import { userConfigService } from "@/shared/proxy-services";
 
 function CircleProgress({

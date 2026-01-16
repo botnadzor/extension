@@ -2,6 +2,15 @@ import { delay } from "es-toolkit";
 import { SendIcon } from "lucide-react";
 import * as React from "react";
 
+import {
+  type TagId,
+  tagIdSchema,
+  type VkDomain,
+} from "@/shared/@model/primitives";
+import {
+  useAccountInspection,
+  useStaticListItems,
+} from "@/shared/@ui-helpers/data-hooks";
 import { ButtonWithLoadingState } from "@/shared/@ui-primitives/button-with-loading-state";
 import {
   Select,
@@ -11,15 +20,6 @@ import {
   SelectValue,
 } from "@/shared/@ui-primitives/select";
 import { Textarea } from "@/shared/@ui-primitives/textarea";
-import {
-  useAccountInspection,
-  useStaticListItems,
-} from "@/shared/pollable-value-hooks";
-import {
-  type TagId,
-  tagIdSchema,
-  type VkDomain,
-} from "@/shared/primitive-values";
 import { cn } from "@/shared/tailwindcss-helpers";
 
 import { Placeholder } from "./placeholder";

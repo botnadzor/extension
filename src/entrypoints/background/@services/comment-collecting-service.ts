@@ -1,9 +1,9 @@
 import { delay } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 
+import type { VkDomain, VkId } from "@/shared/@model/primitives";
+import type { PollVersion } from "@/shared/@pollable/core";
 import { getBackgroundLogger } from "@/shared/logging";
-import type { PollVersion } from "@/shared/pollable";
-import type { VkDomain, VkId } from "@/shared/primitive-values";
 
 import type { AuthService } from "./auth-service";
 import type { StaticListsService } from "./static-lists-service";

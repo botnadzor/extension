@@ -1,4 +1,3 @@
-import { IntlMessageFormat } from "intl-messageformat";
 import {
   ChevronDownIcon,
   MessageCircleIcon,
@@ -8,6 +7,11 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
+import type { VkDomain } from "@/shared/@model/primitives";
+import {
+  useAccountInspection,
+  useAuthStatus,
+} from "@/shared/@ui-helpers/data-hooks";
 import {
   Accordion,
   AccordionContent,
@@ -15,34 +19,26 @@ import {
   AccordionTrigger,
 } from "@/shared/@ui-primitives/accordion";
 import { ScrollArea, ScrollBar } from "@/shared/@ui-primitives/scroll-area";
-import {
-  useAccountInspection,
-  useAuthStatus,
-} from "@/shared/pollable-value-hooks";
-import type { VkDomain } from "@/shared/primitive-values";
+import { createMessage, formatInt } from "@/shared/formatting";
 import { cn } from "@/shared/tailwindcss-helpers";
 
 import { OptionalMark } from "./optional-mark";
 import { Placeholder } from "./placeholder";
 
-const commentTitleMessage = new IntlMessageFormat(
+const commentTitleMessage = createMessage(
   "{commentCount, plural, one {# комментарий} few {# комментария} other {# комментариев}} в {groupCount, plural, one {# группе} other {# группах}}",
-  "ru",
 );
 
-const reviewTitleMessage = new IntlMessageFormat(
+const reviewTitleMessage = createMessage(
   "{commentCount, plural, one {# отзыв} few {# отзыва} other {# отзывов}} в {groupCount, plural, =1 {группе} other {группах}}",
-  "ru",
 );
 
-const likeTitleMessage = new IntlMessageFormat(
+const likeTitleMessage = createMessage(
   "{likeCount, plural, one {# лайк} few {# лайка} other {# лайков}} {botCount, plural, one {# боту} other {# ботам}}",
-  "ru",
 );
 
-const advancedCommentTitleMessage = new IntlMessageFormat(
-  "Комментарии в {groupCount, plural, one {# дополнительной группе} other {# дополнительных группах}}",
-  "ru",
+const advancedCommentTitleMessage = createMessage(
+  "Комментарии в {groupCount, plural, one {# группе} other {# группах}} (уровень 4)",
 );
 
 type Comment = NonNullable<
@@ -73,7 +69,7 @@ function CommentRow({ comment }: { comment: Comment }) {
       {/* Auto-sized count, right-aligned */}
       <span className="text-right font-medium">
         {comment.count !== undefined && comment.count !== null ? (
-          comment.count.toLocaleString("ru")
+          formatInt(comment.count)
         ) : (
           <>&minus;</>
         )}
@@ -139,7 +135,7 @@ function LikeRow({ like }: { like: LikeToBot }) {
   return (
     <>
       <div className="text-right font-medium tabular-nums">
-        {like.links.length.toLocaleString("ru")}
+        {formatInt(like.links.length)}
       </div>
       <div>
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
@@ -284,100 +280,89 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
     >
       <div className="p-3 pt-2 text-sm">
         <Accordion type="multiple" className="-mt-px tabular-nums">
-          <AccordionItem value="comments" disabled={!hasComments}>
-            <AccordionTrigger>
-              <div className="flex items-center gap-2.5 text-sm">
-                <MessageCircleIcon className="size-4" />
-                <span>
-                  {hasComments
-                    ? commentTitleMessage.format(
-                        calculateCommentSummary(data.comments),
-                      )
-                    : "Комментарии в группах не найдены"}
-                </span>
-              </div>
-            </AccordionTrigger>
-            {hasComments && (
+          {hasComments && (
+            <AccordionItem value="comments">
+              <AccordionTrigger>
+                <div className="flex items-center gap-2.5 text-sm">
+                  <MessageCircleIcon className="size-4" />
+                  <span>
+                    {commentTitleMessage.format(
+                      calculateCommentSummary(data.comments),
+                    )}
+                  </span>
+                </div>
+              </AccordionTrigger>
               <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr_auto] items-center gap-2">
                 {data.comments.map((comment, index) => (
                   // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                   <CommentRow key={index} comment={comment} />
                 ))}
               </AccordionContent>
-            )}
-          </AccordionItem>
+            </AccordionItem>
+          )}
 
-          <AccordionItem value="likes" disabled={!hasLikes}>
-            <AccordionTrigger>
-              <div className="flex items-center gap-2.5 text-sm">
-                <ThumbsUpIcon className="size-4" />
-                <span>
-                  {hasLikes
-                    ? likeTitleMessage.format(calculateLikeSummary(data.likes))
-                    : "Лайки ботам не найдены"}
-                </span>
-              </div>
-            </AccordionTrigger>
-            {hasLikes && (
+          {hasLikes && (
+            <AccordionItem value="likes">
+              <AccordionTrigger>
+                <div className="flex items-center gap-2.5 text-sm">
+                  <ThumbsUpIcon className="size-4" />
+                  <span>
+                    {likeTitleMessage.format(calculateLikeSummary(data.likes))}
+                  </span>
+                </div>
+              </AccordionTrigger>
               <AccordionContent childClassName="pr-2.5 grid gap-2 grid-cols-[auto_1fr]">
                 {data.likes.map((like, index) => (
                   // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                   <LikeRow key={index} like={like} />
                 ))}
               </AccordionContent>
-            )}
-          </AccordionItem>
+            </AccordionItem>
+          )}
 
-          <AccordionItem value="reviews" disabled={!hasReviews}>
-            <AccordionTrigger>
-              <div className="flex items-center gap-2.5 text-sm">
-                <StarIcon className="size-4" />
-                <span>
-                  {hasReviews
-                    ? reviewTitleMessage.format(
-                        calculateCommentSummary(data.reviews),
-                      )
-                    : "Отзывы в группах не найдены"}
-                </span>
-              </div>
-            </AccordionTrigger>
-            {hasReviews && (
+          {hasReviews && (
+            <AccordionItem value="reviews">
+              <AccordionTrigger>
+                <div className="flex items-center gap-2.5 text-sm">
+                  <StarIcon className="size-4" />
+                  <span>
+                    {reviewTitleMessage.format(
+                      calculateCommentSummary(data.reviews),
+                    )}
+                  </span>
+                </div>
+              </AccordionTrigger>
               <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr_auto] items-center gap-2">
                 {data.reviews.map((comment, index) => (
                   // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                   <CommentRow key={index} comment={comment} />
                 ))}
               </AccordionContent>
-            )}
-          </AccordionItem>
+            </AccordionItem>
+          )}
 
-          {authStatus.state === "valid" && authStatus.accessLevel === 4 && (
-            <AccordionItem
-              value="comments-advanced"
-              disabled={!hasCommentsAdvanced}
-            >
-              <AccordionTrigger>
-                <div className="flex items-center gap-2.5 text-sm">
-                  <MessageSquareTextIcon className="size-4" />
-                  <span>
-                    {hasCommentsAdvanced
-                      ? advancedCommentTitleMessage.format({
-                          groupCount: data.commentsAdvanced.length,
-                        })
-                      : "Комментарии в дополнительных группах не найдены"}
-                  </span>
-                </div>
-              </AccordionTrigger>
-              {hasCommentsAdvanced && (
+          {authStatus.state === "valid" &&
+            authStatus.accessLevel === 4 &&
+            hasCommentsAdvanced && (
+              <AccordionItem value="comments-advanced">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-2.5 text-sm">
+                    <MessageSquareTextIcon className="size-4" />
+                    <span>
+                      {advancedCommentTitleMessage.format({
+                        groupCount: data.commentsAdvanced.length,
+                      })}
+                    </span>
+                  </div>
+                </AccordionTrigger>
                 <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr_auto] items-center gap-2">
                   {data.commentsAdvanced.map((comment, index) => (
                     // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                     <CommentRow key={index} comment={comment} />
                   ))}
                 </AccordionContent>
-              )}
-            </AccordionItem>
-          )}
+              </AccordionItem>
+            )}
         </Accordion>
       </div>
     </ScrollArea>

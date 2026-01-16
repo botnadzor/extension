@@ -39,11 +39,11 @@ pnpm zip:firefox # Create zip for Firefox Addons
 
 ```bash
 pnpm lint          # Run all linters (ESLint, Prettier, TypeScript, knip, pnpm dedupe, cspell)
-pnpm lint:eslint   # Run ESLint only
-pnpm lint:tsc      # Run TypeScript type checking only
-pnpm lint:prettier # Check code formatting
-pnpm lint:knip     # Check for unused exports/dependencies
 pnpm lint:cspell   # Check spelling
+pnpm lint:eslint   # Run ESLint only
+pnpm lint:knip     # Check for unused exports/dependencies
+pnpm lint:prettier # Check code formatting
+pnpm lint:tsc      # Run TypeScript type checking only
 
 pnpm fix          # Auto-fix all issues (ESLint, Prettier, knip, pnpm dedupe)
 pnpm fix:eslint   # Auto-fix ESLint issues
@@ -63,7 +63,7 @@ pnpm test:system # System tests (not yet configured)
 pnpm prepare # Initialize Husky git hooks and run WXT prepare
 ```
 
-Note: `wxt prepare` must be run before `lint:tsc` or `lint:eslint` as it generates `.wxt/tsconfig.json` with auto-imports.
+Note: `wxt prepare` is included into relevant scripts and does not need to to be run manually. It generates generates `.wxt/tsconfig.json` with auto-imports.
 
 ## Architecture
 
@@ -114,7 +114,9 @@ The **insertion system** is the primary architecture for DOM modifications. Each
 **Example insertion structure:**
 
 ```typescript
-export default {
+import { defineInsertion } from "../insertion-basics";
+
+export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: ".ProfileHeader",
   init: ({ contentId, element, logger, archivedSnapshot }) => {
@@ -125,7 +127,7 @@ export default {
     // Return cleanup function
     return () => badge.remove();
   },
-} satisfies Insertion;
+});
 ```
 
 **Insertion Management:**
@@ -149,8 +151,8 @@ Background-content script communication uses `@webext-core/proxy-service`:
 
 ```typescript
 import { registerService } from "@webext-core/proxy-service";
-import { affiliationServiceKey } from "@/lib/proxy-service-keys";
-import { AffiliationService } from "@/services/affiliation-service";
+import { affiliationServiceKey } from "@/shared/proxy-service-keys";
+import { AffiliationService } from "@/entrypoints/background/@services/affiliation-service";
 
 const affiliationService = new AffiliationService({ staticListsService });
 registerService(affiliationServiceKey, affiliationService);
@@ -159,15 +161,15 @@ registerService(affiliationServiceKey, affiliationService);
 **Content script** (calls services):
 
 ```typescript
-import { affiliationService } from "@/lib/proxy-services";
+import { affiliationService } from "@/shared/proxy-services";
 const result = await affiliationService.checkAffiliation(vkDomain);
 ```
 
-Services are defined in `src/services/` and use this pattern for clean separation between background logic and content script UI. The proxy service keys are centralized in `src/lib/proxy-service-keys.ts`, and proxy service instances for content scripts are created in `src/lib/proxy-services.ts`.
+Services are defined in `src/entrypoints/background/@services/` and use this pattern for clean separation between background logic and content script UI. The proxy service keys are centralized in `src/shared/proxy-service-keys.ts`, and proxy service instances for content scripts are created in `src/shared/proxy-services.ts`.
 
 ### AliasManager Pattern
 
-The extension uses an **AliasManager** system (in `src/entrypoints/background/alias-manager.ts`) for URL rotation and failover across multiple endpoints:
+The extension uses an **AliasManager** system (in `src/entrypoints/background/@service-helpers/alias-manager.ts`) for URL rotation and failover across multiple endpoints:
 
 - Three separate alias managers: `dynamicApi`, `frontend`, `staticApi`
 - Each manages a set of URL aliases with availability tracking
@@ -182,7 +184,9 @@ The extension uses an **AliasManager** system (in `src/entrypoints/background/al
 src/
 ├── entrypoints/              # WXT entry points
 │   ├── background.ts         # Service worker (registers proxy services)
-│   ├── background/           # Background script modules (AliasManager, etc.)
+│   ├── background/
+│   │   ├── @services/        # Proxy service implementations
+│   │   └── @service-helpers/ # AliasManager, fetch helpers, etc.
 │   ├── content.ts            # Content script orchestrator
 │   ├── popup/                # Extension popup (React)
 │   └── content/
@@ -192,14 +196,17 @@ src/
 │       │   └── mobile-*.ts   # Mobile-specific insertions
 │       ├── in-page-app/      # React notification app (shadow DOM)
 │       ├── insertion-management.ts  # Insertion lifecycle manager
-│       ├── insertion-basics.ts      # Type definitions
+│       ├── insertion-basics.ts      # Type definitions and defineInsertion()
 │       ├── insertions.ts            # Insertion registry
 │       ├── derived-page-info.ts     # Page variant detection
 │       └── hosts.ts                 # Supported VK hosts
-├── services/                 # Proxy services (background)
-├── lib/                      # Utilities (logging, utils, urls)
-├── hooks/                    # React hooks and service hooks
-├── components/ui/            # Shadcn UI components
+├── shared/                   # Shared utilities
+│   ├── @model/               # Type definitions and schemas
+│   ├── proxy-service-keys.ts # Service keys for @webext-core/proxy-service
+│   ├── proxy-services.ts     # Proxy service instances for content scripts
+│   ├── logging.ts            # LogTape configuration
+│   ├── tailwindcss-helpers.ts # cn() and cnl() utilities
+│   └── ...
 └── assets/                   # icon
 ```
 
@@ -239,7 +246,7 @@ src/
 3. **Logging**: Use hierarchical logger categories
 
    ```typescript
-   import { getContentLogger } from "@/lib/logging";
+   import { getContentLogger } from "@/shared/logging";
    const logger = getContentLogger(["insertion-name"]);
    logger.info("Message", { data });
    ```
@@ -257,25 +264,51 @@ src/
 
 7. **Frontend URLs**: Use `frontendService.getBaseUrl()` for API calls (supports rotation via AliasManager)
 
-8. **Class Utilities**: Use `cn()` for combining class names with `tailwind-merge`, or `cnl()` for template literal strings
+8. **Class Utilities**: Use `cn()` for combining class names with `tailwind-merge`, or `cnl()` to get an array for `classList.add()`
 
    ```typescript
-   import { cn, cnl } from "@/lib/utils";
+   import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
-   // For arrays/arguments
+   // cn() returns a merged class string
    const classes = cn("bn:flex", condition && "bn:hidden", className);
 
-   // For template literals
-   const classes = cnl`bn:flex ${condition && "bn:hidden"} ${className}`;
+   // cnl() returns an array of class names for classList.add()
+   element.classList.add(...cnl("bn:flex", condition && "bn:hidden"));
    ```
 
-9. **Type Definitions**: Prefer `type` over `interface` (enforced by ESLint `@typescript-eslint/consistent-type-definitions`)
+9. **Formatting Utilities**: Use helpers from `@/shared/formatting` for locale-aware formatting
 
-10. **Type Assertions**: Avoid `as` assertions (enforced by `@typescript-eslint/consistent-type-assertions: never`)
+   ```typescript
+   import {
+     createMessage,
+     formatInt,
+     formatDate,
+     formatTime,
+   } from "@/shared/formatting";
 
-11. **Error Handling**: Avoid unhandled `throw` statements outside `try/catch` blocks. Prefer returning `{ success: false, ...errorDetails }` for type-safe error handling
+   // ICU message format with Russian pluralization
+   const message = createMessage(
+     "{count, plural, one {# яблоко} few {# яблока} other {# яблок}}",
+   );
+   message.format({ count: 5 }); // "5 яблок"
 
-12. **Zod Imports**: Always import from `zod/mini` instead of `zod` to reduce bundle size
+   // Number formatting with Russian locale
+   formatInt(1234567); // "1 234 567"
+
+   // Date/time formatting
+   formatDate("2000-01-31"); // "31.1.2000"
+   formatTime("2000-01-31T06:42:00Z"); // "31.1.2000 9:42" (in UTC+3)
+   ```
+
+10. **Type Definitions**: Prefer `type` over `interface` (enforced by ESLint `@typescript-eslint/consistent-type-definitions`)
+
+11. **Type Assertions**: Avoid `as` assertions (enforced by `@typescript-eslint/consistent-type-assertions: never`)
+
+12. **Error Handling**: Avoid unhandled `throw` statements outside `try/catch` blocks. Prefer returning `{ success: false, ...errorDetails }` for type-safe error handling
+
+13. **Zod Imports**: Always import from `zod/mini` instead of `zod` to reduce bundle size
+
+14. **Zod Optional Fields**: Use `z.exactOptional()` instead of `z.optional()` to avoid serialization issues with `{ someKey: undefined }` (enforced by ESLint)
 
 ### Configuration Files
 
@@ -308,17 +341,17 @@ Page variants detected: `desktopVkWebsite`, `mobileVkWebsite`, `archivedSnapshot
 
 **Adding a new proxy service:**
 
-1. Create service class in `src/services/[name]-service.ts`
-2. Add service key to `src/lib/proxy-service-keys.ts`
-3. Create proxy in `src/lib/proxy-services.ts` using `createProxyService()`
+1. Create service class in `src/entrypoints/background/@services/[name]-service.ts`
+2. Add service key to `src/shared/proxy-service-keys.ts`
+3. Create proxy in `src/shared/proxy-services.ts` using `createProxyService()`
 4. Register in `background.ts` using `registerService()`
-5. Import and use in content script via the proxy from `@/lib/proxy-services`
+5. Import and use in content script via the proxy from `@/shared/proxy-services`
 
 **Styling components:**
 
 - For content script insertions: Always use `bn:` prefix with Tailwind classes
 - For React components in popup/shadow DOM: Use unprefixed Tailwind classes
-- Use `cn()` or `cnl()` helpers from `@/lib/utils` for conditional classes
+- Use `cn()` or `cnl()` helpers from `@/shared/tailwindcss-helpers` for conditional classes
 - For shadow DOM components, styles are isolated automatically
 
 **Debugging:**

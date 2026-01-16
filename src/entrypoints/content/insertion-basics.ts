@@ -1,6 +1,6 @@
 import type { Logger } from "@logtape/logtape";
 
-import type { ContentId } from "@/shared/primitive-values";
+import type { ContentId } from "@/shared/@model/primitives";
 
 import type { WebsiteVariant } from "./derived-page-info";
 

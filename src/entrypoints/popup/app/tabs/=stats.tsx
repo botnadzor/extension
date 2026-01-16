@@ -3,8 +3,8 @@ import {
   useNextStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
-} from "@/shared/pollable-value-hooks";
-import { generateUrl } from "@/shared/urls";
+} from "@/shared/@ui-helpers/data-hooks";
+import { generateUrl } from "@/shared/url-helpers";
 
 import { UpdatableCount } from "./helpers";
 

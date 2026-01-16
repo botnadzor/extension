@@ -1,6 +1,6 @@
-import type { VkDomain } from "@/shared/primitive-values";
+import type { VkDomain } from "@/shared/@model/primitives";
 import { cn } from "@/shared/tailwindcss-helpers";
-import { generateCardUrl } from "@/shared/urls";
+import { generateCardUrl } from "@/shared/url-helpers";
 
 import { renderActionButton } from "./ui-action-buttons";
 
@@ -73,13 +73,13 @@ export function renderAnswerBotAction({
       },
     ],
     containerClassName: cn("bn:size-6 bn:opacity-100", className),
-    actionClassName: cn(actionClassName),
+    actionClassName,
     iconClassName: cn(
       "bn:size-5 bn:stroke-[1.8] bn:text-[#994168]",
       iconClassName,
     ),
     showTooltip,
-    ...(tooltipClassName ? { tooltipClassName } : {}),
-    ...(tooltipHoverClassName ? { tooltipHoverClassName } : {}),
+    tooltipClassName,
+    tooltipHoverClassName,
   });
 }

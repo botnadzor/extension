@@ -1,6 +1,6 @@
+import { type ContentId, contentIdSchema } from "@/shared/@model/primitives";
 import { getAppConfig } from "@/shared/app-config";
 import { configureLogging, getContentLogger } from "@/shared/logging";
-import { type ContentId, contentIdSchema } from "@/shared/primitive-values";
 import { browser, defineContentScript } from "#imports";
 
 import { derivePageInfo } from "./content/derived-page-info";

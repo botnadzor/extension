@@ -1,21 +1,21 @@
-import type { AccountAffiliation } from "@/shared/@model/affiliation";
+import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import type { FailedRegDateInfo } from "@/shared/@model/reg-date";
-import type { TriggeredNotificationPayload } from "@/shared/@model/triggered-notification";
-import { formatTimeOrDate } from "@/shared/formatting";
+import type { TriggeredNotificationPayload } from "@/shared/@model/notifications";
 import type {
   ContentId,
   IsoDate,
   IsoTime,
   VkDomain,
-} from "@/shared/primitive-values";
+} from "@/shared/@model/primitives";
+import type { FailedRegDateInfo } from "@/shared/@model/reg-date";
+import { formatTimeOrDate } from "@/shared/formatting";
 import {
   inspectorService,
   notificationService,
   regDateService,
 } from "@/shared/proxy-services";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
-import { generateCardUrl, generateUrl } from "@/shared/urls";
+import { generateCardUrl, generateUrl } from "@/shared/url-helpers";
 
 import {
   type IconSpec,
@@ -132,13 +132,13 @@ type RenderAccountActionOptions = {
   accountAffiliation?: AccountAffiliation | undefined;
   frontendBaseUrl: string;
   contentId: ContentId;
-  className?: string;
-  actionClassName?: string;
+  className?: string | undefined;
+  actionClassName?: string | undefined;
   registrationDateAnchor: HTMLElement;
-  iconClassName?: string;
+  iconClassName?: string | undefined;
   showTooltip: boolean | TooltipConfig;
-  tooltipClassName?: string;
-  tooltipHoverClassName?: string;
+  tooltipClassName?: string | undefined;
+  tooltipHoverClassName?: string | undefined;
   inspectorInstancePayload?: InspectorInstancePayload | undefined;
   badgeAnchor: HTMLElement;
 };
@@ -208,7 +208,7 @@ export function renderAccountAction({
   });
 
   const desktopDefaults = {
-    containerClassName: cn(className),
+    containerClassName: className,
     actionClassName: cn(
       "bn:size-4 bn:leading-none bn:text-text-link",
       actionClassName,
@@ -218,7 +218,7 @@ export function renderAccountAction({
   };
 
   const mobileDefaults = {
-    containerClassName: cn(className),
+    containerClassName: className,
     actionClassName: cn("bn:size-4 bn:text-text-link", actionClassName),
     iconClassName: cn("bn:size-4", iconClassName),
     showTooltip,

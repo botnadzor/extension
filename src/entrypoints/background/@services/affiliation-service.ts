@@ -3,16 +3,16 @@ import { delay, random } from "es-toolkit";
 import {
   type AccountAffiliation,
   fallbackHexColor,
-} from "@/shared/@model/affiliation";
-import { getAppConfig } from "@/shared/app-config";
-import { getBackgroundLogger } from "@/shared/logging";
+} from "@/shared/@model/account-affiliation";
 import {
   hexColorSchema,
   tagIdSchema,
   vkIdSchema,
   vkNicknameSchema,
-} from "@/shared/primitive-values";
-import type { TagListItem } from "@/shared/static-lists/=tags";
+} from "@/shared/@model/primitives";
+import type { TagListItem } from "@/shared/@model/static-lists";
+import { getAppConfig } from "@/shared/app-config";
+import { getBackgroundLogger } from "@/shared/logging";
 
 import type { StaticListsService } from "./static-lists-service";
 import type { UserConfigService } from "./user-config-service";

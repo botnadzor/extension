@@ -1,8 +1,8 @@
 import { clamp, round } from "es-toolkit";
 import * as React from "react";
 
-import { useStaticListMetadata } from "@/shared/pollable-value-hooks";
-import type { ConfigValue } from "@/shared/primitive-values";
+import type { ConfigValue } from "@/shared/@model/primitives";
+import { useStaticListMetadata } from "@/shared/@ui-helpers/data-hooks";
 import { notificationService } from "@/shared/proxy-services";
 
 import { useContentId } from "../../content-id-context";

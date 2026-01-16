@@ -1,16 +1,16 @@
 import { delay } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 
+import {
+  isoTimeSchema,
+  isPositiveVkId,
+  type PositiveVkId,
+} from "@/shared/@model/primitives";
 import type {
   FailedRegDateInfo,
   RegDateInfo,
   SucceededRegDateInfo,
 } from "@/shared/@model/reg-date";
-import {
-  isoTimeSchema,
-  isPositiveVkId,
-  type PositiveVkId,
-} from "@/shared/primitive-values";
 
 import type { VkDomainResolver } from "../@service-helpers/vk-domain-resolver";
 import type { AuthService } from "./auth-service";

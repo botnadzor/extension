@@ -2,18 +2,18 @@ import { EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react";
 import * as React from "react";
 
 import type { AuthCheck, AuthStatus } from "@/shared/@model/auth";
-import { Button } from "@/shared/@ui-primitives/button";
-import { ButtonWithLoadingState } from "@/shared/@ui-primitives/button-with-loading-state";
-import { formatTime } from "@/shared/formatting";
+import { isoTimeSchema } from "@/shared/@model/primitives";
 import {
   useAuthCheck,
   useAuthStatus,
   useFrontendBaseUrl,
-} from "@/shared/pollable-value-hooks";
-import { isoTimeSchema } from "@/shared/primitive-values";
+} from "@/shared/@ui-helpers/data-hooks";
+import { useAnimate } from "@/shared/@ui-helpers/use-animate";
+import { Button } from "@/shared/@ui-primitives/button";
+import { ButtonWithLoadingState } from "@/shared/@ui-primitives/button-with-loading-state";
+import { formatInt, formatTime } from "@/shared/formatting";
 import { authService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
-import { useAnimate } from "@/shared/use-animate";
 
 import { CollectingCommentsCheckbox } from "./helpers";
 
@@ -185,7 +185,7 @@ function AuthorizedForm({
           <p>Код работает до {formatTime(authStatus.expiresAt)}</p>
         )}
         <p>Уровень доступа: {authStatus.accessLevel}</p>
-        <p>Очки: {authStatus.pointCount.toLocaleString("ru")}</p>
+        <p>Очки: {formatInt(authStatus.pointCount)}</p>
       </div>
       <div className="pt-6 text-xs">
         Вы можете зарабатывать очки, <br />

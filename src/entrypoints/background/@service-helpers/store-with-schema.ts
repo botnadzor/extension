@@ -1,8 +1,8 @@
 import type { z } from "zod/mini";
 
+import type { ConfigValue } from "@/shared/@model/primitives";
 import { getAppConfig } from "@/shared/app-config";
 import { getStoreLogger } from "@/shared/logging";
-import type { ConfigValue } from "@/shared/primitive-values";
 import { storage, type StorageItemKey } from "#imports";
 
 /**

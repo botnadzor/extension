@@ -4,9 +4,9 @@ import { nanoid } from "nanoid";
 import * as React from "react";
 import type { JsonValue } from "type-fest";
 
-import { getContentLogger, getPopupLogger } from "./logging";
-import type { PollResult, PollVersion } from "./pollable";
-import type { ConfigValue } from "./primitive-values";
+import type { ConfigValue } from "../@model/primitives";
+import { getContentLogger, getPopupLogger } from "../logging";
+import type { PollResult, PollVersion } from "./core";
 
 type UsePollableValue<
   Payload extends ConfigValue = never,

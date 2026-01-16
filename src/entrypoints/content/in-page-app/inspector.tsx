@@ -1,5 +1,11 @@
 import * as React from "react";
 
+import type { ContentId } from "@/shared/@model/primitives";
+import { createPollableValueHook } from "@/shared/@pollable/react";
+import {
+  useAuthStatus,
+  useFrontendBaseUrl,
+} from "@/shared/@ui-helpers/data-hooks";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +14,7 @@ import {
   DialogTitle,
 } from "@/shared/@ui-primitives/dialog";
 import { Logo } from "@/shared/@ui-primitives/logo";
-import { createPollableValueHook } from "@/shared/create-pollable-value-hook";
-import {
-  useAuthStatus,
-  useFrontendBaseUrl,
-} from "@/shared/pollable-value-hooks";
-import type { ContentId } from "@/shared/primitive-values";
+import { formatInt } from "@/shared/formatting";
 import { inspectorService } from "@/shared/proxy-services";
 
 import { useContentId } from "../content-id-context";
@@ -42,7 +43,7 @@ function PointsRemaining() {
       <p>
         Осталось очков:{" "}
         <span className="pl-0.5 tabular-nums">
-          {authStatus.pointCount.toLocaleString("ru")}
+          {formatInt(authStatus.pointCount)}
         </span>
       </p>
     </div>

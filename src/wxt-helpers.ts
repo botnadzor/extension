@@ -2,7 +2,7 @@
 
 import { execSync } from "node:child_process";
 
-import { type Semver, semverSchema } from "./shared/primitive-values";
+import { type Semver, semverSchema } from "./shared/@model/primitives";
 
 const repoDirPath = import.meta.dirname;
 

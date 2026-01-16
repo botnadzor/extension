@@ -5,8 +5,12 @@ import {
   type UserConfig,
   userConfigSchema,
 } from "@/shared/@model/user-config";
+import {
+  Pollable,
+  type PollResult,
+  type PollVersion,
+} from "@/shared/@pollable/core";
 import { getBackgroundLogger } from "@/shared/logging";
-import { Pollable, type PollResult, type PollVersion } from "@/shared/pollable";
 
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
 

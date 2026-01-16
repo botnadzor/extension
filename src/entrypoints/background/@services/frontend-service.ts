@@ -1,4 +1,4 @@
-import type { PollResult, PollVersion } from "@/shared/pollable";
+import type { PollResult, PollVersion } from "@/shared/@pollable/core";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
 

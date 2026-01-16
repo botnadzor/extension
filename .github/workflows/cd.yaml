@@ -1,0 +1,57 @@
+name: CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: CI workflow run ID to download artifacts from
+        required: true
+        type: string
+
+jobs:
+  release:
+    name: Create Release Draft
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - name: Download release zips
+        uses: actions/download-artifact@v6
+        with:
+          name: release-zips
+          path: release-zips
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare release metadata
+        id: prepare
+        run: |
+          TAG="${{ github.ref_name }}"
+          DATE=$(date -u +%Y-%m-%d)
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "title=$TAG ($DATE)" >> $GITHUB_OUTPUT
+
+          ## Check if this is a pre-release (has suffix after vN.N.N)
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-.+$ ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          PRERELEASE_FLAG=""
+          if [[ "${{ steps.prepare.outputs.prerelease }}" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "${{ steps.prepare.outputs.tag }}" \
+            --draft \
+            --title "${{ steps.prepare.outputs.title }}" \
+            $PRERELEASE_FLAG \
+            release-zips/*.zip

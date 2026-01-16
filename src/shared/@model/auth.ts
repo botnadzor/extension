@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import type { IsoTime } from "../primitive-values";
+import type { IsoTime } from "./primitives";
 
 export const permissionLookupSchema = z.readonly(
   z.partialRecord(

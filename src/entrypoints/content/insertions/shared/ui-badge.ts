@@ -1,4 +1,4 @@
-import type { TagListItem } from "@/shared/static-lists/=tags";
+import type { TagListItem } from "@/shared/@model/static-lists";
 import { cn } from "@/shared/tailwindcss-helpers";
 
 export type InlineBadgeHandle = {

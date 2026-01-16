@@ -1,10 +1,10 @@
 import Markdown from "marked-react";
 import * as React from "react";
 
+import type { StaticListItem } from "@/shared/@model/static-lists";
+import { useFrontendBaseUrl } from "@/shared/@ui-helpers/data-hooks";
 import { formatDate } from "@/shared/formatting";
-import { useFrontendBaseUrl } from "@/shared/pollable-value-hooks";
 import { notificationService } from "@/shared/proxy-services";
-import type { StaticListItem } from "@/shared/static-lists";
 
 import { Toast } from "./toast";
 

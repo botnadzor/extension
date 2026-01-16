@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { itemCountSchema, vkIdSchema } from "../primitive-values";
+import { itemCountSchema, vkIdSchema } from "../primitives";
 import type { StaticListDefinition } from "../static-list-helpers";
 
 const receivedWallListItemSchema = z.union([
@@ -14,6 +14,8 @@ const storedWallListItemSchema = z.readonly(
     skip: z.boolean(), // true if the wall should be skipped when a user has opted in to collecting comments
   }),
 );
+/** @public */
+export type WallListItem = z.infer<typeof storedWallListItemSchema>;
 
 const wallListSummarySchema = z.readonly(
   z.object({

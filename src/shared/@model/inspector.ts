@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { isoTimeSchema, vkDomainSchema, vkIdSchema } from "../primitive-values";
+import { isoTimeSchema, vkDomainSchema, vkIdSchema } from "./primitives";
 
 export const inspectorInstancePayloadSchema = z.object({
   wallVkId: vkIdSchema,

@@ -1,11 +1,11 @@
 import { clamp } from "es-toolkit";
 import * as React from "react";
 
+import type { StaticListUpstreamInfo } from "@/shared/@model/static-list-helpers";
+import { staticListDefinitionLookup } from "@/shared/@model/static-lists";
+import { useStaticListMetadata } from "@/shared/@ui-helpers/data-hooks";
 import { Logo } from "@/shared/@ui-primitives/logo";
 import { formatTime } from "@/shared/formatting";
-import { useStaticListMetadata } from "@/shared/pollable-value-hooks";
-import type { StaticListUpstreamInfo } from "@/shared/static-list-helpers";
-import { staticListDefinitionLookup } from "@/shared/static-lists";
 
 function Percentage({
   extractFrom,

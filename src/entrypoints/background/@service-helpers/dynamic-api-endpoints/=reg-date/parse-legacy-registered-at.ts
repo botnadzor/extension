@@ -3,7 +3,7 @@ import {
   isoDateSchema,
   type IsoTime,
   isoTimeSchema,
-} from "@/shared/primitive-values";
+} from "@/shared/@model/primitives";
 
 // cspell:ignore msk
 

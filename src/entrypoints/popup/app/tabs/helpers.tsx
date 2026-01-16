@@ -1,6 +1,11 @@
 import { produce } from "immer";
 import { InfoIcon } from "lucide-react";
 
+import {
+  useAuthStatus,
+  useFrontendBaseUrl,
+  useUserConfig,
+} from "@/shared/@ui-helpers/data-hooks";
 import { Checkbox } from "@/shared/@ui-primitives/checkbox";
 import { Label } from "@/shared/@ui-primitives/label";
 import {
@@ -8,11 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/shared/@ui-primitives/tooltip";
-import {
-  useAuthStatus,
-  useFrontendBaseUrl,
-  useUserConfig,
-} from "@/shared/pollable-value-hooks";
+import { formatInt } from "@/shared/formatting";
 import { userConfigService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 
@@ -71,10 +72,10 @@ export function UpdatableCount({
   }
 
   const formattedCount =
-    typeof count === "number" ? count.toLocaleString("ru") : undefined;
+    typeof count === "number" ? formatInt(count) : undefined;
 
   const formattedNextCount =
-    typeof nextCount === "number" ? nextCount.toLocaleString("ru") : undefined;
+    typeof nextCount === "number" ? formatInt(nextCount) : undefined;
 
   const countToShow = formattedCount ?? formattedNextCount;
 

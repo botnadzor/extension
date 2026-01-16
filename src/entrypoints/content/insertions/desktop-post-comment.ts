@@ -3,7 +3,7 @@ import {
   type VkDomain,
   vkDomainSchema,
   vkIdSchema,
-} from "@/shared/primitive-values";
+} from "@/shared/@model/primitives";
 import {
   affiliationService,
   commentCollectingService,

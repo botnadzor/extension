@@ -1,6 +1,6 @@
-import type { AccountAffiliation } from "@/shared/@model/affiliation";
+import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import type { ContentId, VkDomain } from "@/shared/primitive-values";
+import type { ContentId, VkDomain } from "@/shared/@model/primitives";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
 import { renderAccountAction } from "./ui-account-action";
@@ -82,11 +82,11 @@ export function renderCommentUi({
       contentId,
       badgeAnchor,
       registrationDateAnchor,
-      className: cn(containerClassName),
-      actionClassName: cn(actionsActionClassName),
-      iconClassName: cn(iconClassName),
+      className: containerClassName,
+      actionClassName: actionsActionClassName,
+      iconClassName,
       showTooltip: true,
-      tooltipHoverClassName: cn(actionTooltipHoverClassName),
+      tooltipHoverClassName: actionTooltipHoverClassName,
       inspectorInstancePayload,
     });
 

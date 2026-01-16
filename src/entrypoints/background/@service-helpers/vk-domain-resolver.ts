@@ -1,13 +1,13 @@
 import { delay } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 
-import { getBackgroundLogger } from "@/shared/logging";
 import {
   type VkId,
   vkIdSchema,
   type VkNickname,
   vkNicknameSchema,
-} from "@/shared/primitive-values";
+} from "@/shared/@model/primitives";
+import { getBackgroundLogger } from "@/shared/logging";
 
 import type { StaticListsService } from "../@services/static-lists-service";
 

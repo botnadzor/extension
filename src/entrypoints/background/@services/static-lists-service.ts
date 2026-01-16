@@ -6,18 +6,16 @@ import { nanoid } from "nanoid";
 import type { Writable } from "type-fest";
 import type { z } from "zod/mini";
 
-import { getBackgroundLogger } from "@/shared/logging";
-import { Pollable, type PollResult, type PollVersion } from "@/shared/pollable";
-import { type IsoTime, isoTimeSchema } from "@/shared/primitive-values";
+import { type IsoTime, isoTimeSchema } from "@/shared/@model/primitives";
 import type {
   StaticListDefinition,
   StaticListInstance,
   StaticListUpstreamInfo,
-} from "@/shared/static-list-helpers";
+} from "@/shared/@model/static-list-helpers";
 import {
   type StaticListMetadata,
   staticListMetadataSchema,
-} from "@/shared/static-list-metadata";
+} from "@/shared/@model/static-list-metadata";
 import {
   staticListDefinitionEntries,
   staticListDefinitionLookup,
@@ -25,7 +23,13 @@ import {
   staticListIds,
   type StaticListItem,
   type StaticListSummary,
-} from "@/shared/static-lists";
+} from "@/shared/@model/static-lists";
+import {
+  Pollable,
+  type PollResult,
+  type PollVersion,
+} from "@/shared/@pollable/core";
+import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import { fetchFromRemoteSystem } from "../@service-helpers/fetch-from-remote-system";

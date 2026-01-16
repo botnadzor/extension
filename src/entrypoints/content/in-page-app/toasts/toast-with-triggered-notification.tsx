@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import type { TriggeredNotification } from "@/shared/@model/triggered-notification";
-import { useFrontendBaseUrl } from "@/shared/pollable-value-hooks";
+import type { TriggeredNotification } from "@/shared/@model/notifications";
+import { useFrontendBaseUrl } from "@/shared/@ui-helpers/data-hooks";
 import { notificationService, popupService } from "@/shared/proxy-services";
-import { detectVkBaseUrl } from "@/shared/urls";
+import { detectVkBaseUrl } from "@/shared/url-helpers";
 
 import { useContentId } from "../../content-id-context";
 import { Toast } from "./toast";

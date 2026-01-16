@@ -6,7 +6,7 @@ import {
   optionalTrueSchema,
   tagIdSchema,
   tagTypeSchema,
-} from "../primitive-values";
+} from "../primitives";
 import {
   receivedTagIdSchema,
   type StaticListDefinition,
@@ -37,6 +37,7 @@ const storedTagListItemSchema = z.readonly(
     customPathname: z.exactOptional(z.string()),
   }),
 );
+/** @public */
 export type TagListItem = z.infer<typeof storedTagListItemSchema>;
 
 const tagListSummarySchema = z.readonly(

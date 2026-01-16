@@ -1,5 +1,5 @@
-import { type HexColor, hexColorSchema } from "../primitive-values";
-import type { TagListItem } from "../static-lists/=tags";
+import { type HexColor, hexColorSchema } from "./primitives";
+import type { TagListItem } from "./static-lists";
 
 export type AccountAffiliation = {
   color: HexColor;

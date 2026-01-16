@@ -6,9 +6,13 @@ import type {
   AuthStatus,
   PermissionLookup,
 } from "@/shared/@model/auth";
+import { isoTimeSchema } from "@/shared/@model/primitives";
+import {
+  Pollable,
+  type PollResult,
+  type PollVersion,
+} from "@/shared/@pollable/core";
 import { getBackgroundLogger } from "@/shared/logging";
-import { Pollable, type PollResult, type PollVersion } from "@/shared/pollable";
-import { isoTimeSchema } from "@/shared/primitive-values";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import {

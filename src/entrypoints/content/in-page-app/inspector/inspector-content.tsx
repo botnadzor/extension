@@ -5,14 +5,14 @@ import type {
   InspectorInstanceConfig,
   InspectorTab,
 } from "@/shared/@model/inspector";
+import type { VkDomain } from "@/shared/@model/primitives";
+import { useAccountInspection } from "@/shared/@ui-helpers/data-hooks";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/shared/@ui-primitives/tabs";
-import { useAccountInspection } from "@/shared/pollable-value-hooks";
-import type { VkDomain } from "@/shared/primitive-values";
 import { inspectorService } from "@/shared/proxy-services";
 
 import { useContentId } from "../../content-id-context";

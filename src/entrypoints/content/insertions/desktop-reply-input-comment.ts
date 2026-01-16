@@ -1,4 +1,4 @@
-import { vkDomainSchema } from "@/shared/primitive-values";
+import { vkDomainSchema } from "@/shared/@model/primitives";
 import { affiliationService, frontendService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 

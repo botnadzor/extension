@@ -30,12 +30,12 @@ export type TooltipConfig = {
 
 type Options = {
   icons: readonly IconSpec[];
-  containerClassName?: string;
-  actionClassName?: string;
-  iconClassName?: string;
+  containerClassName?: string | undefined;
+  actionClassName?: string | undefined;
+  iconClassName?: string | undefined;
   showTooltip?: boolean | TooltipConfig;
-  tooltipClassName?: string;
-  tooltipHoverClassName?: string;
+  tooltipClassName?: string | undefined;
+  tooltipHoverClassName?: string | undefined;
 };
 
 function isLinkIcon(spec: IconSpec): spec is LinkIconSpec {
@@ -77,17 +77,16 @@ export function renderActionButton({
       el = button;
     }
 
-    const baseActionClasses = `
-      bn:group/link
-      bn:relative bn:inline-flex bn:cursor-pointer bn:items-center
-      bn:justify-center
-      bn:border-none bn:bg-transparent
-      bn:p-0 bn:leading-none bn:align-middle
-    `;
-
-    const buttonNudgeClasses = isButtonIcon(spec) ? "bn:pb-[1px]" : "";
-
-    el.className = cn(baseActionClasses, buttonNudgeClasses, actionClassName);
+    el.className = cn(
+      `
+        bn:group/link
+        bn:relative bn:inline-flex bn:cursor-pointer bn:items-center
+        bn:justify-center bn:border-none bn:bg-transparent bn:p-0
+        bn:align-middle bn:leading-none
+      `,
+      isButtonIcon(spec) && "bn:pb-px",
+      actionClassName,
+    );
 
     const svg = createIconElement({
       iconId: spec.id,

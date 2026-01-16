@@ -1,4 +1,4 @@
-import type { PopupTab } from "@/shared/primitive-values";
+import type { PopupTab } from "@/shared/@model/popup";
 
 import { AccessTabBody } from "./tabs/=access";
 import { AnnouncementsTabBody } from "./tabs/=announcements";

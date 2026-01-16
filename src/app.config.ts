@@ -1,7 +1,8 @@
 import { z } from "zod/mini";
 
-import { type Semver, semverSchema } from "@/shared/primitive-values";
 import { browser, defineAppConfig } from "#imports";
+
+import { type Semver, semverSchema } from "./shared/@model/primitives";
 
 const manifest = browser.runtime.getManifest();
 

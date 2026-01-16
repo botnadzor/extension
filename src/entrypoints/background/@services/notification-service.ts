@@ -7,14 +7,18 @@ import {
   type TriggeredNotification,
   type TriggeredNotificationPayload,
   triggeredNotificationSchema,
-} from "@/shared/@model/triggered-notification";
-import { Pollable, type PollResult, type PollVersion } from "@/shared/pollable";
+} from "@/shared/@model/notifications";
 import {
   type ContentId,
   contentIdSchema,
   type IsoTime,
   isoTimeSchema,
-} from "@/shared/primitive-values";
+} from "@/shared/@model/primitives";
+import {
+  Pollable,
+  type PollResult,
+  type PollVersion,
+} from "@/shared/@pollable/core";
 
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
 

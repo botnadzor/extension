@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { isoTimeSchema } from "./primitive-values";
+import { isoTimeSchema } from "./primitives";
 import {
   staticListInstanceSchema,
   staticListUpstreamInfoSchema,

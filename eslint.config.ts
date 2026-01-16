@@ -1,5 +1,4 @@
 import eslintJs from "@eslint/js";
-// @ts-expect-error -- https://github.com/eslint-community/eslint-plugin-eslint-comments/issues/214
 import eslintPluginEslintCommentsConfigs from "@eslint-community/eslint-plugin-eslint-comments/configs";
 import eslintReactEslintPlugin from "@eslint-react/eslint-plugin";
 import eslintPluginStylistic from "@stylistic/eslint-plugin";
@@ -57,7 +56,6 @@ export default defineConfig(
     },
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- TODO: investigate type mismatch
   eslintPluginEslintCommentsConfigs.recommended,
   {
     rules: {
