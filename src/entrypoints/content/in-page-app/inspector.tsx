@@ -36,8 +36,7 @@ function PointsRemaining() {
   return (
     <div
       className="
-        absolute top-5 right-13 font-ubuntu text-xs font-normal
-        text-muted-foreground
+        absolute top-5 right-13 text-xs font-normal text-muted-foreground
       "
     >
       <p>
@@ -73,29 +72,32 @@ export function Inspector() {
           sm:max-w-150
         "
       >
-        <DialogHeader className="flex-0">
-          <DialogTitle className="-mb-1 flex items-center gap-2">
-            <a
-              href={frontendBaseUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="-mx-0.5 p-0.5 u-ring"
-            >
-              <Logo />
-            </a>
-            <span className="mt-0.5 size-1.5 rounded-full bg-muted-foreground" />
-            <h1 className="mb-0.5 text-2xl text-muted-foreground">Инспектор</h1>
-            <React.Suspense>
-              <PointsRemaining />
-            </React.Suspense>
-            <div className="sr-only">(анализ аккаунта VK)</div>
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Ботнадзор: подсветка ботов
-          </DialogDescription>
+        {/* Console warning is still triggered because of shadow DOM issue - https://github.com/radix-ui/themes/issues/556 */}
+        <DialogTitle className="sr-only">Ботнадзор: Инспектор</DialogTitle>
+
+        <DialogDescription className="sr-only">
+          анализ аккаунта VK
+        </DialogDescription>
+
+        <DialogHeader className="-mb-1 flex flex-0 flex-row items-center gap-2">
+          <a
+            href={frontendBaseUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="-mx-0.5 rounded-xs p-0.5 u-ring"
+          >
+            <Logo />
+          </a>
+          <span className="mt-0.5 size-1.5 rounded-full bg-muted-foreground" />
+          <span className="mb-0.5 font-play text-2xl text-muted-foreground">
+            Инспектор
+          </span>
+          <React.Suspense>
+            <PointsRemaining />
+          </React.Suspense>
         </DialogHeader>
 
-        {inspectorInstanceConfig?.commenterVkDomain && (
+        {inspectorInstanceConfig && (
           <InspectorContent {...inspectorInstanceConfig} />
         )}
       </DialogContent>

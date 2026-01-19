@@ -43,13 +43,13 @@ const advancedCommentTitleMessage = createMessage(
 
 type Comment = NonNullable<
   (ReturnType<typeof useAccountInspection> & {
-    success: true;
+    errorKind?: never;
   })["data"]["comments"]
 >[number];
 
 type LikeToBot = NonNullable<
   (ReturnType<typeof useAccountInspection> & {
-    success: true;
+    errorKind?: never;
   })["data"]["likes"]
 >[number];
 
@@ -254,10 +254,11 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
   const accountInspection = useAccountInspection(vkDomain);
   const authStatus = useAuthStatus();
 
-  if (!accountInspection.success) {
+  if ("errorKind" in accountInspection) {
     return (
       <Placeholder className="bg-destructive/10 text-destructive">
-        Ошибка загрузки данных: {accountInspection.reason}
+        Ошибка загрузки данных:{" "}
+        {accountInspection.errorMessage || accountInspection.errorKind}
       </Placeholder>
     );
   }

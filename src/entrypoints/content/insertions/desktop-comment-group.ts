@@ -1,73 +1,19 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import {
-  type VkDomain,
-  vkDomainSchema,
-  vkIdSchema,
-} from "@/shared/@model/primitives";
 import { affiliationService, frontendService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 
 import { defineInsertion } from "../insertion-basics";
+import {
+  extractCommentLocationFromHref,
+  extractCommentLocationFromReplyClick,
+  extractVkDomainFromAuthorLink,
+} from "./shared/comment-location";
+import {
+  extractCommenterAvatarUrlBySelector,
+  extractCommenterNameBySelector,
+} from "./shared/comment-meta";
 import type { CommentLocation } from "./shared/types";
 import { renderCommentUi } from "./shared/ui-comment";
-
-function extractVkDomain(authorLink: HTMLAnchorElement): VkDomain | undefined {
-  const href = authorLink.getAttribute("href");
-  if (!href) {
-    return;
-  }
-  const directMatch = /^\/([^/?#]+)/.exec(href);
-  const directDomain = vkDomainSchema.safeParse(directMatch?.[1]).data;
-
-  return directDomain;
-}
-
-function extractLocationFromHref(href: string): CommentLocation | undefined {
-  const wallRegexp =
-    /(?:https?:\/\/vk\.com)?\/(?:wall|video|photo)(-?\d+)_(\d+)/;
-  const wallMatch = wallRegexp.exec(href);
-  if (!wallMatch) {
-    return;
-  }
-
-  const wallVkId = vkIdSchema.parse(Number(wallMatch[1]));
-  const postVkId = vkIdSchema.parse(Number(wallMatch[2]));
-
-  const replyMatch = /[?&]reply=(\d+)/.exec(href);
-  const commentVkId = replyMatch
-    ? vkIdSchema.parse(Number(replyMatch[1]))
-    : postVkId;
-
-  return { wallVkId, postVkId, commentVkId };
-}
-
-function extractLocationFromOnclick(
-  onclick: string,
-): CommentLocation | undefined {
-  const wallLike = /replyClick\('wall(-?\d+)_(\d+)'\s*,\s*(\d+)/.exec(onclick);
-
-  if (!wallLike) {
-    return;
-  }
-
-  const ownerNumber = Number(wallLike[1]);
-  const postNumber = Number(wallLike[2]);
-  const commentNumber = Number(wallLike[3]);
-
-  if (
-    !Number.isFinite(ownerNumber) ||
-    !Number.isFinite(postNumber) ||
-    !Number.isFinite(commentNumber)
-  ) {
-    return;
-  }
-
-  return {
-    wallVkId: vkIdSchema.parse(ownerNumber),
-    postVkId: vkIdSchema.parse(postNumber),
-    commentVkId: vkIdSchema.parse(commentNumber),
-  };
-}
 
 function extractCommentLocation(
   root: HTMLElement,
@@ -78,7 +24,7 @@ function extractCommentLocation(
 
   const href = dateLink?.getAttribute("href");
   if (href) {
-    const fromHref = extractLocationFromHref(href);
+    const fromHref = extractCommentLocationFromHref(href);
     if (fromHref) {
       return fromHref;
     }
@@ -92,7 +38,7 @@ function extractCommentLocation(
 
   const onclick = onclickHost?.getAttribute("onclick");
   if (onclick) {
-    const fromOnclick = extractLocationFromOnclick(onclick);
+    const fromOnclick = extractCommentLocationFromReplyClick(onclick);
     if (fromOnclick) {
       return fromOnclick;
     }
@@ -102,23 +48,16 @@ function extractCommentLocation(
 }
 
 function extractCommenterName(root: HTMLElement): string | undefined {
-  const link = root.querySelector<HTMLElement>(
+  return extractCommenterNameBySelector(
+    root,
     ".group_activity_content_owner_name",
   );
-
-  const raw = link?.textContent;
-  const trimmed = raw?.trim();
-  return trimmed && trimmed.length > 0 ? trimmed : undefined;
 }
 
 function extractCommenterAvatarUrl(root: HTMLElement): string | undefined {
-  const img = root.querySelector<HTMLImageElement>(
+  return extractCommenterAvatarUrlBySelector(root, [
     ".group_activity_content_owner img",
-  );
-
-  const src = img?.getAttribute("src");
-  const trimmed = src?.trim();
-  return trimmed && trimmed.length > 0 ? trimmed : undefined;
+  ]);
 }
 
 export default defineInsertion({
@@ -134,7 +73,7 @@ export default defineInsertion({
       return;
     }
 
-    const vkDomain = extractVkDomain(authorLink);
+    const vkDomain = extractVkDomainFromAuthorLink(authorLink);
     if (!vkDomain) {
       logger.warn(`${authorLink.href} not found`);
       return;
@@ -181,12 +120,15 @@ export default defineInsertion({
     let inspectorInstancePayload: InspectorInstancePayload | undefined;
     if (location) {
       inspectorInstancePayload = {
-        wallVkId: location.wallVkId,
-        postVkId: location.postVkId,
-        commentVkId: location.commentVkId,
-        commenterVkDomain: vkDomain,
-        commenterName,
-        commenterAvatarUrl,
+        accountInfo: {
+          vkDomain,
+          name: commenterName,
+          avatarUrl: commenterAvatarUrl,
+        },
+        trigger: {
+          type: "comment",
+          ...location,
+        },
       };
     }
 
@@ -200,10 +142,8 @@ export default defineInsertion({
       actionAnchor,
       registrationDateAnchor,
       containerClassName: cn(`
-        bn:ml-[8px]
-        bn:box-content bn:translate-y-[3px] bn:opacity-100
+        bn:ml-2 bn:box-content bn:translate-y-[3px] bn:gap-[5px] bn:opacity-100
       `),
-      actionsActionClassName: cn("bn:ml-2"),
       actionTooltipHoverClassName: cn("bn:group-hover/link:opacity-60"),
       inspectorInstancePayload,
     });

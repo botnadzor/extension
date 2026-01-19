@@ -13,14 +13,11 @@ import { generateUrl } from "@/shared/url-helpers";
 import { popupTabDefinitionLookup } from "./tabs";
 
 function Tabs({ activeTab }: { activeTab?: PopupTab | undefined }) {
-  const handleTabClick = React.useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- assertion is valid because data-tab is set via popupTabs.map(...)
-      const tab = event.currentTarget.dataset["tab"] as PopupTab;
-      void popupService.setActiveTab(tab);
-    },
-    [],
-  );
+  function handleTabClick(event: React.MouseEvent<HTMLButtonElement>) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- assertion is valid because data-tab is set via popupTabs.map(...)
+    const tab = event.currentTarget.dataset["tab"] as PopupTab;
+    void popupService.setActiveTab(tab);
+  }
 
   return (
     <nav className="flex flex-col pr-1">

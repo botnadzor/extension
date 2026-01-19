@@ -16,15 +16,16 @@ import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import {
+  type DynamicApiEndpointDefinition,
   type DynamicApiEndpointDefinitionLookup,
   dynamicApiEndpointDefinitionLookup,
+  type DynamicApiResponse,
   type DynamicEndpointKey,
 } from "../@service-helpers/dynamic-api-endpoints";
-import type {
-  DynamicApiEndpointDefinition,
-  ResponseConversionResult,
-} from "../@service-helpers/dynamic-api-endpoints/types";
-import { fetchFromRemoteSystem } from "../@service-helpers/fetch-from-remote-system";
+import {
+  errorMessageByUnavailableRemoteSystemReason,
+  fetchFromRemoteSystem,
+} from "../@service-helpers/fetch-from-remote-system";
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
 
 const logger = getBackgroundLogger(["auth-service"]);
@@ -149,22 +150,22 @@ export class AuthService {
         ...authInput,
       };
     } else {
-      const [fetchResult] = await Promise.all([
-        this.robustlyFetchFromDynamicApi("access", {}),
+      const [response] = await Promise.all([
+        this.fetchFromDynamicApiWithAccessCode("access", {}),
         this.getAuthStatus().state === "valid" ? delay(500) : undefined, // Ensure check duration is visible to the user (if it's too fast, it's hard to notice that something is happening)
       ]);
 
-      if (fetchResult.success) {
+      if ("data" in response) {
         newAuthStatus = {
           state: "valid",
           expiresAt: isoTimeSchema.parse(
             new Date(Date.now() + 1000 * 60 * 60 * 24),
           ),
-          accessLevel: fetchResult.data.accessLevel,
-          pointCount: fetchResult.data.pointCount,
-          permissionLookup: fetchResult.data.permissionLookup,
+          accessLevel: response.data.accessLevel,
+          pointCount: response.data.pointCount,
+          permissionLookup: response.data.permissionLookup,
         };
-      } else if (fetchResult.reason === "unauthorized") {
+      } else if (response.errorKind === "unauthorized") {
         newAuthStatus = {
           state: "invalid",
           ...authInput,
@@ -191,34 +192,24 @@ export class AuthService {
     void this.checkAuth();
   }
 
-  public async robustlyFetchFromDynamicApi<Key extends DynamicEndpointKey>(
+  public async fetchFromDynamicApiWithAccessCode<
+    Key extends DynamicEndpointKey,
+  >(
     key: Key,
     payload: Parameters<
       DynamicApiEndpointDefinitionLookup[Key]["generateUrlSuffix"]
     >[0],
   ): Promise<
-    | {
-        success: true;
-        data: z.infer<
-          DynamicApiEndpointDefinitionLookup[Key]["responseBodySchema"]
-        >;
-      }
-    | {
-        success: false;
-        reason:
-          | "methodQuotaExceeded"
-          | "missingPermission"
-          | "noAliasToUse"
-          | "notFound"
-          | "tooManyRequests"
-          | "unauthorized"
-          | "unexpectedError";
-      }
+    | z.infer<DynamicApiEndpointDefinitionLookup[Key]["responseBodySchema"]>
+    | (DynamicApiResponse & { data?: never })
   > {
     const authInput = await this.getAuthInput();
 
     if (!authInput.accessCode) {
-      return { success: false, reason: "unauthorized" };
+      return {
+        errorKind: "unauthorized",
+        errorMessage: "Необходима авторизация",
+      };
     }
 
     const definition: DynamicApiEndpointDefinition =
@@ -226,17 +217,21 @@ export class AuthService {
 
     const fetchResult = await fetchFromRemoteSystem({
       aliasManager: this.aliasManagerForDynamicApi,
-      urlSuffix: definition.generateLegacyUrlSuffix(payload),
       post: {
         accessCode: authInput.accessCode,
         ...(definition.generatePostBody
           ? definition.generatePostBody(payload)
           : {}),
       },
+      urlSuffix: definition.generateLegacyUrlSuffix(payload),
     });
 
     if (!fetchResult.success) {
-      return fetchResult;
+      return {
+        errorKind: fetchResult.reason,
+        errorMessage:
+          errorMessageByUnavailableRemoteSystemReason[fetchResult.reason],
+      };
     }
 
     try {
@@ -244,26 +239,18 @@ export class AuthService {
         await fetchResult.response.json(),
       );
 
-      const parsedBodyResult =
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- mapping generic definition to a specific one
-        definition.convertLegacyResponseBodyToResponseBody(
-          parsedBody,
-        ) as ResponseConversionResult<
-          DynamicApiEndpointDefinitionLookup[Key]["responseBodySchema"]
-        >;
-
-      if (!parsedBodyResult.success) {
-        return parsedBodyResult;
-      }
-
-      return { success: true, data: parsedBodyResult.data };
+      // @ts-expect-error -- mapping generic definition to a specific one
+      return definition.convertLegacyResponseBodyToResponseBody(parsedBody);
     } catch (error) {
       logger.error(
         "Unexpected error while parsing data from dynamic API: {error}",
         { error },
       );
 
-      return { success: false, reason: "unexpectedError" };
+      return {
+        errorKind: "unexpectedError",
+        errorMessage: "Произошла ошибка, попробуйте позже",
+      };
     }
   }
 

@@ -3,6 +3,11 @@ import type { InspectorInstancePayload } from "@/shared/@model/inspector";
 import type { ContentId, VkDomain } from "@/shared/@model/primitives";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
+import {
+  applyInlineAffiliationVars,
+  clearInlineAffiliationVars,
+  inlineAffiliationStripClasses,
+} from "./affiliation-highlight-style";
 import { renderAccountAction } from "./ui-account-action";
 import { renderInlineBadge } from "./ui-badge";
 
@@ -43,27 +48,16 @@ export function renderCommentUi({
   let extraClassListTokens: string[] = [];
 
   if (accountAffiliation && !accountAffiliation.hidden) {
-    commentContent.style.setProperty(
-      "--bn-inline-affiliation-color",
-      accountAffiliation.color,
-    );
-
-    commentContent.style.setProperty(
-      "--bn-inline-affiliation-border",
-      "color-mix(in srgb, var(--bn-inline-affiliation-color) 80%, rgba(250 0 0))",
-    );
-
-    extraClassListTokens = cnl(
-      `
-        bn:mt-[-2px] bn:mr-[-2px] bn:mb-[-5px] bn:border-l-3
-        bn:border-l-(--bn-inline-affiliation-border)
-        bn:bg-(--bn-inline-affiliation-color) bn:px-[2px] bn:pt-[2px]
-        bn:pb-[5px]
-        bn:dark:border-l-(--bn-inline-affiliation-border)/50
-        bn:dark:bg-(--bn-inline-affiliation-color)/20
-      `,
-    );
-
+    applyInlineAffiliationVars(commentContent, accountAffiliation.color);
+    extraClassListTokens = [
+      ...cnl(
+        `
+          bn:mt-[-2px] bn:mr-[-2px] bn:mb-[-5px] bn:px-[2px] bn:pt-[2px]
+          bn:pb-[5px]
+        `,
+      ),
+      ...inlineAffiliationStripClasses,
+    ];
     commentContent.classList.add(...extraClassListTokens);
 
     badgeUI = renderInlineBadge({
@@ -96,8 +90,7 @@ export function renderCommentUi({
   return {
     destroy() {
       if (accountAffiliation && !accountAffiliation.hidden) {
-        commentContent.style.removeProperty("--bn-inline-affiliation-color");
-        commentContent.style.removeProperty("--bn-inline-affiliation-border");
+        clearInlineAffiliationVars(commentContent);
         commentContent.classList.remove(...extraClassListTokens);
       }
 

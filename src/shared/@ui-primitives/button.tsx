@@ -86,10 +86,12 @@ function Button({
   variant,
   size,
   asChild = false,
+  type,
   ...props
-}: React.ComponentProps<"button"> &
+}: Omit<React.ComponentProps<"button">, "type"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    type?: "submit" | undefined;
   }) {
   const Comp = asChild ? Slot : "button";
 
@@ -97,6 +99,7 @@ function Button({
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      type={type ?? "button"}
       {...props}
     />
   );

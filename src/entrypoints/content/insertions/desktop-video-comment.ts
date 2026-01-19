@@ -1,33 +1,22 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import {
-  type VkDomain,
-  vkDomainSchema,
-  vkIdSchema,
-} from "@/shared/@model/primitives";
+import { vkIdSchema } from "@/shared/@model/primitives";
 import { affiliationService, frontendService } from "@/shared/proxy-services";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
 import { defineInsertion } from "../insertion-basics";
+import {
+  applyInlineAffiliationVars,
+  clearInlineAffiliationVars,
+  inlineAffiliationOverlayBaseClasses,
+} from "./shared/affiliation-highlight-style";
+import { extractVkDomainFromAuthorLink } from "./shared/comment-location";
+import {
+  extractCommenterAvatarUrlBySelector,
+  extractCommenterNameBySelector,
+} from "./shared/comment-meta";
 import type { CommentLocation } from "./shared/types";
 import { renderAccountAction } from "./shared/ui-account-action";
 import { renderInlineBadge } from "./shared/ui-badge";
-
-function extractVkDomain(authorLink: HTMLAnchorElement): VkDomain | undefined {
-  const href = authorLink.getAttribute("href");
-  if (!href) {
-    return;
-  }
-
-  const videoMatch = /^(?:https?:\/\/[^/]+)?\/video\/@?([^/?#]+)/.exec(href);
-  const videoDomain = vkDomainSchema.safeParse(videoMatch?.[1]).data;
-
-  if (videoDomain) {
-    return videoDomain;
-  }
-
-  const directMatch = /^(?:https?:\/\/[^/]+)?\/([^/?#]+)/.exec(href);
-  return vkDomainSchema.safeParse(directMatch?.[1]).data;
-}
 
 function extractVideoCommentLocation(
   root: HTMLElement,
@@ -63,35 +52,6 @@ function extractVideoCommentLocation(
   };
 }
 
-function extractCommenterName(root: HTMLElement): string | undefined {
-  const nameCandidate = root.querySelector<HTMLElement>(
-    '[data-testid="comment-owner"]',
-  );
-
-  const raw = nameCandidate?.textContent;
-  if (!raw) {
-    return;
-  }
-
-  const trimmed = raw.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function extractCommenterAvatarUrl(root: HTMLElement): string | undefined {
-  const img =
-    root.querySelector<HTMLImageElement>(
-      '[data-testid="comment-avatar"] img',
-    ) ?? root.querySelector<HTMLImageElement>("img");
-
-  const src = img?.getAttribute("src");
-  if (!src) {
-    return;
-  }
-
-  const trimmed = src.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
 export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: '[data-testid="comment"]',
@@ -110,7 +70,7 @@ export default defineInsertion({
       return;
     }
 
-    const vkDomain = extractVkDomain(authorLink);
+    const vkDomain = extractVkDomainFromAuthorLink(authorLink);
     if (!vkDomain) {
       logger.warn(`${authorLink.href} not found for video comment`);
       return;
@@ -162,27 +122,12 @@ export default defineInsertion({
     if (accountAffiliation) {
       addedClasses = cnl("bn:relative bn:z-0");
       commentContent.classList.add(...addedClasses);
+      applyInlineAffiliationVars(commentContent, accountAffiliation.color);
 
       overlay = document.createElement("div");
       overlay.classList.add(
-        ...cnl(`
-          bn:pointer-events-none bn:absolute bn:inset-0 bn:-z-10 bn:mt-[-2px]
-          bn:mr-[-2px] bn:mb-[-5px] bn:ml-[6px] bn:border-l-3
-          bn:border-l-(--bn-inline-affiliation-border)
-          bn:bg-(--bn-inline-affiliation-color) bn:px-[2px] bn:pt-[2px]
-          bn:pb-[5px]
-          bn:dark:border-l-(--bn-inline-affiliation-border)/50
-          bn:dark:bg-(--bn-inline-affiliation-color)/20
-        `),
-      );
-      commentContent.style.setProperty(
-        "--bn-inline-affiliation-color",
-        accountAffiliation.color,
-      );
-
-      commentContent.style.setProperty(
-        "--bn-inline-affiliation-border",
-        "color-mix(in srgb, var(--bn-inline-affiliation-color) 80%, rgba(250 0 0))",
+        ...inlineAffiliationOverlayBaseClasses,
+        ...cnl("bn:ml-[6px]"),
       );
 
       commentContent.prepend(overlay);
@@ -201,7 +146,11 @@ export default defineInsertion({
       logger.warn("Unable to determine video comment location for inspector");
     }
 
-    let commenterName = extractCommenterName(element);
+    let commenterName =
+      extractCommenterNameBySelector(
+        element,
+        '[data-testid="comment-owner"]',
+      ) ?? vkDomain;
     if (!commenterName) {
       const raw = badgeAnchor.textContent;
       const fallback = raw && raw.trim().length > 0 ? raw.trim() : vkDomain;
@@ -209,18 +158,23 @@ export default defineInsertion({
     }
 
     const commenterAvatarUrl =
-      extractCommenterAvatarUrl(element) ??
-      "https://vk.com/images/camera_200.png";
+      extractCommenterAvatarUrlBySelector(element, [
+        '[data-testid="comment-avatar"] img',
+        "img",
+      ]) ?? "https://vk.com/images/camera_200.png";
 
     let inspectorInstancePayload: InspectorInstancePayload | undefined;
     if (location) {
       inspectorInstancePayload = {
-        wallVkId: location.wallVkId,
-        postVkId: location.postVkId,
-        commentVkId: location.commentVkId,
-        commenterVkDomain: vkDomain,
-        commenterName,
-        commenterAvatarUrl,
+        accountInfo: {
+          vkDomain,
+          name: commenterName,
+          avatarUrl: commenterAvatarUrl,
+        },
+        trigger: {
+          type: "comment",
+          ...location,
+        },
       };
     }
 
@@ -253,9 +207,7 @@ export default defineInsertion({
       if (addedClasses.length > 0) {
         commentContent.classList.remove(...addedClasses);
       }
-
-      commentContent.style.removeProperty("--bn-inline-affiliation-color");
-      commentContent.style.removeProperty("--bn-inline-affiliation-border");
+      clearInlineAffiliationVars(commentContent);
 
       element.classList.remove(...cnl("bn:group"));
 

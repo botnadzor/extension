@@ -216,22 +216,27 @@ export default defineInsertion({
 
           const numericId = el.dataset["id"] ?? undefined;
           const name = linkElement.textContent;
-          const image =
+          const avatarUrl =
             el.querySelector("img.fans_fan_img")?.getAttribute("src") ?? "";
 
-          // TODO: Implement logic to parse comment IDs
           const inspectorInstancePayload: InspectorInstancePayload = {
-            wallVkId: vkIdSchema.parse(1),
-            postVkId: vkIdSchema.parse(1),
-            commentVkId: vkIdSchema.parse(1),
-            commenterVkDomain: vkDomain,
-            commenterName: name,
-            commenterAvatarUrl: image,
+            accountInfo: {
+              vkDomain,
+              name,
+              avatarUrl,
+            },
+            trigger: {
+              type: "comment",
+              // TODO: Implement logic to parse comment IDs
+              wallVkId: vkIdSchema.parse(1),
+              postVkId: vkIdSchema.parse(1),
+              commentVkId: vkIdSchema.parse(1),
+            },
           };
 
           return {
             link: linkElement.getAttribute("href") ?? "",
-            image,
+            image: avatarUrl,
             name,
             profile: el.dataset["id"] ?? "",
             vkDomain,

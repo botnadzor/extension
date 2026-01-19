@@ -14,6 +14,7 @@ const config: KnipConfig = {
     // https://github.com/webpro-nl/knip/issues/1140
     "@wxt-dev/auto-icons",
     "@wxt-dev/module-react",
+    "@vitejs/plugin-react",
   ],
   paths: {
     "#imports": [".wxt/types/imports-module.d.ts"],

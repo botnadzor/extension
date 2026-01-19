@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 import tailwindcss from "@tailwindcss/vite";
+import reactCompiler from "babel-plugin-react-compiler";
 import { defineConfig } from "wxt";
 
 import { determineExtensionVersioning } from "./src/wxt-helpers";
@@ -58,6 +59,14 @@ export default defineConfig({
   modules: ["@wxt-dev/auto-icons", "@wxt-dev/module-react"],
 
   outDir: "dist",
+
+  react: {
+    vite: {
+      babel: {
+        plugins: [reactCompiler],
+      },
+    },
+  },
 
   srcDir: "src",
 

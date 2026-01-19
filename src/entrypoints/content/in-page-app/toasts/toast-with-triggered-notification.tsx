@@ -17,6 +17,7 @@ const closeAfterInMilliseconds = 60_000;
 const popupCanBeOpened = !import.meta.env.FIREFOX;
 
 export function ToastWithTriggeredNotification({
+  message,
   type,
   triggeredAt,
 }: NonNullable<TriggeredNotification> & {}) {
@@ -28,39 +29,43 @@ export function ToastWithTriggeredNotification({
   const contentId = useContentId();
   const vkBaseUrl = detectVkBaseUrl(window.location.href);
 
-  const handleClose = React.useCallback(() => {
+  function handleClose() {
     void notificationService.trigger(contentId, undefined);
-  }, [contentId]);
+  }
 
-  const handleToggleMenuClick = React.useCallback(
-    (event: React.MouseEvent) => {
-      event.preventDefault();
+  function handleToggleMenuClick(event: React.MouseEvent) {
+    event.preventDefault();
 
-      void popupService.open({ tab: "access" });
+    void popupService.open({ tab: "access" });
 
-      setTimeout(() => {
-        handleClose();
-      }, 1000);
-    },
-    [handleClose],
-  );
+    setTimeout(() => {
+      handleClose();
+    }, 1000);
+  }
 
   React.useEffect(() => {
-    const timeout = setTimeout(handleClose, closeAfterInMilliseconds);
+    const timeout = setTimeout(() => {
+      void notificationService.trigger(contentId, undefined);
+    }, closeAfterInMilliseconds);
     return () => {
       clearTimeout(timeout);
     };
-  }, [handleClose]);
+  }, [contentId]);
 
-  const messageSuffixWithMentionOfMenu = popupCanBeOpened ? (
-    <span className="whitespace-nowrap">
-      <a href="#botnadzor-extension-popup" onClick={handleToggleMenuClick}>
-        в меню расширения
-      </a>
-      .
-    </span>
-  ) : (
-    <span className="whitespace-nowrap">в меню расширения.</span>
+  const messageSuffixWithMentionOfMenu = (
+    <>
+      {" "}
+      {popupCanBeOpened ? (
+        <span className="whitespace-nowrap">
+          <a href="#botnadzor-extension-popup" onClick={handleToggleMenuClick}>
+            в меню расширения
+          </a>
+          .
+        </span>
+      ) : (
+        <span className="whitespace-nowrap">в меню расширения.</span>
+      )}
+    </>
   );
 
   switch (type) {
@@ -100,7 +105,7 @@ export function ToastWithTriggeredNotification({
           >
             инспектору
           </a>
-          , ваш код должен иметь дополнительные уровни. Подробности&nbsp;—{" "}
+          , ваш код должен иметь дополнительные уровни. Подробности&nbsp;—
           {messageSuffixWithMentionOfMenu}
         </>
       );
@@ -118,34 +123,9 @@ export function ToastWithTriggeredNotification({
           >
             инспектор
           </a>
-          , настройте доступ {messageSuffixWithMentionOfMenu}
+          , настройте доступ{messageSuffixWithMentionOfMenu}
         </>
       );
-      break;
-    }
-
-    case "regDateAccountNotFound": {
-      children = (
-        <>
-          Аккаунт не найден. Скорее всего, вы пытаетесь получить дату
-          регистрации сообщества.
-        </>
-      );
-      break;
-    }
-
-    case "regDateNoAliasToUse": {
-      children = (
-        <>
-          Невозможно подключиться к серверу для получения даты регистрации.
-          Попробуйте ещё раз с включённым или отключённым VPN.
-        </>
-      );
-      break;
-    }
-
-    case "regDateNotYetKnown": {
-      children = <>Дата регистрации у этого аккаунта пока неизвестна.</>;
       break;
     }
 
@@ -153,36 +133,26 @@ export function ToastWithTriggeredNotification({
       children = (
         <>
           Чтобы получить дату регистрации, ваш&nbsp;код должен иметь очки или
-          дополнительные уровни. Подробности&nbsp;—{" "}
+          дополнительные уровни. Подробности&nbsp;—
           {messageSuffixWithMentionOfMenu}
         </>
       );
 
-      break;
-    }
-
-    case "regDateTooManyRequests": {
-      children = (
-        <>
-          Слишком много запросов к серверу для получения даты регистрации.
-          Попробуйте ещё раз позже.
-        </>
-      );
       break;
     }
 
     case "regDateUnauthorized": {
       children = (
         <>
-          Чтобы получить дату регистрации, настройте доступ{" "}
+          Чтобы получить дату регистрации, настройте доступ
           {messageSuffixWithMentionOfMenu}
         </>
       );
       break;
     }
 
-    case "regDateUnexpectedError": {
-      children = (
+    case "regDateUnavailable": {
+      children = message ?? (
         <>
           Произошла ошибка при получении даты регистрации. Попробуйте ещё раз
           позже.

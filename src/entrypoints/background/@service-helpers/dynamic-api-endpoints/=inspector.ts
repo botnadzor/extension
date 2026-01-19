@@ -7,8 +7,11 @@ import {
 } from "@/shared/@model/auth";
 import type { VkDomain, VkId } from "@/shared/@model/primitives";
 
-import { convertLegacyErrorToDynamicApiError } from "./helpers";
-import type { DynamicApiEndpointDefinition } from "./types";
+import { normalizeLegacyError } from "./normalize-legacy-error";
+import {
+  dynamicApiBaseErrorKinds,
+  type DynamicApiEndpointDefinition,
+} from "./types";
 
 // cspell:ignore Стрельцова лайкнули altapress ботоферма лайкнутые
 
@@ -69,12 +72,8 @@ const legacyLikeToBotSchema = z.readonly(
   }),
 );
 
-const legacyResponseSchema = z.xor([
-  z.readonly(
-    z.object({
-      error: z.nullable(z.string()),
-    }),
-  ),
+const legacyResponseBodySchema = z.union([
+  z.readonly(z.object({ error: z.string() })),
   z.readonly(
     z.object({
       points_left: z.exactOptional(z.number()),
@@ -91,39 +90,59 @@ const legacyResponseSchema = z.xor([
   ),
 ]);
 
-export const responseSchema = z.readonly(
-  z.object({
-    name: z.exactOptional(z.string()),
-    mark: z.exactOptional(z.string()),
-    markColor: z.exactOptional(z.string()),
-    markTitle: z.exactOptional(z.string()),
-    remainingPermissionLookup: z.exactOptional(permissionLookupSchema),
-    remainingPoints: z.exactOptional(z.number()),
+export const inspectorErrorKindSchema = z.enum([
+  ...dynamicApiBaseErrorKinds,
+  "methodQuotaExceeded",
+  "missingPermission",
+  "notFound",
+]);
 
-    // TODO: cleanup schema shapes
-    comments: z.exactOptional(z.array(legacyCommentSchema)),
-    commentsAdvanced: z.exactOptional(z.array(legacyCommentSchema)),
-    likes: z.exactOptional(z.array(legacyLikeToBotSchema)),
-    reviews: z.exactOptional(z.array(legacyCommentSchema)),
-  }),
-);
+export const responseBodySchema = z.union([
+  z.readonly(
+    z.object({
+      data: z.readonly(
+        z.object({
+          name: z.exactOptional(z.string()),
+          mark: z.exactOptional(z.string()),
+          markColor: z.exactOptional(z.string()),
+          markTitle: z.exactOptional(z.string()),
+          remainingPermissionLookup: z.exactOptional(permissionLookupSchema),
+          remainingPoints: z.exactOptional(z.number()),
+
+          comments: z.exactOptional(z.array(legacyCommentSchema)),
+          commentsAdvanced: z.exactOptional(z.array(legacyCommentSchema)),
+          likes: z.exactOptional(z.array(legacyLikeToBotSchema)),
+          reviews: z.exactOptional(z.array(legacyCommentSchema)),
+        }),
+      ),
+    }),
+  ),
+  z.readonly(
+    z.object({
+      errorKind: inspectorErrorKindSchema,
+      errorMessage: z.string(),
+    }),
+  ),
+]);
 
 export const inspectorEndpointDefinition: DynamicApiEndpointDefinition<
   { vkDomainOrId: VkDomain | VkId },
-  typeof responseSchema,
-  typeof legacyResponseSchema
+  typeof responseBodySchema,
+  typeof legacyResponseBodySchema
 > = {
   generateUrlSuffix: ({ vkDomainOrId }) => `/inspector/${vkDomainOrId}`,
-  responseBodySchema: responseSchema,
+  responseBodySchema,
 
-  legacyResponseBodySchema: legacyResponseSchema,
+  legacyResponseBodySchema,
   convertLegacyResponseBodyToResponseBody: (legacyResponse) => {
     if ("error" in legacyResponse) {
-      return convertLegacyErrorToDynamicApiError(legacyResponse.error);
+      return normalizeLegacyError(
+        legacyResponse.error,
+        inspectorErrorKindSchema,
+      );
     }
 
     return {
-      success: true,
       data: {
         ...(legacyResponse.name ? { name: legacyResponse.name } : {}),
 

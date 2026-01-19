@@ -57,6 +57,7 @@ async function populateStaticLists({
     return;
   }
 
+  // TODO: account for possible parse errors
   const rootConfig = rootConfigSchema.parse(await fetchResult.response.json());
 
   aliasManagerForDynamicApi.configure(

@@ -1,19 +1,19 @@
-import { type VkDomain, vkDomainSchema } from "@/shared/@model/primitives";
+import type { VkDomain } from "@/shared/@model/primitives";
 import { affiliationService, frontendService } from "@/shared/proxy-services";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
 import { defineInsertion } from "../insertion-basics";
+import {
+  applyInlineAffiliationVars,
+  clearInlineAffiliationVars,
+  inlineAffiliationStripClasses,
+} from "./shared/affiliation-highlight-style";
 import { renderAccountAction } from "./shared/ui-account-action";
 import { renderInlineBadge } from "./shared/ui-badge";
+import { extractVkDomainFromHref } from "./shared/vk-identifies";
 
 function extractVkDomain(authorLink: HTMLAnchorElement): VkDomain | undefined {
-  const href = authorLink.getAttribute("href");
-  if (!href) {
-    return;
-  }
-
-  const match = /^\/(.+)$/.exec(href);
-  return vkDomainSchema.safeParse(match?.[1]).data;
+  return extractVkDomainFromHref(authorLink.getAttribute("href"));
 }
 
 export default defineInsertion({
@@ -52,25 +52,12 @@ export default defineInsertion({
     }
 
     if (accountAffiliation) {
-      badgeAnchor.style.setProperty(
-        "--bn-inline-affiliation-color",
-        accountAffiliation.color,
-      );
+      applyInlineAffiliationVars(badgeAnchor, accountAffiliation.color);
 
-      badgeAnchor.style.setProperty(
-        "--bn-inline-affiliation-border",
-        "color-mix(in srgb, var(--bn-inline-affiliation-color) 80%, rgba(250 0 0))",
-      );
-
-      extraClassListTokens = cnl(
-        `
-          bn:box-border bn:flex bn:w-full bn:items-center bn:self-stretch
-          bn:border-l-3 bn:border-l-(--bn-inline-affiliation-border)
-          bn:bg-(--bn-inline-affiliation-color) bn:p-[2px]
-          bn:dark:border-l-(--bn-inline-affiliation-border)/50
-          bn:dark:bg-(--bn-inline-affiliation-color)/20
-        `,
-      );
+      extraClassListTokens = [
+        ...inlineAffiliationStripClasses,
+        ...cnl("bn:px-[2px] bn:pt-[2px]"),
+      ];
 
       badgeAnchor.classList.add(...extraClassListTokens);
 
@@ -96,8 +83,7 @@ export default defineInsertion({
       badgeUI.element.after(actionUI.element);
     }
     return () => {
-      badgeAnchor.style.removeProperty("--bn-inline-affiliation-color");
-      badgeAnchor.style.removeProperty("--bn-inline-affiliation-border");
+      clearInlineAffiliationVars(badgeAnchor);
       badgeUI?.destroy();
       actionUI?.destroy();
     };

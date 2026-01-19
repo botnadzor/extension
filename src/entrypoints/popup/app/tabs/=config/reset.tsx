@@ -53,20 +53,20 @@ export function Reset() {
 
   const configIsDefault = isEqual(userConfig, defaultUserConfig);
 
-  const resetUserConfig = React.useCallback(async () => {
+  async function resetUserConfig() {
     await userConfigService.set(defaultUserConfig);
     setUserConfigToRestore(userConfig);
     await delay(100);
     actionButtonRef.current?.focus();
-  }, [userConfig]);
+  }
 
-  const restoreUserConfig = React.useCallback(async () => {
+  async function restoreUserConfig() {
     setUserConfigToRestore(undefined);
     setTimeRemaining(timeToRestore);
     await userConfigService.set(userConfigToRestore ?? defaultUserConfig);
     await delay(100);
     actionButtonRef.current?.focus();
-  }, [userConfigToRestore]);
+  }
 
   React.useEffect(() => {
     if (!userConfigToRestore) {

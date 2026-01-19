@@ -28,16 +28,28 @@ export function Toasts() {
   const announcements = useStaticListItems("announcements");
   const contentId = useContentId();
   const triggeredNotification = useTriggeredNotification(contentId);
-  const globalNotificationsState = useGlobalNotificationsState();
+
+  const { welcomeMessageReadAt, announcementReadAtByCreatedAt } =
+    useGlobalNotificationsState();
 
   const [dataWarmupToastNeeded, setDataWarmupToastNeeded] =
     React.useState(false);
 
+  const welcomeMessageReadAtRef = React.useRef(welcomeMessageReadAt);
+
   React.useEffect(() => {
-    void checkIfDataWarmupToastNeeded().then((needed) => {
+    void checkIfDataWarmupToastNeeded().then(async (needed) => {
       setDataWarmupToastNeeded(needed);
+
+      if (!needed && !welcomeMessageReadAtRef.current) {
+        await notificationService.trigger(contentId, {
+          type: "dataWarmupComplete",
+        });
+      }
+
+      welcomeMessageReadAtRef.current = welcomeMessageReadAt;
     });
-  }, []);
+  }, [contentId, welcomeMessageReadAt]);
 
   if (triggeredNotification) {
     return (
@@ -47,25 +59,10 @@ export function Toasts() {
     );
   }
 
-  const { welcomeMessageReadAt, announcementReadAtByCreatedAt } =
-    globalNotificationsState;
-
   if (!welcomeMessageReadAt) {
     return (
       <React.Suspense>
-        <ToastWithWelcomeMessage
-          onClose={() => {
-            void checkIfDataWarmupToastNeeded().then((needed) => {
-              if (needed) {
-                setDataWarmupToastNeeded(true);
-              } else {
-                void notificationService.trigger(contentId, {
-                  type: "dataWarmupComplete",
-                });
-              }
-            });
-          }}
-        />
+        <ToastWithWelcomeMessage />
       </React.Suspense>
     );
   }
@@ -108,7 +105,6 @@ export function Toasts() {
 
   return (
     <Button
-      type="button"
       className={`
         fixed right-[10px] bottom-[10px] left-[10px] z-999999
         sm:right-auto

@@ -226,7 +226,10 @@ function SelectSeparator({
   );
 }
 
+const emptySelectValue = "-";
+
 export {
+  emptySelectValue,
   Select,
   SelectContent,
   SelectGroup,

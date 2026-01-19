@@ -129,7 +129,10 @@ function UnauthorizedForm({
           </button>
         </div>
 
-        <ButtonWithLoadingState loading={authCheck.state === "ongoing"}>
+        <ButtonWithLoadingState
+          loading={authCheck.state === "ongoing"}
+          type="submit"
+        >
           Установить
         </ButtonWithLoadingState>
       </form>

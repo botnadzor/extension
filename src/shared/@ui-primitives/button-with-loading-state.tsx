@@ -9,7 +9,7 @@ export function ButtonWithLoadingState({
   disabled,
   loading,
   ...props
-}: React.ComponentProps<"button"> & { loading: boolean }) {
+}: React.ComponentProps<typeof Button> & { loading: boolean }) {
   return (
     <Button
       className={cn(className, "relative")}

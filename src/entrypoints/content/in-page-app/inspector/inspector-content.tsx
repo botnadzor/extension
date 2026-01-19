@@ -1,9 +1,11 @@
 import { LoaderCircleIcon } from "lucide-react";
 import * as React from "react";
 
-import type {
-  InspectorInstanceConfig,
-  InspectorTab,
+import {
+  type InspectorAccountInfo,
+  type InspectorInstanceConfig,
+  type InspectorTab,
+  inspectorTabSchema,
 } from "@/shared/@model/inspector";
 import type { VkDomain } from "@/shared/@model/primitives";
 import { useAccountInspection } from "@/shared/@ui-helpers/data-hooks";
@@ -22,11 +24,27 @@ import { ReportForm } from "./report-form";
 
 function AccountMark({ vkDomain }: { vkDomain: VkDomain }) {
   const accountInspection = useAccountInspection(vkDomain);
-  if (!accountInspection.success) {
+  if ("errorKind" in accountInspection) {
     return;
   }
 
   return <OptionalMark {...accountInspection.data} />;
+}
+
+function InspectedAccount({ avatarUrl, name, vkDomain }: InspectorAccountInfo) {
+  return (
+    <div className="flex flex-none items-center gap-2.25 pb-1">
+      <img
+        src={avatarUrl}
+        alt={name}
+        className="size-5.5 translate-x-0.5 rounded-full bg-border"
+      />
+      <span className="text-lg">{name}</span>
+      <React.Suspense>
+        <AccountMark vkDomain={vkDomain} />
+      </React.Suspense>
+    </div>
+  );
 }
 
 function InspectorTabsContent({
@@ -56,33 +74,21 @@ function TabLoader() {
 }
 
 export function InspectorContent({
-  commenterVkDomain,
-  commenterName,
-  commenterAvatarUrl,
+  accountInfo,
+  trigger,
   tab,
 }: InspectorInstanceConfig) {
   const contentId = useContentId();
   return (
     <>
-      <div className="flex flex-none items-center gap-2.25 pb-1">
-        <img
-          src={commenterAvatarUrl}
-          alt={commenterName}
-          className="size-5.5 translate-x-0.5 rounded-full bg-border"
-        />
-        <span className="text-lg">{commenterName}</span>
-        <React.Suspense>
-          <AccountMark vkDomain={commenterVkDomain} />
-        </React.Suspense>
-      </div>
+      <InspectedAccount {...accountInfo} />
       <Tabs
         activationMode="manual"
         value={tab}
         onValueChange={(value) => {
           void inspectorService.setTab(
             contentId,
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- protected by `satisfies` below
-            value as InspectorTab,
+            inspectorTabSchema.parse(value),
           );
         }}
         className="flex flex-1 flex-col"
@@ -97,23 +103,23 @@ export function InspectorContent({
             value={"activity" satisfies InspectorTab}
             className="px-2.5"
           >
-            обнаруженная активность
+            Обнаруженная активность
           </TabsTrigger>
           <TabsTrigger
             value={"report" satisfies InspectorTab}
             className="px-2.5"
           >
-            отправить на проверку
+            Отправить на проверку
           </TabsTrigger>
         </TabsList>
         <InspectorTabsContent value="activity">
           <React.Suspense fallback={<TabLoader />}>
-            <AccountActivity vkDomain={commenterVkDomain} />
+            <AccountActivity vkDomain={accountInfo.vkDomain} />
           </React.Suspense>
         </InspectorTabsContent>
         <InspectorTabsContent value="report">
           <React.Suspense fallback={<TabLoader />}>
-            <ReportForm vkDomain={commenterVkDomain} />
+            <ReportForm vkDomain={accountInfo.vkDomain} trigger={trigger} />
           </React.Suspense>
         </InspectorTabsContent>
       </Tabs>

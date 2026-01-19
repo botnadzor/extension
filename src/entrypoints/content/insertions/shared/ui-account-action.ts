@@ -1,13 +1,11 @@
 import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import type { TriggeredNotificationPayload } from "@/shared/@model/notifications";
 import type {
   ContentId,
   IsoDate,
   IsoTime,
   VkDomain,
 } from "@/shared/@model/primitives";
-import type { FailedRegDateInfo } from "@/shared/@model/reg-date";
 import { formatTimeOrDate } from "@/shared/formatting";
 import {
   inspectorService,
@@ -24,20 +22,6 @@ import {
 } from "./ui-action-buttons";
 
 type DesignVariant = "desktop" | "mobile";
-
-const regDateNotificationTypeByFailureReason: Record<
-  FailedRegDateInfo["reason"],
-  TriggeredNotificationPayload["type"]
-> = {
-  methodQuotaExceeded: "regDateTooManyRequests",
-  missingPermission: "regDateMissingPermission",
-  noAliasToUse: "regDateNoAliasToUse",
-  notFound: "regDateAccountNotFound",
-  notYetKnown: "regDateNotYetKnown",
-  tooManyRequests: "regDateTooManyRequests",
-  unauthorized: "regDateUnauthorized",
-  unexpectedError: "regDateUnexpectedError",
-};
 
 function disableRegDateButton(event: MouseEvent): void {
   const target = event.target;
@@ -90,20 +74,24 @@ async function handleRegDateResult(
   contentId: ContentId,
   registrationDateAnchor: HTMLElement,
 ): Promise<void> {
-  if (result.success && result.value !== "notYetKnown") {
-    injectRegDateText(event, result.value, registrationDateAnchor);
+  if ("data" in result) {
+    injectRegDateText(event, result.data, registrationDateAnchor);
     hideRegDateButton(event);
+    void notificationService.trigger(contentId, undefined);
+
     return;
   }
 
   enableRegDateButton(event);
 
-  const notificationType = result.success
-    ? "regDateNotYetKnown"
-    : regDateNotificationTypeByFailureReason[result.reason];
-
   await notificationService.trigger(contentId, {
-    type: notificationType,
+    message: result.errorMessage,
+    type:
+      result.errorKind === "unauthorized"
+        ? "regDateUnauthorized"
+        : result.errorKind === "missingPermission"
+          ? "regDateMissingPermission"
+          : "regDateUnavailable",
   });
 }
 

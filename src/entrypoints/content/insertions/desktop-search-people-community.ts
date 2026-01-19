@@ -3,6 +3,11 @@ import { affiliationService, frontendService } from "@/shared/proxy-services";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
 import { defineInsertion } from "../insertion-basics";
+import {
+  applyInlineAffiliationVars,
+  clearInlineAffiliationVars,
+  inlineAffiliationStripClasses,
+} from "./shared/affiliation-highlight-style";
 import { renderAccountAction } from "./shared/ui-account-action";
 import { renderInlineBadge } from "./shared/ui-badge";
 
@@ -81,22 +86,12 @@ export default defineInsertion({
     }
 
     if (accountAffiliation) {
-      element.style.setProperty(
-        "--bn-inline-affiliation-color",
-        accountAffiliation.color,
-      );
+      applyInlineAffiliationVars(element, accountAffiliation.color);
 
-      element.style.setProperty(
-        "--bn-inline-affiliation-border",
-        "color-mix(in srgb, var(--bn-inline-affiliation-color) 80%, rgba(250 0 0))",
-      );
-
-      extraClassListTokens = cnl(`
-        bn:border-l-3 bn:border-l-(--bn-inline-affiliation-border)
-        bn:bg-(--bn-inline-affiliation-color) bn:px-[2px] bn:pt-[2px]
-        bn:dark:border-l-(--bn-inline-affiliation-border)/50
-        bn:dark:bg-(--bn-inline-affiliation-color)/20
-      `);
+      extraClassListTokens = [
+        ...cnl("bn:px-[2px] bn:pt-[2px]"),
+        ...inlineAffiliationStripClasses,
+      ];
 
       element.classList.add(...extraClassListTokens);
 
@@ -138,8 +133,7 @@ export default defineInsertion({
       row?.remove();
 
       if (accountAffiliation) {
-        element.style.removeProperty("--bn-inline-affiliation-color");
-        element.style.removeProperty("--bn-inline-affiliation-border");
+        clearInlineAffiliationVars(element);
         element.classList.remove(...extraClassListTokens);
       }
 

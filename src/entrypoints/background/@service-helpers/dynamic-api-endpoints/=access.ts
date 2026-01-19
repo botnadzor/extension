@@ -7,24 +7,14 @@ import {
 } from "@/shared/@model/auth";
 import { isoTimeSchema } from "@/shared/@model/primitives";
 
-import { convertLegacyErrorToDynamicApiError } from "./helpers";
-import type { DynamicApiEndpointDefinition } from "./types";
+import { normalizeLegacyError } from "./normalize-legacy-error";
+import {
+  dynamicApiBaseErrorKinds,
+  type DynamicApiEndpointDefinition,
+} from "./types";
 
-const responseSchema = z.readonly(
-  z.object({
-    accessLevel: z.number().check(z.nonnegative()),
-    expiresAt: z.exactOptional(isoTimeSchema),
-    pointCount: z.number().check(z.nonnegative()),
-    permissionLookup: permissionLookupSchema,
-  }),
-);
-
-const legacyResponseSchema = z.xor([
-  z.readonly(
-    z.object({
-      error: z.string(),
-    }),
-  ),
+const legacyResponseBodySchema = z.union([
+  z.readonly(z.object({ error: z.string() })),
   z.readonly(
     z.object({
       response: z.object({
@@ -36,24 +26,46 @@ const legacyResponseSchema = z.xor([
   ),
 ]);
 
+export const accessErrorKindSchema = z.enum(dynamicApiBaseErrorKinds);
+
+const responseBodySchema = z.union([
+  z.readonly(
+    z.object({
+      data: z.readonly(
+        z.object({
+          accessLevel: z.number().check(z.nonnegative()),
+          expiresAt: z.exactOptional(isoTimeSchema),
+          pointCount: z.number().check(z.nonnegative()),
+          permissionLookup: permissionLookupSchema,
+        }),
+      ),
+    }),
+  ),
+  z.readonly(
+    z.object({
+      errorKind: accessErrorKindSchema,
+      errorMessage: z.string(),
+    }),
+  ),
+]);
+
 export const accessEndpointDefinition: DynamicApiEndpointDefinition<
   Record<string, never>,
-  typeof responseSchema,
-  typeof legacyResponseSchema
+  typeof responseBodySchema,
+  typeof legacyResponseBodySchema
 > = {
   generateUrlSuffix: () => "/access",
-  responseBodySchema: responseSchema,
+  responseBodySchema,
 
-  legacyResponseBodySchema: legacyResponseSchema,
+  legacyResponseBodySchema,
   convertLegacyResponseBodyToResponseBody: (legacyResponse) => {
     if ("error" in legacyResponse) {
-      return convertLegacyErrorToDynamicApiError(legacyResponse.error);
+      return normalizeLegacyError(legacyResponse.error, accessErrorKindSchema);
     }
 
     const { access, points, permissions } = legacyResponse.response;
 
     return {
-      success: true,
       data: {
         accessLevel: Number(access),
         pointCount: Number(points),

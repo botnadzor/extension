@@ -4,17 +4,14 @@ import { isoTimeSchema } from "./primitives";
 
 export const triggeredNotificationSchema = z.readonly(
   z.object({
+    message: z.exactOptional(z.string()),
     type: z.enum([
       "dataWarmupComplete",
       "inspectorMissingPermission",
       "inspectorUnauthorized",
-      "regDateAccountNotFound",
       "regDateMissingPermission",
-      "regDateNoAliasToUse",
-      "regDateNotYetKnown",
-      "regDateTooManyRequests",
       "regDateUnauthorized",
-      "regDateUnexpectedError",
+      "regDateUnavailable",
       "test",
     ]),
     triggeredAt: isoTimeSchema,

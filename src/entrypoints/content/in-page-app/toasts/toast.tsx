@@ -52,7 +52,6 @@ export function Toast({
         <Button
           className="absolute top-0.5 right-0.5"
           size="iconSm"
-          type="button"
           variant="ghost"
           onClick={onClose}
         >

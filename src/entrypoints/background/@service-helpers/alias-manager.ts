@@ -14,17 +14,20 @@ type AliasConfig = Readonly<{ role?: "primary" }>;
 
 type AliasConfigLookup = Readonly<Record<string, AliasConfig>>;
 
-export type UnavailableAliasReason =
-  | "blockedByFirewall"
-  | "connectionFailed"
-  | "tooManyRequests"
-  | "unexpectedError";
+export const unavailableAliasReasons = [
+  "blockedByFirewall",
+  "connectionFailed",
+  "serverError",
+  "tooManyRequests",
+] as const;
+
+export type UnavailableAliasReason = (typeof unavailableAliasReasons)[number];
 
 const expiryTimeoutLookup: Record<UnavailableAliasReason, number> = {
   blockedByFirewall: 60_000,
   connectionFailed: 10_000,
-  tooManyRequests: 30_000,
-  unexpectedError: 5000,
+  serverError: 5000,
+  tooManyRequests: 10_000,
 };
 
 type AliasStatus = Readonly<
@@ -96,6 +99,17 @@ export class AliasManager {
   }
 
   private doFindAliasToUse(): AliasToUse | undefined {
+    // If at least one alias has complained about too many requests, don't use any of them
+    for (const [baseUrl] of Object.entries(this.aliasConfigLookup)) {
+      const status = this.aliasStatusLookup[baseUrl];
+      if (
+        status?.state === "unavailable" &&
+        status.reason === "tooManyRequests"
+      ) {
+        return undefined;
+      }
+    }
+
     for (const [baseUrl, config] of Object.entries(this.aliasConfigLookup)) {
       const status = this.aliasStatusLookup[baseUrl];
 
@@ -223,5 +237,9 @@ export class AliasManager {
       "All alias statuses were reset for remote system {remoteSystem}",
       { remoteSystem: this.remoteSystem },
     );
+  }
+
+  public getAliasCount(): number {
+    return Object.keys(this.aliasConfigLookup).length;
   }
 }

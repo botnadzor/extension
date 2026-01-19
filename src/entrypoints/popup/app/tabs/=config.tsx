@@ -52,20 +52,17 @@ function ColorOverridePicker({
 
   const colorPickerValue = inputValueResult.data ?? defaultColor;
 
-  const onColorPick = React.useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const rawColor = event.target.value;
-      const colorResult = hexColorSchema.safeParse(rawColor);
+  function onColorPick(event: React.ChangeEvent<HTMLInputElement>) {
+    const rawColor = event.target.value;
+    const colorResult = hexColorSchema.safeParse(rawColor);
 
-      onOverrideChange({
-        tagId,
-        colorOverride: colorResult.success ? colorResult.data : undefined,
-      });
-    },
-    [tagId, onOverrideChange],
-  );
+    onOverrideChange({
+      tagId,
+      colorOverride: colorResult.success ? colorResult.data : undefined,
+    });
+  }
 
-  const submitColorOverride = React.useCallback(() => {
+  function submitColorOverride() {
     const newColorOverride =
       colorPickerValue === defaultColor ? undefined : colorPickerValue;
 
@@ -76,7 +73,7 @@ function ColorOverridePicker({
 
     setInputValue(newColorOverride ?? "");
     setOldOverride(newColorOverride);
-  }, [colorPickerValue, defaultColor, onOverrideChange, tagId]);
+  }
 
   return (
     <div className="flex flex-none shrink items-center gap-1.5">
@@ -141,66 +138,62 @@ export function ConfigTabBody() {
 
   const tagsToShow = tags.filter((tag) => tag.type === "accountCategory");
 
-  const handleTagVisibilityClick = React.useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data-tag-id is set in a loop
-      const tagId = event.currentTarget.dataset["tagId"] as TagId;
+  function handleTagVisibilityClick(
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data-tag-id is set in a loop
+    const tagId = event.currentTarget.dataset["tagId"] as TagId;
 
-      const {
-        [tagId]: override = {},
-        ...tagOverrideLookupWithoutCurrentOverride
-      } = userConfig.tagOverrideLookup;
+    const {
+      [tagId]: override = {},
+      ...tagOverrideLookupWithoutCurrentOverride
+    } = userConfig.tagOverrideLookup;
 
-      const { hidden, ...overrideWithoutHidden } = override;
+    const { hidden, ...overrideWithoutHidden } = override;
 
-      const newOverride = {
-        ...overrideWithoutHidden,
-        ...(hidden ? {} : { hidden: true }),
-      };
+    const newOverride = {
+      ...overrideWithoutHidden,
+      ...(hidden ? {} : { hidden: true }),
+    };
 
-      const newOverrideHasKeys = Object.keys(newOverride).length > 0;
+    const newOverrideHasKeys = Object.keys(newOverride).length > 0;
 
-      void userConfigService.set({
-        ...userConfig,
-        tagOverrideLookup: {
-          ...tagOverrideLookupWithoutCurrentOverride,
-          ...(newOverrideHasKeys ? { [tagId]: newOverride } : {}),
-        },
-      });
-    },
-    [userConfig],
-  );
+    void userConfigService.set({
+      ...userConfig,
+      tagOverrideLookup: {
+        ...tagOverrideLookupWithoutCurrentOverride,
+        ...(newOverrideHasKeys ? { [tagId]: newOverride } : {}),
+      },
+    });
+  }
 
-  const handleColorOverrideChange = React.useCallback(
-    ({
-      tagId,
-      colorOverride,
-    }: {
-      tagId: TagId;
-      colorOverride: HexColor | undefined;
-    }) => {
-      const { [tagId]: override, ...tagOverrideLookupWithoutCurrentOverride } =
-        userConfig.tagOverrideLookup;
+  function handleColorOverrideChange({
+    tagId,
+    colorOverride,
+  }: {
+    tagId: TagId;
+    colorOverride: HexColor | undefined;
+  }) {
+    const { [tagId]: override, ...tagOverrideLookupWithoutCurrentOverride } =
+      userConfig.tagOverrideLookup;
 
-      const { color, ...overrideWithoutColor } = override ?? {};
+    const { color, ...overrideWithoutColor } = override ?? {};
 
-      const newOverride = {
-        ...overrideWithoutColor,
-        ...(colorOverride ? { color: colorOverride } : {}),
-      };
+    const newOverride = {
+      ...overrideWithoutColor,
+      ...(colorOverride ? { color: colorOverride } : {}),
+    };
 
-      const newOverrideHasKeys = Object.keys(newOverride).length > 0;
+    const newOverrideHasKeys = Object.keys(newOverride).length > 0;
 
-      void userConfigService.set({
-        ...userConfig,
-        tagOverrideLookup: {
-          ...tagOverrideLookupWithoutCurrentOverride,
-          ...(newOverrideHasKeys ? { [tagId]: newOverride } : {}),
-        },
-      });
-    },
-    [userConfig],
-  );
+    void userConfigService.set({
+      ...userConfig,
+      tagOverrideLookup: {
+        ...tagOverrideLookupWithoutCurrentOverride,
+        ...(newOverrideHasKeys ? { [tagId]: newOverride } : {}),
+      },
+    });
+  }
 
   return (
     <div className="space-y-5 px-3 pt-3 text-sm">

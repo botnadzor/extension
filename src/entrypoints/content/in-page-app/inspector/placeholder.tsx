@@ -11,8 +11,8 @@ export function Placeholder({
     <div
       className={cn(
         `
-          absolute inset-3 top-2 flex items-center justify-center rounded-md
-          bg-muted text-sm text-muted-foreground
+          absolute inset-3 top-1.75 flex items-center justify-center rounded-md
+          bg-muted px-10 text-center text-sm text-muted-foreground
         `,
         className,
       )}

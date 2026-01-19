@@ -20,6 +20,7 @@ type PayloadKeyRecord<
   Payload extends JsonValue | undefined = never,
   Value extends JsonValue | undefined = undefined,
 > = Readonly<{
+  logger: Logger;
   payload: Payload;
   pollResult: PollResult<Value> | Promise<PollResult<Value>>;
   setters: Array<React.Dispatch<React.SetStateAction<Value>>>;
@@ -73,21 +74,19 @@ export function createPollableValueHook<
     PayloadKeyRecord<Payload, Value>
   >();
 
-  const parentLogger =
-    import.meta.env.ENTRYPOINT === "content"
-      ? getContentLogger()
-      : getPopupLogger();
-
-  async function watchPayload(payloadKey: string, payloadLogger: Logger) {
+  async function watchPayload(payloadKey: string) {
     const watcherId = nanoid(8);
-    payloadLogger.debug("Started watching payload with watcherId {watcherId}", {
-      watcherId,
-    });
 
     let latestRecord = payloadKeyRecordMap.get(payloadKey);
     if (!latestRecord) {
       return;
     }
+
+    const logger = latestRecord.logger;
+
+    logger.debug("Started watching payload with watcherId {watcherId}", {
+      watcherId,
+    });
 
     latestRecord = { ...latestRecord, watcherId };
     payloadKeyRecordMap.set(payloadKey, latestRecord);
@@ -117,7 +116,7 @@ export function createPollableValueHook<
         );
       }
 
-      payloadLogger.debug(
+      logger.debug(
         "Received new value {newValue} (version {lastPollVersion} -> {newPollVersion}), notified {setterCount} component(s) in watcher {watcherId}",
         {
           lastPollVersion,
@@ -129,7 +128,7 @@ export function createPollableValueHook<
       );
     }
 
-    payloadLogger.debug("Stopped watching payload with watcherId {watcherId}", {
+    logger.debug("Stopped watching payload with watcherId {watcherId}", {
       watcherId,
     });
   }
@@ -140,7 +139,16 @@ export function createPollableValueHook<
 
     let recordInRender = payloadKeyRecordMap.get(payloadKey);
     if (!recordInRender) {
+      const parentLogger =
+        import.meta.env.ENTRYPOINT === "content"
+          ? getContentLogger()
+          : getPopupLogger();
+
       recordInRender = {
+        logger: parentLogger.getChild([
+          "pollable-value-hook",
+          `${hookNameForDebugging}(${payloadKey === payloadKeyForUndefined ? "" : payloadKey})`,
+        ]),
         payload,
         pollResult: poll(undefined, payload),
         setters: [],
@@ -155,20 +163,12 @@ export function createPollableValueHook<
 
     const [value, setValue] = React.useState<Value>(initialPollResult.value);
 
-    const payloadLogger = React.useMemo(
-      () =>
-        parentLogger.getChild([
-          "pollable-value-hook",
-          `${hookNameForDebugging}(${payloadKey === payloadKeyForUndefined ? "" : payloadKey})`,
-        ]),
-      [payloadKey],
-    );
-
     React.useEffect(() => {
       const initialRecordInEffect = payloadKeyRecordMap.get(payloadKey);
       if (!initialRecordInEffect) {
         return;
       }
+      const logger = initialRecordInEffect.logger;
 
       const updatedRecordInEffect = initialRecordInEffect.setters.includes(
         setValue,
@@ -180,10 +180,10 @@ export function createPollableValueHook<
           };
 
       payloadKeyRecordMap.set(payloadKey, updatedRecordInEffect);
-      payloadLogger.debug("Added setter to record in effect");
+      logger.debug("Added setter to record in effect");
 
       if (!initialRecordInEffect.watcherId) {
-        void watchPayload(payloadKey, payloadLogger);
+        void watchPayload(payloadKey);
       }
 
       return () => {
@@ -200,7 +200,7 @@ export function createPollableValueHook<
         };
 
         payloadKeyRecordMap.set(payloadKey, updatedRecordInCleanup);
-        payloadLogger.debug("Removed setter from record in cleanup");
+        logger.debug("Removed setter from record in cleanup");
 
         if (updatedRecordInCleanup.setters.length === 0) {
           // eslint-disable-next-line @eslint-react/web-api/no-leaked-timeout -- timeout is created during component cleanup
@@ -211,14 +211,15 @@ export function createPollableValueHook<
 
               if (initialRecordInTimeout === updatedRecordInCleanup) {
                 payloadKeyRecordMap.delete(payloadKey);
-                payloadLogger.debug("Deleted record as stale");
+                logger.debug("Deleted record as stale");
               }
             },
+
             Math.max(staleTimeout, minStaleTimeout),
           );
         }
       };
-    }, [payloadKey, payloadLogger]);
+    }, [payloadKey]);
 
     return value;
   }

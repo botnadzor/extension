@@ -1,5 +1,4 @@
 import Markdown from "marked-react";
-import * as React from "react";
 
 import type { StaticListItem } from "@/shared/@model/static-lists";
 import { useFrontendBaseUrl } from "@/shared/@ui-helpers/data-hooks";
@@ -15,12 +14,13 @@ export function ToastWithAnnouncement({
 }: StaticListItem<"announcements">) {
   const frontendBaseUrl = useFrontendBaseUrl();
 
-  const handleClose = React.useCallback(() => {
-    void notificationService.markAnnouncementAsRead(createdAt);
-  }, [createdAt]);
-
   return (
-    <Toast header={header} onClose={handleClose}>
+    <Toast
+      header={header}
+      onClose={() => {
+        void notificationService.markAnnouncementAsRead(createdAt);
+      }}
+    >
       <div className="-mt-1 pb-1 font-play text-xs text-muted-foreground">
         {formatDate(createdAt)}
       </div>

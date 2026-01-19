@@ -1,25 +1,16 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import {
-  type VkDomain,
-  vkDomainSchema,
-  vkIdSchema,
-} from "@/shared/@model/primitives";
+import { vkIdSchema } from "@/shared/@model/primitives";
 import { affiliationService, frontendService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 
 import { defineInsertion } from "../insertion-basics";
+import { extractVkDomainFromAuthorLink } from "./shared/comment-location";
+import {
+  extractCommenterAvatarUrlBySelector,
+  extractCommenterNameBySelector,
+} from "./shared/comment-meta";
 import type { CommentLocation } from "./shared/types";
 import { renderCommentUi } from "./shared/ui-comment";
-
-function extractVkDomain(authorLink: HTMLAnchorElement): VkDomain | undefined {
-  const href = authorLink.getAttribute("href");
-  if (!href) {
-    return;
-  }
-
-  const match = /^\/(.+)$/.exec(href);
-  return vkDomainSchema.safeParse(match?.[1]).data;
-}
 
 function extractReviewLocation(root: HTMLElement): CommentLocation | undefined {
   const idAttr = root.getAttribute("id");
@@ -49,34 +40,6 @@ function extractReviewLocation(root: HTMLElement): CommentLocation | undefined {
   };
 }
 
-function extractReviewerName(root: HTMLElement): string | undefined {
-  const nameNode = root.querySelector<HTMLElement>(
-    '[data-testid="review-name"]',
-  );
-
-  const raw = nameNode?.textContent;
-  if (!raw) {
-    return;
-  }
-
-  const trimmed = raw.trim();
-  return trimmed.length === 0 ? undefined : trimmed;
-}
-
-function extractReviewerAvatarUrl(root: HTMLElement): string | undefined {
-  const img = root.querySelector<HTMLImageElement>(
-    '[data-testid="review-avatar-link"] img',
-  );
-
-  const src = img?.getAttribute("src");
-  if (!src) {
-    return;
-  }
-
-  const trimmed = src.trim();
-  return trimmed.length === 0 ? undefined : trimmed;
-}
-
 export default defineInsertion({
   appliesTo: "desktopVkWebsite",
   elementSelector: '[data-testid="review"]',
@@ -90,7 +53,7 @@ export default defineInsertion({
       return;
     }
 
-    const vkDomain = extractVkDomain(authorLink);
+    const vkDomain = extractVkDomainFromAuthorLink(authorLink);
     if (!vkDomain) {
       logger.warn(`${authorLink.href} not found`);
       return;
@@ -135,21 +98,27 @@ export default defineInsertion({
       logger.warn("Unable to parse review location for inspector");
     }
 
-    const commenterName = extractReviewerName(element) ?? vkDomain;
+    const commenterName =
+      extractCommenterNameBySelector(element, '[data-testid="review-name"]') ??
+      vkDomain;
 
     const commenterAvatarUrl =
-      extractReviewerAvatarUrl(element) ??
-      "https://vk.com/images/camera_200.png";
+      extractCommenterAvatarUrlBySelector(element, [
+        '[data-testid="review-avatar-link"] img',
+      ]) ?? "https://vk.com/images/camera_200.png";
 
     let inspectorInstancePayload: InspectorInstancePayload | undefined;
     if (location) {
       inspectorInstancePayload = {
-        wallVkId: location.wallVkId,
-        postVkId: location.postVkId,
-        commentVkId: location.commentVkId,
-        commenterVkDomain: vkDomain,
-        commenterName,
-        commenterAvatarUrl,
+        accountInfo: {
+          vkDomain,
+          name: commenterName,
+          avatarUrl: commenterAvatarUrl,
+        },
+        trigger: {
+          type: "comment",
+          ...location,
+        },
       };
     }
 

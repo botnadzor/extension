@@ -34,16 +34,12 @@ export function useAnimate(): {
     };
   }, [animationVariant]);
 
-  const animate = React.useCallback((variant: AnimationVariant) => {
-    setAnimationVariant(variant);
-  }, []);
-
   return {
     animationClassName: animationVariant
       ? animationVariant === "bounce"
         ? bounceClassName
         : shakeClassName
       : "",
-    animate,
+    animate: setAnimationVariant,
   };
 }

@@ -437,6 +437,13 @@ export class StaticListsService {
         return { success: false, error: fetchResult.reason };
       }
 
+      if (fetchResult.response.status !== 200) {
+        return {
+          success: false,
+          error: `Failed to fetch list from static API: ${fetchResult.response.status}`,
+        };
+      }
+
       if (!fetchResult.response.body) {
         return { success: false, error: "No response body from static API" };
       }

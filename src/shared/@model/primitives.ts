@@ -96,9 +96,19 @@ export const vkNicknameSchema = z
 /** @public */
 export type VkNickname = z.infer<typeof vkNicknameSchema>;
 
-export const tagIdSchema = z.string().brand<"TagId">();
+export const tagIdSchema = z
+  .string()
+  .check(z.regex(/^((d|r)?\d+|devOnlyNicknamePresent|devOnlyOdd)$/))
+  .brand<"TagId">();
 /** @public */
 export type TagId = z.infer<typeof tagIdSchema>;
+
+export const tagSuggestionSchema = z.union([
+  tagIdSchema,
+  z.literal("untagged"),
+]);
+/** @public */
+export type TagSuggestion = z.infer<typeof tagSuggestionSchema>;
 
 export const tagTypeSchema = z.enum([
   "accountCategory",

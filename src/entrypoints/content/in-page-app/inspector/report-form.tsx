@@ -1,18 +1,28 @@
-import { delay } from "es-toolkit";
-import { SendIcon } from "lucide-react";
+import { SendHorizontalIcon } from "lucide-react";
 import * as React from "react";
 
 import {
+  type InspectorTrigger,
+  reportTextMaxLength,
+} from "@/shared/@model/inspector";
+import {
   type TagId,
   tagIdSchema,
+  type TagSuggestion,
+  tagSuggestionSchema,
   type VkDomain,
 } from "@/shared/@model/primitives";
 import {
   useAccountInspection,
+  useAuthStatus,
+  useFrontendBaseUrl,
   useStaticListItems,
 } from "@/shared/@ui-helpers/data-hooks";
+import { useAnimate } from "@/shared/@ui-helpers/use-animate";
+import { Button } from "@/shared/@ui-primitives/button";
 import { ButtonWithLoadingState } from "@/shared/@ui-primitives/button-with-loading-state";
 import {
+  emptySelectValue,
   Select,
   SelectContent,
   SelectItem,
@@ -20,115 +30,189 @@ import {
   SelectValue,
 } from "@/shared/@ui-primitives/select";
 import { Textarea } from "@/shared/@ui-primitives/textarea";
+import { inspectorService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 
 import { Placeholder } from "./placeholder";
 
-const minLength = 10;
-const maxLength = 200;
-
-const emptySelectValue = "-";
-
-type ReportResult =
-  | {
-      success: true;
-      remainingPoints?: number;
-      remainingPermissionLookup?: Record<string, true>;
-    }
-  | {
-      success: false;
-      errorMessage: string;
-    };
-
-export function ReportForm({ vkDomain }: { vkDomain: VkDomain }) {
+export function ReportForm({
+  vkDomain,
+  trigger,
+}: {
+  vkDomain: VkDomain;
+  trigger: InspectorTrigger;
+}) {
   const accountInspection = useAccountInspection(vkDomain);
   const tags = useStaticListItems("tags");
+  const authStatus = useAuthStatus();
+  const frontendBaseUrl = useFrontendBaseUrl();
   const filteredTags = tags.filter((tag) => /^\d/.exec(tag.id));
 
   const [tagId, setTagId] = React.useState<TagId | undefined>();
   const [text, setText] = React.useState("");
 
-  const [reportResult, setReportResult] = React.useState<
-    ReportResult | undefined
+  const [reportSubmission, setReportSubmission] = React.useState<
+    Awaited<ReturnType<typeof inspectorService.submitReport>> | undefined
   >();
   const [submitting, setSubmitting] = React.useState(false);
 
   const reportingMistake =
-    accountInspection.success && accountInspection.data.mark;
+    "data" in accountInspection && accountInspection.data.mark;
 
-  async function report() {
+  const selectElementRef = React.useRef<HTMLButtonElement>(null);
+  const textElementRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const { animate: animateSelect, animationClassName: shakeSelectClassName } =
+    useAnimate();
+  const { animate: animateText, animationClassName: shakeTextClassName } =
+    useAnimate();
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+
+    const formTagSuggestion = formData.get("tagSuggestion");
+    const formText = formData.get("text");
+
+    const parsedTagIdSuggestion =
+      typeof formTagSuggestion === "string" &&
+      formTagSuggestion !== emptySelectValue
+        ? tagSuggestionSchema.parse(formTagSuggestion)
+        : undefined;
+
+    if (!parsedTagIdSuggestion) {
+      setReportSubmission({
+        errorKind: "invalidTagSuggestion",
+        errorMessage: "Выберите подходящую маркировку для этого аккаунта",
+      });
+      return;
+    }
+
     setSubmitting(true);
-    await delay(500);
 
-    if (!tagId) {
-      setSubmitting(false);
-      setReportResult({
-        success: false,
-        errorMessage: "Выберите подходящую маркировку",
+    void inspectorService
+      .submitReport({
+        tagSuggestion: parsedTagIdSuggestion,
+        text: typeof formText === "string" ? formText : "",
+        trigger,
+        vkDomain,
+      })
+      .then((submission) => {
+        setSubmitting(false);
+        setReportSubmission(submission);
       });
-      return;
-    }
-
-    if (text.length < minLength) {
-      setSubmitting(false);
-      setReportResult({
-        success: false,
-        errorMessage: `Минимальная длина текста: ${minLength} символов`,
-      });
-      return;
-    }
-
-    if (text.length > maxLength) {
-      setSubmitting(false);
-      setReportResult({
-        success: false,
-        errorMessage: `Максимальная длина текста: ${maxLength} символов`,
-      });
-      return;
-    }
-
-    await delay(500);
-
-    setSubmitting(false);
-    setReportResult({
-      success: true,
-      remainingPoints: 100,
-    });
   }
 
-  if (reportResult?.success === true) {
+  React.useEffect(() => {
+    if (!reportSubmission || !("errorKind" in reportSubmission)) {
+      return;
+    }
+
+    let timeoutId: NodeJS.Timeout | undefined;
+
+    if (reportSubmission.errorKind === "invalidTagSuggestion") {
+      animateSelect("shake");
+      timeoutId = setTimeout(() => {
+        selectElementRef.current?.focus();
+      }, 100);
+    }
+    if (reportSubmission.errorKind === "invalidText") {
+      animateText("shake");
+      timeoutId = setTimeout(() => {
+        textElementRef.current?.focus();
+      }, 100);
+    }
+
+    if (!timeoutId) {
+      return;
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [animateSelect, animateText, reportSubmission]);
+
+  if (reportSubmission && "data" in reportSubmission) {
+    return <Placeholder>{reportSubmission.data.message}</Placeholder>;
+  }
+
+  if (
+    authStatus.state !== "valid" ||
+    !authStatus.permissionLookup.canReportAccount
+  ) {
     return (
       <Placeholder>
-        Ваше сообщение отправлено (пока что в тестовом режиме). Спасибо!
+        <div>
+          Чтобы отправлять аккаунты на проверку, нужно иметь боле высокий
+          уровень доступа или достаточное количество очков.
+          <br />
+          <br />
+          Подробнее —{" "}
+          <a
+            className="u-link"
+            href={`${frontendBaseUrl}/docs/extension#inspector`}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            в справке
+          </a>
+          .
+        </div>
       </Placeholder>
     );
   }
 
   return (
-    <div className="absolute inset-x-3 top-1.75 bottom-2 flex flex-col gap-2">
+    <form
+      className="absolute inset-x-3 top-1.75 bottom-2 flex flex-col gap-2"
+      onSubmit={handleSubmit}
+    >
+      <input type="hidden" value={vkDomain} />
       {reportingMistake ? (
-        <div className="pl-3 text-sm text-muted-foreground">
-          Аккаунт уже маркирован. Если вы считаете это ошибкой, напишите,
-          почему.
-        </div>
+        <>
+          <div className="pt-1.75 pb-2 pl-3 text-sm text-muted-foreground">
+            Аккаунт уже маркирован. Если вы считаете это ошибкой, напишите,
+            почему.
+          </div>
+          <input
+            type="hidden"
+            name="tagSuggestion"
+            value={"untagged" satisfies TagSuggestion}
+          />
+        </>
       ) : (
         <Select
+          name="tagSuggestion"
           disabled={submitting}
           onValueChange={(value) => {
-            setReportResult(undefined);
+            setReportSubmission(undefined);
             setTagId(
               value === emptySelectValue ? undefined : tagIdSchema.parse(value),
             );
           }}
+          value={tagId ?? emptySelectValue}
         >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Выберите подходящую маркировку для этого аккаунта..." />
+          <SelectTrigger
+            className={cn("w-full", shakeSelectClassName)}
+            ref={selectElementRef}
+          >
+            <SelectValue>
+              {tagId ? undefined : (
+                <span>
+                  Выберите подходящую маркировку для этого аккаунта...
+                </span>
+              )}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value={emptySelectValue}>
+              Маркировка не выбрана
+            </SelectItem>
             {filteredTags.map((tag) => (
               <SelectItem
                 key={tag.id}
-                value={tag.name}
+                value={tag.id}
                 className="flex items-center gap-2"
               >
                 <span
@@ -143,41 +227,54 @@ export function ReportForm({ vkDomain }: { vkDomain: VkDomain }) {
       )}
       <Textarea
         disabled={submitting}
-        className="w-full flex-1 resize-none"
+        className={cn("w-full flex-1 resize-none", shakeTextClassName)}
+        name="text"
         value={text}
         onChange={(e) => {
+          setReportSubmission(undefined);
           setText(e.target.value);
         }}
+        ref={textElementRef}
       />
-      <input type="hidden" value={vkDomain} />
-      <div className="flex h-10 items-center justify-between">
-        {reportResult?.success === false ? (
-          <div className="pl-3 text-sm text-destructive">
-            {reportResult.errorMessage}
-          </div>
+
+      <div className="flex h-10 items-center justify-between gap-2">
+        {reportSubmission ? (
+          <>
+            <div className="flex-1 truncate pl-3 text-sm text-destructive">
+              {reportSubmission.errorMessage}
+            </div>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setReportSubmission(undefined);
+              }}
+            >
+              Понятно
+            </Button>
+          </>
         ) : (
-          <div
-            className={cn(
-              "pl-3 text-sm text-muted-foreground",
-              text.length > maxLength && "text-warning",
-            )}
-          >
-            {text.length} / {maxLength} символов
-          </div>
+          <>
+            <div
+              className={cn(
+                "pl-3 text-sm text-muted-foreground",
+                text.length > reportTextMaxLength && "text-warning",
+              )}
+            >
+              {text.length} / {reportTextMaxLength} символов
+            </div>
+            <ButtonWithLoadingState
+              disabled={Boolean(reportSubmission)}
+              loading={submitting}
+              type="submit"
+            >
+              {reportingMistake
+                ? "Сообщить о неправильной маркировке"
+                : "Отправить"}
+              <SendHorizontalIcon className="size-4" />
+            </ButtonWithLoadingState>
+          </>
         )}
-        <ButtonWithLoadingState
-          disabled={Boolean(reportResult)}
-          loading={submitting}
-          onClick={() => {
-            void report();
-          }}
-        >
-          <SendIcon />{" "}
-          {reportingMistake
-            ? "Сообщить о неправильной маркировке"
-            : "Отправить"}
-        </ButtonWithLoadingState>
       </div>
-    </div>
+    </form>
   );
 }

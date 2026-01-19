@@ -1,24 +1,20 @@
 import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
-import {
-  type ContentId,
-  type VkDomain,
-  vkDomainSchema,
-} from "@/shared/@model/primitives";
+import type { ContentId, VkDomain } from "@/shared/@model/primitives";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
+import {
+  applyPagePostAffiliationVars,
+  clearPagePostAffiliationVars,
+  pagePostHeaderHighlightClasses,
+} from "./affiliation-highlight-style";
 import { renderAccountAction } from "./ui-account-action";
 import { renderInlineBadge } from "./ui-badge";
+import { extractVkDomainFromHref } from "./vk-identifies";
 
 export function extractVkDomain(
   authorLink: HTMLAnchorElement,
 ): VkDomain | undefined {
-  const href = authorLink.getAttribute("href");
-  if (!href) {
-    return;
-  }
-
-  const match = /^\/(.+)$/.exec(href);
-  return vkDomainSchema.safeParse(match?.[1]).data;
+  return extractVkDomainFromHref(authorLink.getAttribute("href"));
 }
 
 export type RenderPostUiOptions = {
@@ -71,20 +67,9 @@ export function renderPostUI({
   let row: HTMLDivElement | undefined;
 
   if (accountAffiliation) {
-    const base = accountAffiliation.color;
-    headerContainer.style.setProperty("--bn-page-post-affiliation-color", base);
-    headerContainer.style.setProperty(
-      "--bn-page-post-affiliation-border",
-      "color-mix(in srgb, var(--bn-page-post-affiliation-color) 80%, rgba(250 0 0))",
-    );
+    applyPagePostAffiliationVars(headerContainer, accountAffiliation.color);
 
-    extraClassListTokens = cnl(`
-      bn:rounded-t-[10px] bn:border-l-3
-      bn:border-l-(--bn-page-post-affiliation-border)
-      bn:bg-(--bn-page-post-affiliation-color) bn:pt-[10px]! bn:pb-[5px]!
-      bn:dark:border-l-(--bn-page-post-affiliation-border)/50
-      bn:dark:bg-(--bn-page-post-affiliation-color)/20
-    `);
+    extraClassListTokens = [...pagePostHeaderHighlightClasses];
     headerContainer.classList.add(...extraClassListTokens);
 
     badgeUI = renderInlineBadge({
@@ -118,8 +103,7 @@ export function renderPostUI({
   return {
     destroy() {
       headerContainer.classList.remove(...cnl("bn:group"));
-      headerContainer.style.removeProperty("--bn-page-post-affiliation-color");
-      headerContainer.style.removeProperty("--bn-page-post-affiliation-border");
+      clearPagePostAffiliationVars(headerContainer);
       headerContainer.classList.remove(...extraClassListTokens);
 
       const wrapParent = badgeAnchor.parentElement;
