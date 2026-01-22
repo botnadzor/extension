@@ -1,4 +1,7 @@
-import { type ContentScriptHost, contentScriptHosts } from "./hosts";
+import {
+  type ContentScriptHost,
+  contentScriptHosts,
+} from "./hosts-and-matches";
 
 export type WebsiteVariant = "mobileVkWebsite" | "desktopVkWebsite";
 

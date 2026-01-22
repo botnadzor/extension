@@ -169,7 +169,7 @@ function generateFallbackExtensionVersion(
 export function determineExtensionVersioning(mode: string): {
   extensionVersion: Semver;
   extensionVersionName: string;
-  publishable: boolean;
+  publishableToStores: boolean;
 } {
   const extensionVersionNameFromEnv = process.env["WXT_EXTENSION_VERSION_NAME"];
   const gitInfo = collectGitInfo(process.env["WXT_PR_BRANCH_COMMIT_HASH"]);
@@ -194,13 +194,13 @@ export function determineExtensionVersioning(mode: string): {
         ? generateFallbackExtensionVersion(mode, gitInfo)
         : semverSchema.parse(extensionVersion),
       extensionVersionName: extensionVersionNameResult.data,
-      publishable: !preReleaseSuffix,
+      publishableToStores: !preReleaseSuffix,
     };
   }
 
   return {
     extensionVersion: generateFallbackExtensionVersion(mode, gitInfo),
     extensionVersionName: generateExtensionVersionName(mode, gitInfo),
-    publishable: false,
+    publishableToStores: false,
   };
 }

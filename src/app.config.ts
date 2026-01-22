@@ -28,7 +28,8 @@ declare module "wxt/utils/define-app-config" {
     extensionVersion: Semver;
 
     /**
-     * Same as in manifest, placed next to extensionVersion (typed more narrowly than string)
+     * Same as in manifest, but fixed for Firefox
+     * (version_name not supported in manifest, so we extract it from the description)
      */
     extensionVersionName: string;
 
@@ -37,7 +38,10 @@ declare module "wxt/utils/define-app-config" {
 }
 
 const extensionVersion = semverSchema.parse(manifest.version);
-const extensionVersionName = manifest.version_name ?? extensionVersion;
+const extensionVersionName =
+  manifest.version_name ??
+  manifest.description?.match(/\((\S+)\)$/)?.[1] ?? // Firefox does not support version_name, so we extract it from the description
+  extensionVersion;
 
 const syncStorageAllowed: boolean = (() => {
   if (import.meta.env.BROWSER !== "firefox") {

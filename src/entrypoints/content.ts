@@ -4,7 +4,7 @@ import { configureLogging, getContentLogger } from "@/shared/logging";
 import { browser, defineContentScript } from "#imports";
 
 import { derivePageInfo } from "./content/derived-page-info";
-import { contentScriptHosts } from "./content/hosts";
+import { contentScriptMatches } from "./content/hosts-and-matches";
 import { startInPageApp } from "./content/in-page-app";
 import { startManagingInsertions } from "./content/insertion-management";
 
@@ -41,10 +41,7 @@ function setupContentId(): ContentId {
 }
 
 export default defineContentScript({
-  matches: [
-    ...contentScriptHosts.map((host) => `https://${host}/*`),
-    ...contentScriptHosts.map((host) => `*://web.archive.org/*/${host}/*`),
-  ],
+  matches: contentScriptMatches,
 
   cssInjectionMode: "manual",
 

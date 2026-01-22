@@ -230,7 +230,7 @@ export default defineConfig(
     ],
   },
 
-  eslintPluginRegexp.configs["flat/recommended"],
+  eslintPluginRegexp.configs.recommended,
 
   {
     plugins: {
@@ -282,6 +282,7 @@ export default defineConfig(
           peerDependencies: false,
         },
       ],
+      "import/no-named-as-default-member": "off",
     },
   },
 

@@ -1,6 +1,5 @@
 import type { JsonValue } from "type-fest";
 
-import { getAppConfig } from "@/shared/app-config";
 import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AliasToUse, UnavailableAliasReason } from "./alias-manager";
@@ -27,11 +26,7 @@ export async function fetchFromAlias({
       reason: UnavailableAliasReason;
     }
 > {
-  const url =
-    alias.baseUrl +
-    urlSuffix +
-    (urlSuffix.includes("?") ? "&" : "?") +
-    `ev=${getAppConfig().extensionVersion}`;
+  const url = alias.baseUrl + urlSuffix;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
@@ -52,13 +47,6 @@ export async function fetchFromAlias({
   }
 
   if (response.status === 403) {
-    return { success: false, reason: "blockedByFirewall" };
-  }
-
-  if (
-    response.status === 429 &&
-    response.headers.get("x-vercel-mitigated") === "challenge"
-  ) {
     return { success: false, reason: "blockedByFirewall" };
   }
 
