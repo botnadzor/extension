@@ -1,6 +1,11 @@
 import { z } from "zod/mini";
 
-import { isoTimeSchema, vkDomainSchema, vkIdSchema } from "./primitives";
+import {
+  isoTimeSchema,
+  positiveVkIdSchema,
+  vkDomainSchema,
+  vkIdSchema,
+} from "./primitives";
 
 export const inspectorAccountInfoSchema = z.readonly(
   z.object({
@@ -11,16 +16,25 @@ export const inspectorAccountInfoSchema = z.readonly(
 );
 export type InspectorAccountInfo = z.infer<typeof inspectorAccountInfoSchema>;
 
-export const inspectorTriggerSchema = z.readonly(
-  z.discriminatedUnion("type", [
+export const inspectorTriggerSchema = z.discriminatedUnion("type", [
+  z.readonly(
     z.object({
       type: z.literal("comment"),
+      postType: z.enum(["photo", "video", "wall"]),
       wallVkId: vkIdSchema,
       postVkId: vkIdSchema,
       commentVkId: vkIdSchema,
     }),
-  ]),
-);
+  ),
+  z.readonly(
+    z.object({
+      type: z.literal("review"),
+      wallVkId: vkIdSchema,
+      reviewVkId: positiveVkIdSchema,
+    }),
+  ),
+]);
+
 export type InspectorTrigger = z.infer<typeof inspectorTriggerSchema>;
 
 export const inspectorInstancePayloadSchema = z.object({

@@ -228,6 +228,7 @@ export default defineInsertion({
             trigger: {
               type: "comment",
               // TODO: Implement logic to parse comment IDs
+              postType: "wall",
               wallVkId: vkIdSchema.parse(1),
               postVkId: vkIdSchema.parse(1),
               commentVkId: vkIdSchema.parse(1),

@@ -9,4 +9,6 @@ onlyBuiltDependencies:
   - esbuild
   - spawn-sync ## @v1, dependency of web-ext-run
 
+savePrefix: ""
+
 updateNotifier: false

@@ -81,10 +81,10 @@ This extension uses **WXT** (Web Extension Tools), a modern framework for buildi
 1.  **Background Script** (`src/entrypoints/background.ts`)
     - Registers proxy services using `@webext-core/proxy-service`
     - Creates and configures AliasManager instances for URL rotation (dynamicApi, frontend, staticApi)
-    - Services include: AffiliationService, AuthService, CommentCollectingService, FrontendService, InspectorService, NotificationService, PopupService, RegDateService, StaticListsService, UserConfigService
+    - Services include: AffiliationService, AuthService, CollectingService, FrontendService, InspectorService, NotificationService, PopupService, RegDateService, StaticListsService, UserConfigService
     - Fetches root config from remote system and populates static lists
     - Handles online/offline events to reset alias statuses
-    - Persists data on `onSuspend` event (e.g., registered comments)
+    - Persists data on `onSuspend` event (e.g., collected comments)
 
 1.  **Content Script** (`src/entrypoints/content.ts`)
     - Main orchestrator that runs on VK.com pages

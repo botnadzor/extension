@@ -6,7 +6,7 @@ import { defineInsertion } from "../insertion-basics";
 import {
   applyInlineAffiliationVars,
   clearInlineAffiliationVars,
-  inlineAffiliationStripClasses,
+  inlineAffiliationStripClassListTokens,
 } from "./shared/affiliation-highlight-style";
 import { renderAccountAction } from "./shared/ui-account-action";
 import { renderInlineBadge } from "./shared/ui-badge";
@@ -22,7 +22,7 @@ export default defineInsertion({
 
   init: async ({ element, logger, contentId }) => {
     const authorLink = element.querySelector(
-      'a[href^="/"]:not([data-testid="mention"])',
+      'a[href^="/"]:not([data-testid="mention"] [data-testid="post-text-hashtag"])',
     );
 
     if (!(authorLink instanceof HTMLAnchorElement)) {
@@ -48,7 +48,7 @@ export default defineInsertion({
       authorLink.style.overflow = "visible";
 
       applyInlineAffiliationVars(authorLink, accountAffiliation.color);
-      extraClassListTokens = [...inlineAffiliationStripClasses];
+      extraClassListTokens = [...inlineAffiliationStripClassListTokens];
 
       authorLink.classList.add(...extraClassListTokens);
 

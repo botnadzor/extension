@@ -3,6 +3,8 @@ import semverValid from "semver/functions/valid";
 import semverValidRange from "semver/ranges/valid";
 import { z } from "zod/mini";
 
+export const accessCodeSchema = z.string();
+
 export const contentIdSchema = z
   .catch(z.string().check(z.regex(/^[\w-]{4,32}$/)), () => nanoid(8))
   .brand<"ContentId">();
@@ -34,11 +36,9 @@ export const isoTimeSchema = z
             ? new Date(input).toISOString()
             : input,
     ),
-    z.pipe(
-      z
-        .string()
-        .check(z.regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/)),
-      z.transform((value: string) => value.replace(/\.\d{3}Z/, "Z")),
+    z.string().check(
+      z.regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/),
+      z.overwrite((value: string) => value.replace(/\.\d{3}Z/, "Z")),
     ),
   )
   .brand<"IsoString">();
@@ -62,24 +62,29 @@ export type VkDomain = z.infer<typeof vkDomainSchema>;
 
 export const vkIdSchema = z
   .number()
-  .check(z.int(), (ctx) => {
-    if (ctx.value === 0) {
-      ctx.issues.push({
-        code: "custom",
-        message: "VkId must be non-zero",
-        input: ctx.value,
-      });
-    }
-  })
+  .check(
+    z.int(),
+    z.minimum(-5_000_000_000),
+    z.maximum(5_000_000_000),
+    (ctx) => {
+      if (ctx.value === 0) {
+        ctx.issues.push({
+          code: "custom",
+          message: "VkId must be non-zero",
+          input: ctx.value,
+        });
+      }
+    },
+  )
   .brand<"VkId">();
 /** @public */
 export type VkId = z.infer<typeof vkIdSchema>;
 
-export const PositiveVkIdSchema = vkIdSchema
-  .check(z.positive())
+export const positiveVkIdSchema = vkIdSchema
+  .check(z.minimum(1), z.maximum(5_000_000_000))
   .brand<"PositiveVkId">();
 /** @public */
-export type PositiveVkId = z.infer<typeof PositiveVkIdSchema>;
+export type PositiveVkId = z.infer<typeof positiveVkIdSchema>;
 
 export function isPositiveVkId(vkId: VkId): vkId is PositiveVkId {
   return vkId > 0;
@@ -98,7 +103,7 @@ export type VkNickname = z.infer<typeof vkNicknameSchema>;
 
 export const tagIdSchema = z
   .string()
-  .check(z.regex(/^((d|r)?\d+|devOnlyNicknamePresent|devOnlyOdd)$/))
+  .check(z.regex(/^((d|r)?\d+)$/))
   .brand<"TagId">();
 /** @public */
 export type TagId = z.infer<typeof tagIdSchema>;

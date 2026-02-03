@@ -39,7 +39,7 @@ const logger = getBackgroundLogger(["static-lists-service"]);
 const itemBatchSize = 1000;
 const lockIntervalInMs = 100;
 const lockTimeoutInMs = 10_000;
-const metadataStoreName = "--metadata--";
+const metadataTableName = "--metadata--";
 
 async function* streamLines(
   readableStream: ReadableStream<Uint8Array>,
@@ -67,7 +67,7 @@ async function* streamLines(
   }
 }
 
-function generateStoreName(
+function generateTableName(
   listId: StaticListId,
   instance: StaticListInstance,
 ): string {
@@ -135,15 +135,15 @@ export class StaticListsService {
 
     this.db = new Dexie("static-lists");
     this.db.version(1).stores({
-      [metadataStoreName]: "listId",
+      [metadataTableName]: "listId",
       ...Object.fromEntries(
         staticListDefinitionEntries.flatMap(([listId, listDefinition]) => [
           [
-            generateStoreName(listId, "a"),
+            generateTableName(listId, "a"),
             ["++", ...listDefinition.indexes].join(","),
           ],
           [
-            generateStoreName(listId, "b"),
+            generateTableName(listId, "b"),
             ["++", ...listDefinition.indexes].join(","),
           ],
         ]),
@@ -249,11 +249,11 @@ export class StaticListsService {
   }
 
   private getMetadataLogger(): Logger {
-    return logger.getChild([metadataStoreName]);
+    return logger.getChild([metadataTableName]);
   }
 
   private getMetadataTable(): Table<unknown> {
-    return this.db.table<unknown>(metadataStoreName);
+    return this.db.table<unknown>(metadataTableName);
   }
 
   public async pollListMetadata(
@@ -448,7 +448,7 @@ export class StaticListsService {
         return { success: false, error: "No response body from static API" };
       }
 
-      const previouslyActiveStoreName = generateStoreName(
+      const previouslyActiveStoreName = generateTableName(
         listId,
         initialMetadata.activeInstance,
       );
@@ -458,7 +458,7 @@ export class StaticListsService {
       );
 
       const nextInstance = pickAnotherInstance(initialMetadata.activeInstance);
-      const nextStoreName = generateStoreName(listId, nextInstance);
+      const nextStoreName = generateTableName(listId, nextInstance);
       const nextTable = this.db.table<unknown>(nextStoreName);
       await nextTable.clear();
 
@@ -651,8 +651,8 @@ export class StaticListsService {
     }
 
     const metadata = await this.getListMetadata(listId);
-    const activeTable = this.db.table(
-      generateStoreName(listId, metadata.activeInstance),
+    const activeTable = this.db.table<unknown>(
+      generateTableName(listId, metadata.activeInstance),
     );
     this.activeListTableCache.set(listId, activeTable);
     return activeTable;

@@ -1,10 +1,11 @@
 import { delay } from "es-toolkit";
-import { z } from "zod/mini";
 
-import type {
-  AuthCheck,
-  AuthStatus,
-  PermissionLookup,
+import {
+  type AuthCheck,
+  type AuthInput,
+  authInputSchema,
+  type AuthStatus,
+  type PermissionLookup,
 } from "@/shared/@model/auth";
 import { isoTimeSchema } from "@/shared/@model/primitives";
 import {
@@ -15,29 +16,21 @@ import {
 import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
-import {
-  type DynamicApiEndpointDefinition,
-  type DynamicApiEndpointDefinitionLookup,
-  dynamicApiEndpointDefinitionLookup,
-  type DynamicApiResponse,
-  type DynamicEndpointKey,
+import type {
+  ContractProblem,
+  DynamicApiEndpointInput,
+  DynamicApiEndpointKey,
+  DynamicApiEndpointOutcome,
+  DynamicApiEndpointOutput,
+  RemoteSystemUnavailableProblem,
 } from "../@service-helpers/dynamic-api-endpoints";
 import {
-  errorMessageByUnavailableRemoteSystemReason,
-  fetchFromRemoteSystem,
-} from "../@service-helpers/fetch-from-remote-system";
+  orpcClient,
+  OrpcErrorRemoteSystemUnavailable,
+} from "../@service-helpers/orpc";
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
 
 const logger = getBackgroundLogger(["auth-service"]);
-
-const authInputSchema = z.readonly(
-  z.object({
-    accessCode: z.string(),
-    accessCodeEnteredAt: isoTimeSchema,
-  }),
-);
-
-type AuthInput = z.infer<typeof authInputSchema>;
 
 const authInputStore = defineStoreWithSchema(
   "sync:auth-input",
@@ -150,25 +143,26 @@ export class AuthService {
         ...authInput,
       };
     } else {
-      const [response] = await Promise.all([
-        this.fetchFromDynamicApiWithAccessCode("access", {}),
+      const [outcome] = await Promise.all([
+        this.fetchFromDynamicApiWithAccessCode("getMe"),
         this.getAuthStatus().state === "valid" ? delay(500) : undefined, // Ensure check duration is visible to the user (if it's too fast, it's hard to notice that something is happening)
       ]);
 
-      if ("data" in response) {
+      if (!outcome.problem) {
         newAuthStatus = {
           state: "valid",
-          expiresAt: isoTimeSchema.parse(
-            new Date(Date.now() + 1000 * 60 * 60 * 24),
-          ),
-          accessLevel: response.data.accessLevel,
-          pointCount: response.data.pointCount,
-          permissionLookup: response.data.permissionLookup,
+          accessLevel: outcome.accessLevel,
+          ...(outcome.expiresAt ? { expiresAt: outcome.expiresAt } : {}),
+          pointCount: outcome.pointCount,
+          permissionLookup: outcome.permissionLookup,
         };
-      } else if (response.errorKind === "unauthorized") {
+      } else if (outcome.type === "bn:ext:invalid-access-code") {
         newAuthStatus = {
           state: "invalid",
-          ...authInput,
+          accessCode: authInput.accessCode,
+          accessCodeEnteredAt: authInput.accessCodeEnteredAt,
+          accessCodeRecognized: outcome.accessCodeRecognized ?? false,
+          errorMessage: outcome.description,
         };
       } else {
         newAuthStatus = {
@@ -193,65 +187,48 @@ export class AuthService {
   }
 
   public async fetchFromDynamicApiWithAccessCode<
-    Key extends DynamicEndpointKey,
+    Method extends DynamicApiEndpointKey,
   >(
-    key: Key,
-    payload: Parameters<
-      DynamicApiEndpointDefinitionLookup[Key]["generateUrlSuffix"]
-    >[0],
-  ): Promise<
-    | z.infer<DynamicApiEndpointDefinitionLookup[Key]["responseBodySchema"]>
-    | (DynamicApiResponse & { data?: never })
-  > {
-    const authInput = await this.getAuthInput();
-
-    if (!authInput.accessCode) {
-      return {
-        errorKind: "unauthorized",
-        errorMessage: "Необходима авторизация",
-      };
-    }
-
-    const definition: DynamicApiEndpointDefinition =
-      dynamicApiEndpointDefinitionLookup[key];
-
-    const fetchResult = await fetchFromRemoteSystem({
-      aliasManager: this.aliasManagerForDynamicApi,
-      post: {
-        accessCode: authInput.accessCode,
-        ...(definition.generatePostBody
-          ? definition.generatePostBody(payload)
-          : {}),
+    method: Method,
+    ...rest: DynamicApiEndpointInput<Method> extends Record<string, never>
+      ? []
+      : [payload: DynamicApiEndpointInput<Method>]
+  ): Promise<DynamicApiEndpointOutcome<Method>> {
+    const [error, data] = await orpcClient[method](
+      // @ts-expect-error -- orpcClient is a union of all methods, but the payload belongs to a single method
+      rest[0],
+      {
+        context: {
+          aliasManager: this.aliasManagerForDynamicApi,
+          authInput: await this.getAuthInput(),
+        },
       },
-      urlSuffix: definition.generateLegacyUrlSuffix(payload),
-    });
+    );
 
-    if (!fetchResult.success) {
+    if (error instanceof OrpcErrorRemoteSystemUnavailable) {
       return {
-        errorKind: fetchResult.reason,
-        errorMessage:
-          errorMessageByUnavailableRemoteSystemReason[fetchResult.reason],
-      };
+        problem: true,
+        type: "bn:ext:local:remote-system-unavailable",
+        description: error.message,
+        reason: error.reason,
+      } satisfies RemoteSystemUnavailableProblem;
     }
 
-    try {
-      const parsedBody = definition.legacyResponseBodySchema.parse(
-        await fetchResult.response.json(),
-      );
-
-      // @ts-expect-error -- mapping generic definition to a specific one
-      return definition.convertLegacyResponseBodyToResponseBody(parsedBody);
-    } catch (error) {
-      logger.error(
-        "Unexpected error while parsing data from dynamic API: {error}",
-        { error },
-      );
+    if (error) {
+      logger.error("Failed to fetch from dynamic API: {error}", {
+        error,
+      });
 
       return {
-        errorKind: "unexpectedError",
-        errorMessage: "Произошла ошибка, попробуйте позже",
-      };
+        problem: true,
+        type: "bn:ext:local:contract-error",
+        description: error instanceof Error ? error.message : "Unknown error",
+      } satisfies ContractProblem;
     }
+
+    // @ts-expect-error -- orpcClient returns a union of all methods, but the data belongs to a single method
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- orpcClient returns a union of all methods, but the data belongs to a single method
+    return data.body as DynamicApiEndpointOutput<Method>;
   }
 
   public patchPermissionLookup(permissionLookup: PermissionLookup): void {

@@ -1,20 +1,24 @@
 import { z } from "zod/mini";
 
-import type { IsoTime } from "./primitives";
+import { type IsoTime, isoTimeSchema } from "./primitives";
 
 export const permissionLookupSchema = z.readonly(
-  z.partialRecord(
-    z.enum(["canGetRegDate", "canOpenInspector", "canReportAccount"]),
-    z.literal(true),
-  ),
+  z.object({
+    getRegDate: z.exactOptional(z.literal(true)),
+    inspectAccount: z.exactOptional(z.literal(true)),
+    reportAccount: z.exactOptional(z.literal(true)),
+  }),
 );
 export type PermissionLookup = z.infer<typeof permissionLookupSchema>;
 
-export const legacyPermissionsSchema = z.readonly(
-  z.array(
-    z.enum(["can_open_inspector", "can_report", "can_get_registration_date"]),
-  ),
+export const authInputSchema = z.readonly(
+  z.object({
+    accessCode: z.string(),
+    accessCodeEnteredAt: isoTimeSchema,
+  }),
 );
+
+export type AuthInput = z.infer<typeof authInputSchema>;
 
 export type AuthStatus =
   | {
@@ -26,6 +30,8 @@ export type AuthStatus =
       state: "invalid";
       accessCode: string;
       accessCodeEnteredAt: IsoTime;
+      accessCodeRecognized: boolean;
+      errorMessage: string;
     }
   | {
       state: "valid";
@@ -47,18 +53,3 @@ export type AuthCheck =
       state: "ongoing";
       startedAt: IsoTime;
     };
-export function mapLegacyPermissionsToPermissionLookup(
-  permissions: z.infer<typeof legacyPermissionsSchema>,
-): PermissionLookup {
-  return {
-    ...(permissions.includes("can_open_inspector")
-      ? { canOpenInspector: true }
-      : {}),
-
-    ...(permissions.includes("can_report") ? { canReportAccount: true } : {}),
-
-    ...(permissions.includes("can_get_registration_date")
-      ? { canGetRegDate: true }
-      : {}),
-  };
-}

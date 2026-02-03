@@ -2,27 +2,28 @@ import { delay } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 
 import {
+  type IsoDate,
   type IsoTime,
   isoTimeSchema,
   isPositiveVkId,
   type PositiveVkId,
 } from "@/shared/@model/primitives";
 
-import type { DynamicApiEndpointResponse } from "../@service-helpers/dynamic-api-endpoints";
+import type { DynamicApiEndpointOutcome } from "../@service-helpers/dynamic-api-endpoints";
 import type { VkDomainResolver } from "../@service-helpers/vk-domain-resolver";
 import type { AuthService } from "./auth-service";
 
 const symbolForPending = Symbol("pending");
 
-type RegDateInfo = DynamicApiEndpointResponse<"regDate"> & {
+type RegDateInfo = DynamicApiEndpointOutcome<"getRegDate"> & {
   checkedAt: IsoTime;
 };
 
 type CachedRegDateInfo =
-  | (DynamicApiEndpointResponse<"regDate"> & {
+  | {
+      value: IsoDate | IsoTime;
       checkedAt: IsoTime;
-      errorKind?: never;
-    })
+    }
   | typeof symbolForPending;
 
 export class RegDateService {
@@ -60,16 +61,22 @@ export class RegDateService {
     if (!vkId) {
       return {
         checkedAt: isoTimeSchema.parse(undefined),
-        errorKind: "notFound",
-        errorMessage: "Аккаунт с таким никнеймом не найден",
+
+        problem: true,
+        type: "bn:ext:invalid-payload",
+        description: "Аккаунт с таким никнеймом не найден",
+        fields: ["vkDomain"],
       };
     }
 
     if (!isPositiveVkId(vkId)) {
       return {
         checkedAt: isoTimeSchema.parse(undefined),
-        errorKind: "notApplicableToNegativeVkIds",
-        errorMessage: "Невозможно узнать дату регистрации у сообществ ВК",
+
+        problem: true,
+        type: "bn:ext:invalid-payload",
+        description: "Невозможно узнать дату регистрации у сообществ ВК",
+        fields: ["vkDomain"],
       };
     }
 
@@ -77,16 +84,20 @@ export class RegDateService {
     if (authStatus.state !== "valid") {
       return {
         checkedAt: isoTimeSchema.parse(undefined),
-        errorKind: "unauthorized",
-        errorMessage: "Чтобы получить дату регистрации, настройте доступ",
+
+        problem: true,
+        type: "bn:ext:invalid-access-code",
+        description: "Чтобы получить дату регистрации, настройте доступ",
       };
     }
 
-    if (!authStatus.permissionLookup.canGetRegDate) {
+    if (!authStatus.permissionLookup.getRegDate) {
       return {
         checkedAt: isoTimeSchema.parse(undefined),
-        errorKind: "missingPermission",
-        errorMessage:
+
+        problem: true,
+        type: "bn:ext:missing-permission",
+        description:
           "Чтобы получить дату регистрации, ваш код должен иметь очки или дополнительные уровни",
       };
     }
@@ -98,16 +109,16 @@ export class RegDateService {
 
     this.regDateCache.set(vkId, symbolForPending);
 
-    const responseBody =
-      await this.authService.fetchFromDynamicApiWithAccessCode("regDate", {
-        vkId,
-      });
+    const outcome = await this.authService.fetchFromDynamicApiWithAccessCode(
+      "getRegDate",
+      { vkId },
+    );
 
     const checkedAt = isoTimeSchema.parse(undefined);
 
-    if ("data" in responseBody) {
+    if (!outcome.problem) {
       const info = {
-        data: responseBody.data,
+        value: outcome.value,
         checkedAt,
       } satisfies RegDateInfo;
 
@@ -118,17 +129,13 @@ export class RegDateService {
 
     this.regDateCache.delete(vkId);
 
-    if (
-      responseBody.errorKind === "missingPermission" ||
-      responseBody.errorKind === "notFound"
-    ) {
+    if (outcome.type === "bn:ext:missing-permission") {
       void this.authService.checkAuth();
     }
 
     return {
       checkedAt,
-      errorKind: responseBody.errorKind,
-      errorMessage: responseBody.errorMessage,
+      ...outcome,
     };
   }
 }

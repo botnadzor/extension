@@ -24,11 +24,17 @@ import { ReportForm } from "./report-form";
 
 function AccountMark({ vkDomain }: { vkDomain: VkDomain }) {
   const accountInspection = useAccountInspection(vkDomain);
-  if ("errorKind" in accountInspection) {
+  if (accountInspection.problem) {
     return;
   }
 
-  return <OptionalMark {...accountInspection.data} />;
+  return (
+    <OptionalMark
+      mark={accountInspection.classic.mark ?? undefined}
+      markTitle={accountInspection.classic.mark_title ?? undefined}
+      markColor={accountInspection.classic.mark_color ?? undefined}
+    />
+  );
 }
 
 function InspectedAccount({ avatarUrl, name, vkDomain }: InspectorAccountInfo) {

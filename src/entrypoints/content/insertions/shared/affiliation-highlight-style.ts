@@ -16,14 +16,14 @@ export function clearInlineAffiliationVars(target: HTMLElement): void {
   target.style.removeProperty("--bn-inline-affiliation-border");
 }
 
-export const inlineAffiliationStripClasses: string[] = cnl(`
+export const inlineAffiliationStripClassListTokens: string[] = cnl(`
   bn:border-l-3 bn:border-l-(--bn-inline-affiliation-border)
   bn:bg-(--bn-inline-affiliation-color)
   bn:dark:border-l-(--bn-inline-affiliation-border)/50
   bn:dark:bg-(--bn-inline-affiliation-color)/20
 `);
 
-export const inlineAffiliationOverlayBaseClasses: string[] = cnl(`
+export const inlineAffiliationOverlayBaseClassListTokens: string[] = cnl(`
   bn:pointer-events-none bn:absolute bn:inset-0 bn:-z-10 bn:mt-[-2px]
   bn:mr-[-2px] bn:mb-[-5px] bn:border-l-3
   bn:border-l-(--bn-inline-affiliation-border)
@@ -48,7 +48,7 @@ export function clearPagePostAffiliationVars(target: HTMLElement): void {
   target.style.removeProperty("--bn-page-post-affiliation-border");
 }
 
-export const pagePostHeaderHighlightClasses: string[] = cnl(`
+export const pagePostHeaderHighlightClassListTokens: string[] = cnl(`
   bn:rounded-t-[10px] bn:border-l-3
   bn:border-l-(--bn-page-post-affiliation-border)
   bn:bg-(--bn-page-post-affiliation-color) bn:pt-[10px]! bn:pb-[5px]!

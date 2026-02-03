@@ -7,7 +7,7 @@ import { configureLogging, getBackgroundLogger } from "@/shared/logging";
 import {
   affiliationServiceKey,
   authServiceKey,
-  commentCollectingServiceKey,
+  collectingServiceKey,
   frontendServiceKey,
   inspectorServiceKey,
   notificationServiceKey,
@@ -23,7 +23,7 @@ import { fetchFromRemoteSystem } from "./background/@service-helpers/fetch-from-
 import { VkDomainResolver } from "./background/@service-helpers/vk-domain-resolver";
 import { AffiliationService } from "./background/@services/affiliation-service";
 import { AuthService } from "./background/@services/auth-service";
-import { CommentCollectingService } from "./background/@services/comment-collecting-service";
+import { CollectingService } from "./background/@services/collecting-service";
 import { FrontendService } from "./background/@services/frontend-service";
 import { InspectorService } from "./background/@services/inspector-service";
 import { NotificationService } from "./background/@services/notification-service";
@@ -96,11 +96,7 @@ export default defineBackground(() => {
   const jobScheduler = defineJobScheduler();
 
   const aliasManagerForDynamicApi = new AliasManager("dynamicApi", {
-    "https://botnadzor.org/script": { role: "primary" },
-    "https://botnadzor-epe1uraet-botnadzors-projects.vercel.app/script": {},
-    // TODO: replace above urls with these ones:
-    // "https://botnadzor.org/api/extension/dynamic": { "role": ""},
-    // "https://botnadzor-epe1uraet-botnadzors-projects.vercel.app/api/extension/dynamic": {},
+    "https://extension.botnadzor.org/dynamic": { role: "primary" },
   });
 
   const aliasManagerForFrontend = new AliasManager("frontend", {
@@ -142,7 +138,7 @@ export default defineBackground(() => {
     userConfigService,
   });
 
-  const commentCollectingService = new CommentCollectingService({
+  const collectingService = new CollectingService({
     authService,
     staticListsService,
     userConfigService,
@@ -161,7 +157,7 @@ export default defineBackground(() => {
 
   registerService(affiliationServiceKey, affiliationService);
   registerService(authServiceKey, authService);
-  registerService(commentCollectingServiceKey, commentCollectingService);
+  registerService(collectingServiceKey, collectingService);
   registerService(frontendServiceKey, frontendService);
   registerService(inspectorServiceKey, inspectorService);
   registerService(notificationServiceKey, notificationService);
@@ -178,7 +174,7 @@ export default defineBackground(() => {
   });
 
   browser.runtime.onSuspend.addListener(() => {
-    void commentCollectingService.persistRegisteredComments();
+    void collectingService.persistRegisteredCommentsIfNeeded();
   });
 
   void populateStaticLists({

@@ -1,4 +1,5 @@
 import {
+  positiveVkIdSchema,
   type VkDomain,
   vkDomainSchema,
   vkIdSchema,
@@ -37,22 +38,23 @@ export function extractVkDomainFromAuthorLink(
 export function extractCommentLocationFromHref(
   href: string,
 ): CommentLocation | undefined {
-  const wallRegexp =
-    /(?:https?:\/\/vk\.com)?\/(?:wall|video|photo)(-?\d+)_(\d+)/;
+  const wallRegexp = /(?:https?:\/\/vk\.com)?\/(photo|video|wall)(-?\d+)_(\d+)/;
   const wallMatch = wallRegexp.exec(href);
   if (!wallMatch) {
     return;
   }
 
-  const wallNumber = Number(wallMatch[1]);
-  const postNumber = Number(wallMatch[2]);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- type assertion corresponds to the regexp
+  const postType = wallMatch[1] as "photo" | "video" | "wall";
+  const wallNumber = Number(wallMatch[2]);
+  const postNumber = Number(wallMatch[3]);
 
   if (!Number.isFinite(wallNumber) || !Number.isFinite(postNumber)) {
     return;
   }
 
   const wallVkId = vkIdSchema.parse(wallNumber);
-  const postVkId = vkIdSchema.parse(postNumber);
+  const postVkId = positiveVkIdSchema.parse(postNumber);
 
   const replyMatch = /[?&]reply=(\d+)/.exec(href);
   const commentNumber = replyMatch ? Number(replyMatch[1]) : postNumber;
@@ -61,9 +63,9 @@ export function extractCommentLocationFromHref(
     return;
   }
 
-  const commentVkId = vkIdSchema.parse(commentNumber);
+  const commentVkId = positiveVkIdSchema.parse(commentNumber);
 
-  return { wallVkId, postVkId, commentVkId };
+  return { postType, wallVkId, postVkId, commentVkId };
 }
 
 export function extractCommentLocationFromReplyClick(
@@ -84,9 +86,10 @@ export function extractCommentLocationFromReplyClick(
     }
 
     return {
+      postType: "wall",
       wallVkId: vkIdSchema.parse(ownerNumber),
-      postVkId: vkIdSchema.parse(postNumber),
-      commentVkId: vkIdSchema.parse(commentNumber),
+      postVkId: positiveVkIdSchema.parse(postNumber),
+      commentVkId: positiveVkIdSchema.parse(commentNumber),
     };
   }
 
@@ -107,9 +110,10 @@ export function extractCommentLocationFromReplyClick(
     }
 
     return {
+      postType: "photo",
       wallVkId: vkIdSchema.parse(ownerNumber),
-      postVkId: vkIdSchema.parse(photoNumber),
-      commentVkId: vkIdSchema.parse(commentNumber),
+      postVkId: positiveVkIdSchema.parse(photoNumber),
+      commentVkId: positiveVkIdSchema.parse(commentNumber),
     };
   }
 
@@ -128,9 +132,10 @@ export function extractCommentLocationFromReplyClick(
     }
 
     return {
+      postType: "wall",
       wallVkId: vkIdSchema.parse(ownerNumber),
-      postVkId: vkIdSchema.parse(postNumber),
-      commentVkId: vkIdSchema.parse(commentNumber),
+      postVkId: positiveVkIdSchema.parse(postNumber),
+      commentVkId: positiveVkIdSchema.parse(commentNumber),
     };
   }
 

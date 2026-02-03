@@ -9,8 +9,8 @@ import {
   extractVkDomainFromAuthorLink,
 } from "./shared/comment-location";
 import {
-  extractCommenterAvatarUrlBySelector,
   extractCommenterNameBySelector,
+  getCommenterAvatarUrlWithFallback,
 } from "./shared/comment-meta";
 import type { CommentLocation } from "./shared/types";
 import { renderCommentUi } from "./shared/ui-comment";
@@ -52,12 +52,6 @@ function extractCommenterName(root: HTMLElement): string | undefined {
     root,
     ".group_activity_content_owner_name",
   );
-}
-
-function extractCommenterAvatarUrl(root: HTMLElement): string | undefined {
-  return extractCommenterAvatarUrlBySelector(root, [
-    ".group_activity_content_owner img",
-  ]);
 }
 
 export default defineInsertion({
@@ -113,9 +107,9 @@ export default defineInsertion({
       commenterName = raw && raw.trim().length > 0 ? raw.trim() : vkDomain;
     }
 
-    const commenterAvatarUrl =
-      extractCommenterAvatarUrl(element) ??
-      "https://vk.com/images/camera_200.png";
+    const commenterAvatarUrl = getCommenterAvatarUrlWithFallback(element, [
+      ".group_activity_content_owner img",
+    ]);
 
     let inspectorInstancePayload: InspectorInstancePayload | undefined;
     if (location) {

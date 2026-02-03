@@ -24,8 +24,7 @@ export default defineInsertion({
     const accountAffiliation = await affiliationService.checkAccount(vkDomain);
     const frontendBaseUrl = await frontendService.getBaseUrl();
 
-    const postHeaderContainer =
-      element.querySelector<HTMLElement>(":scope > div");
+    const postHeaderContainer = element.querySelector(":scope > div");
     if (!(postHeaderContainer instanceof HTMLElement)) {
       return;
     }

@@ -27,3 +27,29 @@ export function getVkDomainFromRow(row: HTMLElement): VkDomain | undefined {
 
   return extractVkDomainFromHref(link.getAttribute("href"));
 }
+
+export function extractVkDomainFromReplyInputValue(
+  replyTargetInput: HTMLInputElement,
+): VkDomain | undefined {
+  const commentId = replyTargetInput.value.trim();
+  if (!commentId) {
+    return;
+  }
+
+  const root = document.querySelector(`[id$="_${commentId}"]`);
+  if (!(root instanceof HTMLElement)) {
+    return;
+  }
+
+  const replyRoot = root.closest(".reply");
+  if (!(replyRoot instanceof HTMLElement)) {
+    return;
+  }
+
+  const authorLink = replyRoot.querySelector(".reply_author a.author");
+  if (!(authorLink instanceof HTMLAnchorElement)) {
+    return;
+  }
+
+  return extractVkDomainFromHref(authorLink.getAttribute("href"));
+}

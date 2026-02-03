@@ -22,11 +22,9 @@ export default defineInsertion({
     const accountAffiliation = await affiliationService.checkAccount(vkDomain);
     const frontendBaseUrl = await frontendService.getBaseUrl();
 
-    const authorNameBlock = element.querySelector<HTMLElement>(
-      ".copy_post_header_info",
-    );
+    const authorNameBlock = element.querySelector(".copy_post_header_info");
 
-    if (!authorNameBlock) {
+    if (!(authorNameBlock instanceof HTMLElement)) {
       return;
     }
 

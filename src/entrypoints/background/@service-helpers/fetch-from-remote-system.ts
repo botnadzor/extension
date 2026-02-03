@@ -25,13 +25,16 @@ export type UnavailableRemoteSystemReason =
 
 export async function fetchFromRemoteSystem({
   aliasManager,
+  init,
   post,
-  timeout,
+  signalOrTimeout,
   urlSuffix,
 }: {
   aliasManager: AliasManager;
+  init?: RequestInit | undefined;
   post?: JsonValue | undefined;
-  timeout?: number | undefined;
+  signal?: AbortSignal | undefined;
+  signalOrTimeout?: number | undefined;
   urlSuffix: string;
 }): Promise<
   | {
@@ -48,9 +51,10 @@ export async function fetchFromRemoteSystem({
   while ((aliasToUse = aliasManager.findAliasToUse())) {
     const fetchResult = await fetchFromAlias({
       alias: aliasToUse,
+      init,
       urlSuffix,
       post,
-      timeout,
+      signalOrTimeout,
     });
 
     if (fetchResult.success) {

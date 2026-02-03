@@ -12,7 +12,7 @@ export function Placeholder({
       className={cn(
         `
           absolute inset-3 top-1.75 flex items-center justify-center rounded-md
-          bg-muted px-10 text-center text-sm text-muted-foreground
+          bg-muted px-10 text-center text-sm text-balance text-muted-foreground
         `,
         className,
       )}

@@ -5,7 +5,7 @@ import { cn, cnl } from "@/shared/tailwindcss-helpers";
 import {
   applyPagePostAffiliationVars,
   clearPagePostAffiliationVars,
-  pagePostHeaderHighlightClasses,
+  pagePostHeaderHighlightClassListTokens,
 } from "./affiliation-highlight-style";
 import { renderAccountAction } from "./ui-account-action";
 import { renderInlineBadge } from "./ui-badge";
@@ -69,7 +69,7 @@ export function renderPostUI({
   if (accountAffiliation) {
     applyPagePostAffiliationVars(headerContainer, accountAffiliation.color);
 
-    extraClassListTokens = [...pagePostHeaderHighlightClasses];
+    extraClassListTokens = [...pagePostHeaderHighlightClassListTokens];
     headerContainer.classList.add(...extraClassListTokens);
 
     badgeUI = renderInlineBadge({

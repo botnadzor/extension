@@ -6,7 +6,7 @@ import { cn, cnl } from "@/shared/tailwindcss-helpers";
 import {
   applyInlineAffiliationVars,
   clearInlineAffiliationVars,
-  inlineAffiliationStripClasses,
+  inlineAffiliationStripClassListTokens,
 } from "./affiliation-highlight-style";
 import { renderAccountAction } from "./ui-account-action";
 import { renderInlineBadge } from "./ui-badge";
@@ -49,15 +49,13 @@ export function renderCommentUi({
 
   if (accountAffiliation && !accountAffiliation.hidden) {
     applyInlineAffiliationVars(commentContent, accountAffiliation.color);
-    extraClassListTokens = [
-      ...cnl(
-        `
-          bn:mt-[-2px] bn:mr-[-2px] bn:mb-[-5px] bn:px-[2px] bn:pt-[2px]
-          bn:pb-[5px]
-        `,
-      ),
-      ...inlineAffiliationStripClasses,
-    ];
+    extraClassListTokens = cnl(
+      ...inlineAffiliationStripClassListTokens,
+      `
+        bn:mt-[-2px] bn:mr-[-2px] bn:mb-[-5px] bn:px-[2px] bn:pt-[2px]
+        bn:pb-[5px]
+      `,
+    );
     commentContent.classList.add(...extraClassListTokens);
 
     badgeUI = renderInlineBadge({

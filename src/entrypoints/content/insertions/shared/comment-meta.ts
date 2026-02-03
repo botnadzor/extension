@@ -1,3 +1,5 @@
+const defaultVkAvatarUrl = "https://vk.com/images/camera_200.png";
+
 export function extractCommenterNameBySelector(
   root: HTMLElement,
   selector: string,
@@ -27,23 +29,32 @@ export function extractCommenterAvatarUrlBySelector(
   for (const selector of selectors) {
     const image = root.querySelector(selector);
     if (!(image instanceof HTMLImageElement)) {
-      return;
+      continue;
     }
 
     const src = image.getAttribute("src");
     if (!src) {
-      return;
+      continue;
     }
 
     const trimmed = src.trim();
     if (trimmed.length === 0) {
-      return;
+      continue;
     }
 
     return trimmed;
   }
 
   return;
+}
+
+export function getCommenterAvatarUrlWithFallback(
+  root: HTMLElement,
+  selectors: string[],
+  fallback: string = defaultVkAvatarUrl,
+): string {
+  const extracted = extractCommenterAvatarUrlBySelector(root, selectors);
+  return extracted ?? fallback;
 }
 
 export function extractPostCommentCountFromDataset(

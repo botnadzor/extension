@@ -7,14 +7,16 @@ import type { AliasToUse, UnavailableAliasReason } from "./alias-manager";
 const logger = getBackgroundLogger(["fetch-from-alias"]);
 
 export async function fetchFromAlias({
-  urlSuffix,
   alias,
+  init,
   post,
-  timeout = 5000,
+  signalOrTimeout,
+  urlSuffix,
 }: {
   alias: AliasToUse;
+  init?: RequestInit | undefined;
   post?: JsonValue | undefined;
-  timeout?: number | undefined;
+  signalOrTimeout?: AbortSignal | number | undefined;
   urlSuffix: string;
 }): Promise<
   | {
@@ -29,16 +31,23 @@ export async function fetchFromAlias({
   const url = alias.baseUrl + urlSuffix;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, timeout);
+  const timeoutId =
+    typeof signalOrTimeout === "number"
+      ? setTimeout(() => {
+          controller.abort();
+        }, signalOrTimeout)
+      : undefined;
+
+  const signal =
+    typeof signalOrTimeout === "number" ? controller.signal : signalOrTimeout;
 
   let response: Response;
   try {
     response = await fetch(url, {
       method: post ? "POST" : "GET",
       ...(post ? { body: JSON.stringify(post) } : {}),
-      signal: controller.signal,
+      ...(signal ? { signal } : {}),
+      ...init,
     });
   } catch {
     return { success: false, reason: "connectionFailed" };

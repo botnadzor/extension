@@ -1,8 +1,8 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import { vkIdSchema } from "@/shared/@model/primitives";
+import { positiveVkIdSchema, vkIdSchema } from "@/shared/@model/primitives";
 import {
   affiliationService,
-  commentCollectingService,
+  collectingService,
   frontendService,
 } from "@/shared/proxy-services";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
@@ -14,9 +14,9 @@ import {
   extractVkDomainFromAuthorLink,
 } from "./shared/comment-location";
 import {
-  extractCommenterAvatarUrlBySelector,
   extractCommenterNameBySelector,
   extractPostCommentCountFromDataset,
+  getCommenterAvatarUrlWithFallback,
 } from "./shared/comment-meta";
 import type { CommentLocation } from "./shared/types";
 import { renderCommentUi } from "./shared/ui-comment";
@@ -26,7 +26,7 @@ function extractCommentLocation(
 ): CommentLocation | undefined {
   const permalink =
     root.querySelector("a[href*='reply=']") ??
-    root.querySelector<HTMLAnchorElement>(
+    root.querySelector(
       "a[href*='/wall'], a[href*='/video'], a[href*='/photo']",
     );
 
@@ -55,6 +55,9 @@ function extractCommentLocation(
   }
 
   const postRoot = root.closest<HTMLElement>(".reply._post") ?? root;
+  if (!(postRoot instanceof HTMLElement)) {
+    return;
+  }
 
   const idSource = postRoot.dataset["postId"] ?? postRoot.getAttribute("id");
   if (!idSource) {
@@ -75,10 +78,10 @@ function extractCommentLocation(
   }
 
   const wallVkId = vkIdSchema.parse(ownerNumber);
-  const postVkId = vkIdSchema.parse(commentNumber);
-  const commentVkId = vkIdSchema.parse(commentNumber);
+  const postVkId = positiveVkIdSchema.parse(commentNumber);
+  const commentVkId = positiveVkIdSchema.parse(commentNumber);
 
-  return { wallVkId, postVkId, commentVkId };
+  return { postType: "wall", wallVkId, postVkId, commentVkId };
 }
 
 export default defineInsertion({
@@ -108,11 +111,10 @@ export default defineInsertion({
     }
 
     const badgeAnchor =
-      element.querySelector<HTMLElement>(
-        ".reply_author .image_status__status",
-      ) ?? element.querySelector<HTMLElement>(".reply_author .author");
+      element.querySelector(".reply_author .image_status__status") ??
+      element.querySelector(".reply_author .author");
 
-    if (!badgeAnchor) {
+    if (!(badgeAnchor instanceof HTMLElement)) {
       return;
     }
 
@@ -166,11 +168,10 @@ export default defineInsertion({
       commenterName = raw && raw.trim().length > 0 ? raw.trim() : vkDomain;
     }
 
-    const commenterAvatarUrl =
-      extractCommenterAvatarUrlBySelector(element, [
-        ".reply_image img",
-        ".reply_author img",
-      ]) ?? "https://vk.com/images/camera_200.png";
+    const commenterAvatarUrl = getCommenterAvatarUrlWithFallback(element, [
+      ".reply_image img",
+      ".reply_author img",
+    ]);
 
     let inspectorInstancePayload: InspectorInstancePayload | undefined;
 
@@ -216,7 +217,7 @@ export default defineInsertion({
         commentButtonSelector: ".PostBottomAction.comment._comment._reply_wrap",
         datasetKey: "count",
       });
-      void commentCollectingService.registerIfNeeded({
+      void collectingService.collectCommentIfNeeded({
         wallVkId: location.wallVkId,
         postVkId: location.postVkId,
         commentVkId: location.commentVkId,

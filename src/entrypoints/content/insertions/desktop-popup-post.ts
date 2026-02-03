@@ -2,7 +2,7 @@ import type { InspectorInstancePayload } from "@/shared/@model/inspector";
 import type { VkDomain } from "@/shared/@model/primitives";
 import {
   affiliationService,
-  commentCollectingService,
+  collectingService,
   frontendService,
 } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
@@ -14,9 +14,9 @@ import {
   extractVkDomainFromAuthorLink,
 } from "./shared/comment-location";
 import {
-  extractCommenterAvatarUrlBySelector,
   extractCommenterNameBySelector,
   extractPostCommentCountFromDataset,
+  getCommenterAvatarUrlWithFallback,
 } from "./shared/comment-meta";
 import type { CommentLocation } from "./shared/types";
 import { renderAccountAction } from "./shared/ui-account-action";
@@ -69,13 +69,6 @@ export function extractCommentLocation(
 
 function extractCommenterName(root: HTMLElement): string | undefined {
   return extractCommenterNameBySelector(root, ".reply_author .author");
-}
-
-function extractCommenterAvatarUrl(root: HTMLElement): string | undefined {
-  return extractCommenterAvatarUrlBySelector(root, [
-    ".reply_image img",
-    ".reply_author img",
-  ]);
 }
 
 function extractPostCommentCount(root: HTMLElement): number | undefined {
@@ -150,9 +143,10 @@ export default defineInsertion({
       commenterName = raw && raw.trim().length > 0 ? raw.trim() : vkDomain;
     }
 
-    const commenterAvatarUrl =
-      extractCommenterAvatarUrl(element) ??
-      "https://vk.com/images/camera_200.png";
+    const commenterAvatarUrl = getCommenterAvatarUrlWithFallback(element, [
+      ".reply_image img",
+      ".reply_author img",
+    ]);
 
     let inspectorInstancePayload: InspectorInstancePayload | undefined;
 
@@ -189,7 +183,7 @@ export default defineInsertion({
 
     if (location) {
       const postCommentCount = extractPostCommentCount(element);
-      void commentCollectingService.registerIfNeeded({
+      void collectingService.collectCommentIfNeeded({
         wallVkId: location.wallVkId,
         postVkId: location.postVkId,
         commentVkId: location.commentVkId,

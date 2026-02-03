@@ -1,7 +1,7 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
 import {
   affiliationService,
-  commentCollectingService,
+  collectingService,
   frontendService,
 } from "@/shared/proxy-services";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
@@ -10,16 +10,16 @@ import { defineInsertion } from "../insertion-basics";
 import {
   applyInlineAffiliationVars,
   clearInlineAffiliationVars,
-  inlineAffiliationOverlayBaseClasses,
+  inlineAffiliationOverlayBaseClassListTokens,
 } from "./shared/affiliation-highlight-style";
 import {
   extractCommentLocationFromHref,
   extractVkDomainFromAuthorLink,
 } from "./shared/comment-location";
 import {
-  extractCommenterAvatarUrlBySelector,
   extractCommenterNameBySelector,
   extractPostCommentCountFromAriaLabel,
+  getCommenterAvatarUrlWithFallback,
 } from "./shared/comment-meta";
 import type { CommentLocation } from "./shared/types";
 import { renderAccountAction } from "./shared/ui-account-action";
@@ -86,14 +86,15 @@ export default defineInsertion({
     }
 
     const badgeAnchor =
-      commentContent.querySelector<HTMLAnchorElement>("a[href^='/']") ??
-      authorLink;
+      commentContent.querySelector("a[href^='/']") ?? authorLink;
 
-    const actionAnchor = element.querySelector<HTMLElement>(
-      '[data-testid="comment-share"]',
-    );
+    if (!(badgeAnchor instanceof HTMLAnchorElement)) {
+      return;
+    }
 
-    if (!actionAnchor) {
+    const actionAnchor = element.querySelector('[data-testid="comment-share"]');
+
+    if (!(actionAnchor instanceof HTMLElement)) {
       return;
     }
 
@@ -103,10 +104,11 @@ export default defineInsertion({
       applyInlineAffiliationVars(commentContent, accountAffiliation.color);
 
       overlay = document.createElement("div");
-      overlay.classList.add(
-        ...inlineAffiliationOverlayBaseClasses,
-        ...cnl("bn:ml-[2px]"),
+      const overlayClassListTokens = cnl(
+        ...inlineAffiliationOverlayBaseClassListTokens,
+        "bn:ml-[2px]",
       );
+      overlay.classList.add(...overlayClassListTokens);
       commentContent.prepend(overlay);
 
       badgeUI = renderInlineBadge({
@@ -136,11 +138,10 @@ export default defineInsertion({
       }
     }
 
-    const commenterAvatarUrl =
-      extractCommenterAvatarUrlBySelector(element, [
-        '[data-testid="comment-avatar"] img',
-        "img",
-      ]) ?? "https://vk.com/images/camera_200.png";
+    const commenterAvatarUrl = getCommenterAvatarUrlWithFallback(element, [
+      '[data-testid="comment-avatar"] img',
+      "img",
+    ]);
 
     let inspectorInstancePayload: InspectorInstancePayload | undefined;
     if (location) {
@@ -188,7 +189,7 @@ export default defineInsertion({
         commentButtonSelector: '[data-testid="post_footer_action_comment"]',
       });
 
-      void commentCollectingService.registerIfNeeded({
+      void collectingService.collectCommentIfNeeded({
         wallVkId: location.wallVkId,
         postVkId: location.postVkId,
         commentVkId: location.commentVkId,

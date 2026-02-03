@@ -23,6 +23,7 @@ nogit
 noreferrer
 ntvs
 nums
+orpc
 oxc-resolver
 pnpm-dedupe
 pollable
@@ -47,7 +48,10 @@ vkvideo
 webext-core
 wxt
 Ботнадзор
+ботоферма
 лайкнувших
+лайкнули
+лайкнутые
 лайков
 Подгрузка
 скроллите

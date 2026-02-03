@@ -1,5 +1,5 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import { vkIdSchema } from "@/shared/@model/primitives";
+import { positiveVkIdSchema, vkIdSchema } from "@/shared/@model/primitives";
 import { affiliationService, frontendService } from "@/shared/proxy-services";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
@@ -7,12 +7,12 @@ import { defineInsertion } from "../insertion-basics";
 import {
   applyInlineAffiliationVars,
   clearInlineAffiliationVars,
-  inlineAffiliationOverlayBaseClasses,
+  inlineAffiliationOverlayBaseClassListTokens,
 } from "./shared/affiliation-highlight-style";
 import { extractVkDomainFromAuthorLink } from "./shared/comment-location";
 import {
-  extractCommenterAvatarUrlBySelector,
   extractCommenterNameBySelector,
+  getCommenterAvatarUrlWithFallback,
 } from "./shared/comment-meta";
 import type { CommentLocation } from "./shared/types";
 import { renderAccountAction } from "./shared/ui-account-action";
@@ -46,9 +46,10 @@ function extractVideoCommentLocation(
   }
 
   return {
+    postType: "video",
     wallVkId: vkIdSchema.parse(ownerNumber),
-    postVkId: vkIdSchema.parse(videoNumber),
-    commentVkId: vkIdSchema.parse(commentNumber),
+    postVkId: positiveVkIdSchema.parse(videoNumber),
+    commentVkId: positiveVkIdSchema.parse(commentNumber),
   };
 }
 
@@ -103,19 +104,15 @@ export default defineInsertion({
       overflowHost.style.overflow = "visible";
     }
 
-    const badgeAnchor = element.querySelector<HTMLAnchorElement>(
-      '[data-testid="comment-owner"]',
-    );
+    const badgeAnchor = element.querySelector('[data-testid="comment-owner"]');
 
-    if (!badgeAnchor) {
+    if (!(badgeAnchor instanceof HTMLAnchorElement)) {
       return;
     }
 
-    const actionAnchor = element.querySelector<HTMLElement>(
-      '[data-testid="comment-reply"]',
-    );
+    const actionAnchor = element.querySelector('[data-testid="comment-reply"]');
 
-    if (!actionAnchor) {
+    if (!(actionAnchor instanceof HTMLElement)) {
       return;
     }
 
@@ -125,10 +122,12 @@ export default defineInsertion({
       applyInlineAffiliationVars(commentContent, accountAffiliation.color);
 
       overlay = document.createElement("div");
-      overlay.classList.add(
-        ...inlineAffiliationOverlayBaseClasses,
-        ...cnl("bn:ml-[6px]"),
+      const overlayClassListTokens = cnl(
+        ...inlineAffiliationOverlayBaseClassListTokens,
+        "bn:ml-[2px]",
       );
+
+      overlay.classList.add(...overlayClassListTokens);
 
       commentContent.prepend(overlay);
 
@@ -157,11 +156,10 @@ export default defineInsertion({
       commenterName = fallback;
     }
 
-    const commenterAvatarUrl =
-      extractCommenterAvatarUrlBySelector(element, [
-        '[data-testid="comment-avatar"] img',
-        "img",
-      ]) ?? "https://vk.com/images/camera_200.png";
+    const commenterAvatarUrl = getCommenterAvatarUrlWithFallback(element, [
+      '[data-testid="comment-avatar"] img',
+      "img",
+    ]);
 
     let inspectorInstancePayload: InspectorInstancePayload | undefined;
     if (location) {

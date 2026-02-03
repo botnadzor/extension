@@ -64,7 +64,7 @@ export function renderAnswerBotAction({
   return renderActionButton({
     icons: [
       {
-        id: "userSearch",
+        id: "userPlus",
         kind: "button",
         title: "Вы отвечаете боту, добавить его в карточку?",
         onClick: () => {

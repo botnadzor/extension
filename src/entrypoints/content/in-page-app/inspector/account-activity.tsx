@@ -43,14 +43,14 @@ const advancedCommentTitleMessage = createMessage(
 
 type Comment = NonNullable<
   (ReturnType<typeof useAccountInspection> & {
-    errorKind?: never;
-  })["data"]["comments"]
+    problem?: never;
+  })["classic"]["comments"]
 >[number];
 
 type LikeToBot = NonNullable<
   (ReturnType<typeof useAccountInspection> & {
-    errorKind?: never;
-  })["data"]["likes"]
+    problem?: never;
+  })["classic"]["likes"]
 >[number];
 
 type LikeLink = LikeToBot["links"][number];
@@ -92,20 +92,48 @@ function CommentRow({ comment }: { comment: Comment }) {
           <span>{comment.name}</span>
         </a>
       </div>
+    </>
+  );
+}
 
-      {/* Review */}
-      {comment.mark === undefined ? (
-        <div />
-      ) : (
-        <div
+function ReviewRow({ comment }: { comment: Comment }) {
+  return (
+    <>
+      {/* Colored dot indicator */}
+      <div
+        className="size-2 rounded-full"
+        style={{
+          backgroundColor: comment.color ?? "transparent",
+        }}
+      />
+
+      {/* Star rating */}
+      <div
+        className="
+          flex shrink-0 items-center gap-1 pr-0.5 text-muted-foreground
+        "
+      >
+        <StarIcon className="size-3" />
+        {String(comment.mark)}
+      </div>
+
+      <div className="flex min-w-0 items-center gap-2">
+        <a
+          href={comment.link}
+          target="_blank"
+          rel="noopener noreferrer"
           className="
-            flex shrink-0 items-center gap-1 pr-3.5 text-muted-foreground
+            flex items-center gap-2 overflow-hidden u-link rounded-full pr-1
           "
         >
-          <StarIcon className="size-3" />
-          {String(comment.mark)}
-        </div>
-      )}
+          <span className="size-5 shrink-0 overflow-hidden rounded-full bg-border">
+            {comment.photo && (
+              <img src={comment.photo} alt="" className="size-5 object-cover" />
+            )}
+          </span>
+          <span>{comment.name}</span>
+        </a>
+      </div>
     </>
   );
 }
@@ -254,22 +282,21 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
   const accountInspection = useAccountInspection(vkDomain);
   const authStatus = useAuthStatus();
 
-  if ("errorKind" in accountInspection) {
+  if (accountInspection.problem) {
     return (
       <Placeholder className="bg-destructive/10 text-destructive">
-        Ошибка загрузки данных:{" "}
-        {accountInspection.errorMessage || accountInspection.errorKind}
+        {accountInspection.description || accountInspection.type}
       </Placeholder>
     );
   }
 
-  const data = accountInspection.data;
+  const classicData = accountInspection.classic;
 
-  const hasComments = data.comments && data.comments.length > 0;
-  const hasLikes = data.likes && data.likes.length > 0;
-  const hasReviews = data.reviews && data.reviews.length > 0;
+  const hasComments = classicData.comments && classicData.comments.length > 0;
+  const hasLikes = classicData.likes && classicData.likes.length > 0;
+  const hasReviews = classicData.reviews && classicData.reviews.length > 0;
   const hasCommentsAdvanced =
-    data.commentsAdvanced && data.commentsAdvanced.length > 0;
+    classicData.comments_advanced && classicData.comments_advanced.length > 0;
 
   return (
     <ScrollArea
@@ -288,13 +315,15 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
                   <MessageCircleIcon className="size-4" />
                   <span>
                     {commentTitleMessage.format(
-                      calculateCommentSummary(data.comments),
+                      calculateCommentSummary(
+                        classicData.comments ?? undefined,
+                      ),
                     )}
                   </span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr_auto] items-center gap-2">
-                {data.comments.map((comment, index) => (
+              <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr] items-center gap-2">
+                {classicData.comments?.map((comment, index) => (
                   // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                   <CommentRow key={index} comment={comment} />
                 ))}
@@ -308,12 +337,14 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
                 <div className="flex items-center gap-2.5 text-sm">
                   <ThumbsUpIcon className="size-4" />
                   <span>
-                    {likeTitleMessage.format(calculateLikeSummary(data.likes))}
+                    {likeTitleMessage.format(
+                      calculateLikeSummary(classicData.likes ?? undefined),
+                    )}
                   </span>
                 </div>
               </AccordionTrigger>
               <AccordionContent childClassName="pr-2.5 grid gap-2 grid-cols-[auto_1fr]">
-                {data.likes.map((like, index) => (
+                {classicData.likes?.map((like, index) => (
                   // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                   <LikeRow key={index} like={like} />
                 ))}
@@ -328,15 +359,15 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
                   <StarIcon className="size-4" />
                   <span>
                     {reviewTitleMessage.format(
-                      calculateCommentSummary(data.reviews),
+                      calculateCommentSummary(classicData.reviews ?? undefined),
                     )}
                   </span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr_auto] items-center gap-2">
-                {data.reviews.map((comment, index) => (
+              <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr] items-center gap-2">
+                {classicData.reviews?.map((comment, index) => (
                   // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
-                  <CommentRow key={index} comment={comment} />
+                  <ReviewRow key={index} comment={comment} />
                 ))}
               </AccordionContent>
             </AccordionItem>
@@ -351,13 +382,13 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
                     <MessageSquareTextIcon className="size-4" />
                     <span>
                       {advancedCommentTitleMessage.format({
-                        groupCount: data.commentsAdvanced.length,
+                        groupCount: classicData.comments_advanced?.length ?? 0,
                       })}
                     </span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr_auto] items-center gap-2">
-                  {data.commentsAdvanced.map((comment, index) => (
+                <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr] items-center gap-2">
+                  {classicData.comments_advanced?.map((comment, index) => (
                     // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                     <CommentRow key={index} comment={comment} />
                   ))}

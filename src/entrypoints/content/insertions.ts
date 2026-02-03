@@ -11,6 +11,7 @@ import desktopPagePost from "./insertions/desktop-page-post";
 import desktopPopupPost from "./insertions/desktop-popup-post";
 import desktopPostComment from "./insertions/desktop-post-comment";
 import desktopProfileHeader from "./insertions/desktop-profile-header";
+import desktopReplyButtonPhoto from "./insertions/desktop-reply-button-photo";
 import desktopReplyInputComment from "./insertions/desktop-reply-input-comment";
 import desktopReplyTo from "./insertions/desktop-reply-to";
 import desktopRepostHeader from "./insertions/desktop-repost-header";
@@ -30,6 +31,7 @@ export const insertionLookup: Record<string, Insertion> = {
   desktopPopupPost,
   desktopPostComment,
   desktopProfileHeader,
+  desktopReplyButtonPhoto,
   desktopReplyInputComment,
   desktopReplyTo,
   desktopRepostHeader,

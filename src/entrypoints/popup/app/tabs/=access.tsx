@@ -138,7 +138,7 @@ function UnauthorizedForm({
       </form>
 
       <div className="mt-3 h-lh truncate text-sm text-destructive">
-        {codeIsInvalid && "Код доступа вставлен с ошибкой или просрочен"}
+        {codeIsInvalid && authStatus.errorMessage}
       </div>
 
       <div className="pt-2 text-xs">

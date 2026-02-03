@@ -56,8 +56,8 @@ export function ReportForm({
   >();
   const [submitting, setSubmitting] = React.useState(false);
 
-  const reportingMistake =
-    "data" in accountInspection && accountInspection.data.mark;
+  const reportingInvalidTag =
+    !accountInspection.problem && accountInspection.classic.mark;
 
   const selectElementRef = React.useRef<HTMLButtonElement>(null);
   const textElementRef = React.useRef<HTMLTextAreaElement>(null);
@@ -83,8 +83,10 @@ export function ReportForm({
 
     if (!parsedTagIdSuggestion) {
       setReportSubmission({
-        errorKind: "invalidTagSuggestion",
-        errorMessage: "Выберите подходящую маркировку для этого аккаунта",
+        problem: true,
+        type: "bn:ext:invalid-payload",
+        description: "Выберите подходящую маркировку для этого аккаунта",
+        fields: ["tagSuggestion"],
       });
       return;
     }
@@ -133,13 +135,26 @@ export function ReportForm({
     };
   }, [animateSelect, animateText, reportSubmission]);
 
-  if (reportSubmission && "data" in reportSubmission) {
-    return <Placeholder>{reportSubmission.data.message}</Placeholder>;
+  if (
+    accountInspection.problem &&
+    accountInspection.type !== "bn:ext:not-found" &&
+    accountInspection.type !== "bn:ext:unforeseen-error" &&
+    accountInspection.type !== "bn:ext:local:contract-error"
+  ) {
+    return (
+      <Placeholder className="bg-destructive/10 text-destructive">
+        {accountInspection.description || accountInspection.type}
+      </Placeholder>
+    );
+  }
+
+  if (reportSubmission && !reportSubmission.problem) {
+    return <Placeholder>{reportSubmission.message}</Placeholder>;
   }
 
   if (
     authStatus.state !== "valid" ||
-    !authStatus.permissionLookup.canReportAccount
+    !authStatus.permissionLookup.reportAccount
   ) {
     return (
       <Placeholder>
@@ -169,7 +184,7 @@ export function ReportForm({
       onSubmit={handleSubmit}
     >
       <input type="hidden" value={vkDomain} />
-      {reportingMistake ? (
+      {reportingInvalidTag ? (
         <>
           <div className="pt-1.75 pb-2 pl-3 text-sm text-muted-foreground">
             Аккаунт уже маркирован. Если вы считаете это ошибкой, напишите,
@@ -241,7 +256,7 @@ export function ReportForm({
         {reportSubmission ? (
           <>
             <div className="flex-1 truncate pl-3 text-sm text-destructive">
-              {reportSubmission.errorMessage}
+              {reportSubmission.description}
             </div>
             <Button
               variant="destructive"
@@ -267,7 +282,7 @@ export function ReportForm({
               loading={submitting}
               type="submit"
             >
-              {reportingMistake
+              {reportingInvalidTag
                 ? "Сообщить о неправильной маркировке"
                 : "Отправить"}
               <SendHorizontalIcon className="size-4" />

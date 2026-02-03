@@ -74,8 +74,8 @@ async function handleRegDateResult(
   contentId: ContentId,
   registrationDateAnchor: HTMLElement,
 ): Promise<void> {
-  if ("data" in result) {
-    injectRegDateText(event, result.data, registrationDateAnchor);
+  if (!result.problem) {
+    injectRegDateText(event, result.value, registrationDateAnchor);
     hideRegDateButton(event);
     void notificationService.trigger(contentId, undefined);
 
@@ -85,11 +85,11 @@ async function handleRegDateResult(
   enableRegDateButton(event);
 
   await notificationService.trigger(contentId, {
-    message: result.errorMessage,
+    message: result.description,
     type:
-      result.errorKind === "unauthorized"
+      result.type === "bn:ext:invalid-access-code"
         ? "regDateUnauthorized"
-        : result.errorKind === "missingPermission"
+        : result.type === "bn:ext:missing-permission"
           ? "regDateMissingPermission"
           : "regDateUnavailable",
   });

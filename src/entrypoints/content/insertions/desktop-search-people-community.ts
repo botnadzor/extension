@@ -6,7 +6,7 @@ import { defineInsertion } from "../insertion-basics";
 import {
   applyInlineAffiliationVars,
   clearInlineAffiliationVars,
-  inlineAffiliationStripClasses,
+  inlineAffiliationStripClassListTokens,
 } from "./shared/affiliation-highlight-style";
 import { renderAccountAction } from "./shared/ui-account-action";
 import { renderInlineBadge } from "./shared/ui-badge";
@@ -88,10 +88,13 @@ export default defineInsertion({
     if (accountAffiliation) {
       applyInlineAffiliationVars(element, accountAffiliation.color);
 
-      extraClassListTokens = [
-        ...cnl("bn:px-[2px] bn:pt-[2px]"),
-        ...inlineAffiliationStripClasses,
-      ];
+      extraClassListTokens = cnl(
+        ...inlineAffiliationStripClassListTokens,
+        `
+          bn:mt-[-2px] bn:mr-[-2px] bn:mb-[-5px] bn:px-[2px] bn:pt-[2px]
+          bn:pb-[5px]
+        `,
+      );
 
       element.classList.add(...extraClassListTokens);
 

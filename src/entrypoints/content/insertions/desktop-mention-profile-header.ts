@@ -6,7 +6,7 @@ import { defineInsertion } from "../insertion-basics";
 import {
   applyInlineAffiliationVars,
   clearInlineAffiliationVars,
-  inlineAffiliationStripClasses,
+  inlineAffiliationStripClassListTokens,
 } from "./shared/affiliation-highlight-style";
 import { renderAccountAction } from "./shared/ui-account-action";
 import { renderInlineBadge } from "./shared/ui-badge";
@@ -46,18 +46,18 @@ export default defineInsertion({
     let actionUI: ReturnType<typeof renderAccountAction> | undefined;
     let extraClassListTokens: string[] = [];
 
-    const badgeAnchor = element.querySelector<HTMLElement>(".mention_tt_title");
-    if (!badgeAnchor) {
+    const badgeAnchor = element.querySelector(".mention_tt_title");
+    if (!(badgeAnchor instanceof HTMLElement)) {
       return;
     }
 
     if (accountAffiliation) {
       applyInlineAffiliationVars(badgeAnchor, accountAffiliation.color);
 
-      extraClassListTokens = [
-        ...inlineAffiliationStripClasses,
-        ...cnl("bn:px-[2px] bn:pt-[2px]"),
-      ];
+      extraClassListTokens = cnl(
+        ...inlineAffiliationStripClassListTokens,
+        "bn:mt-[-2px] bn:mr-[-2px] bn:px-[2px] bn:pt-[2px]",
+      );
 
       badgeAnchor.classList.add(...extraClassListTokens);
 

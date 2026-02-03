@@ -271,7 +271,7 @@ export default defineConfig(
     },
   },
   {
-    files: ["*.config.{js,ts}"],
+    files: ["*.config.{js,ts}", "scripts/**"],
     rules: {
       "import/no-default-export": "off",
       "import/no-extraneous-dependencies": [

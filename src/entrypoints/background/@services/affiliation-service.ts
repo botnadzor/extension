@@ -24,7 +24,7 @@ const extraTagsLookup = {
     {
       color: hexColorSchema.parse("#ccccff"),
       type: "accountCategory",
-      id: tagIdSchema.parse("devOnlyNicknamePresent"),
+      id: tagIdSchema.parse("d1000001"),
       name: "Есть никнейм",
     },
   ],
@@ -32,7 +32,7 @@ const extraTagsLookup = {
     {
       color: hexColorSchema.parse("#ccffff"),
       type: "accountCategory",
-      id: tagIdSchema.parse("devOnlyOdd"),
+      id: tagIdSchema.parse("d1000002"),
       name: "ID нечётный",
     },
   ],

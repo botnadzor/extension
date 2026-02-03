@@ -3,7 +3,7 @@ import { createProxyService } from "@webext-core/proxy-service";
 import {
   affiliationServiceKey,
   authServiceKey,
-  commentCollectingServiceKey,
+  collectingServiceKey,
   frontendServiceKey,
   inspectorServiceKey,
   notificationServiceKey,
@@ -15,9 +15,7 @@ import {
 
 export const affiliationService = createProxyService(affiliationServiceKey);
 export const authService = createProxyService(authServiceKey);
-export const commentCollectingService = createProxyService(
-  commentCollectingServiceKey,
-);
+export const collectingService = createProxyService(collectingServiceKey);
 export const frontendService = createProxyService(frontendServiceKey);
 export const inspectorService = createProxyService(inspectorServiceKey);
 export const notificationService = createProxyService(notificationServiceKey);

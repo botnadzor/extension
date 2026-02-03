@@ -13,9 +13,9 @@ import {
   type ContentId,
   contentIdSchema,
   isoTimeSchema,
+  isPositiveVkId,
   type TagSuggestion,
   type VkDomain,
-  type VkId,
 } from "@/shared/@model/primitives";
 import {
   Pollable,
@@ -23,14 +23,16 @@ import {
   type PollVersion,
 } from "@/shared/@pollable/core";
 
-import type { DynamicApiEndpointResponse } from "../@service-helpers/dynamic-api-endpoints";
+import type { DynamicApiEndpointOutcome } from "../@service-helpers/dynamic-api-endpoints";
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
 import type { VkDomainResolver } from "../@service-helpers/vk-domain-resolver";
 import type { AuthService } from "./auth-service";
 import type { NotificationService } from "./notification-service";
 
-export type AccountInspection = DynamicApiEndpointResponse<"inspector">;
-export type ReportSubmission = DynamicApiEndpointResponse<"report">;
+export type ResultOfInspectAccount =
+  DynamicApiEndpointOutcome<"inspectAccount">;
+
+export type ResultOfReportAccount = DynamicApiEndpointOutcome<"reportAccount">;
 
 const inspectorServiceConfigSchema = z.readonly(
   z.object({
@@ -59,15 +61,15 @@ export class InspectorService {
   private readonly notificationService: NotificationService;
   private readonly vkDomainResolver: VkDomainResolver;
 
-  private accountInspectionLookup: Record<VkDomain | VkId, AccountInspection> =
+  private accountInspectionLookup: Record<VkDomain, ResultOfInspectAccount> =
     {};
   private pendingAccountInspectionLookup: Record<
-    VkDomain | VkId,
-    Promise<AccountInspection>
+    VkDomain,
+    Promise<ResultOfInspectAccount>
   > = {};
   private pollableAccountInspectionLookup: Record<
-    VkDomain | VkId,
-    Pollable<AccountInspection>
+    VkDomain,
+    Pollable<ResultOfInspectAccount>
   > = {};
 
   constructor({
@@ -146,7 +148,7 @@ export class InspectorService {
       return;
     }
 
-    if (!authStatus.permissionLookup.canOpenInspector) {
+    if (!authStatus.permissionLookup.inspectAccount) {
       await this.notificationService.trigger(contentId, {
         type: "inspectorMissingPermission",
       });
@@ -178,69 +180,81 @@ export class InspectorService {
     });
   }
 
-  async reinspectAccount(
-    vkDomainOrId: VkDomain | VkId,
-  ): Promise<AccountInspection> {
-    if (this.pendingAccountInspectionLookup[vkDomainOrId]) {
-      return this.pendingAccountInspectionLookup[vkDomainOrId];
+  async reinspectAccount(vkDomain: VkDomain): Promise<ResultOfInspectAccount> {
+    const vkId = await this.vkDomainResolver.resolve(vkDomain);
+    if (!vkId) {
+      return {
+        problem: true,
+        type: "bn:ext:unforeseen-error",
+        description: "Не получилось получить ID аккаунта",
+      };
     }
 
-    const responseBodyPromise =
-      this.authService.fetchFromDynamicApiWithAccessCode("inspector", {
-        vkDomainOrId,
-      });
+    if (!isPositiveVkId(vkId)) {
+      return {
+        problem: true,
+        type: "bn:ext:invalid-payload",
+        description: "Инспектор не поддерживает проверку сообществ",
+        fields: ["vkId"],
+      };
+    }
 
-    this.pendingAccountInspectionLookup[vkDomainOrId] = responseBodyPromise;
+    if (this.pendingAccountInspectionLookup[vkDomain]) {
+      return this.pendingAccountInspectionLookup[vkDomain];
+    }
 
-    const responseBody = await responseBodyPromise;
+    const fetchPromise = this.authService.fetchFromDynamicApiWithAccessCode(
+      "inspectAccount",
+      { vkId },
+    );
 
-    if (Object.hasOwn(this.pendingAccountInspectionLookup, vkDomainOrId)) {
+    this.pendingAccountInspectionLookup[vkDomain] = fetchPromise;
+
+    const outcome = await fetchPromise;
+
+    if (Object.hasOwn(this.pendingAccountInspectionLookup, vkId)) {
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- vkDomain is present based on Object.hasOwn check
-      delete this.pendingAccountInspectionLookup[vkDomainOrId];
+      delete this.pendingAccountInspectionLookup[vkDomain];
     }
 
-    if (
-      "errorKind" in responseBody &&
-      responseBody.errorKind === "unauthorized"
-    ) {
+    if (outcome.problem && outcome.type === "bn:ext:invalid-access-code") {
       void this.authService.checkAuth();
     }
 
-    if ("data" in responseBody) {
-      if (responseBody.data.remainingPermissionLookup) {
+    if (!outcome.problem) {
+      if (outcome.remainingPermissionLookup) {
         this.authService.patchPermissionLookup(
-          responseBody.data.remainingPermissionLookup,
+          outcome.remainingPermissionLookup,
         );
       }
 
-      if (responseBody.data.remainingPoints) {
-        this.authService.patchPointCount(responseBody.data.remainingPoints);
+      if (outcome.remainingPointCount) {
+        this.authService.patchPointCount(outcome.remainingPointCount);
       }
     }
 
-    this.accountInspectionLookup[vkDomainOrId] = responseBody;
-    this.pollableAccountInspectionLookup[vkDomainOrId]?.setValue(responseBody);
+    this.accountInspectionLookup[vkDomain] = outcome;
+    this.pollableAccountInspectionLookup[vkDomain]?.setValue(outcome);
 
-    return responseBody;
+    return outcome;
   }
 
-  async getAccountInspection(vkDomain: VkDomain): Promise<AccountInspection> {
-    const vkDomainOrId =
-      (await this.vkDomainResolver.resolve(vkDomain)) ?? vkDomain;
-
+  async getAccountInspection(
+    vkDomain: VkDomain,
+  ): Promise<ResultOfInspectAccount> {
     return (
-      this.pendingAccountInspectionLookup[vkDomainOrId] ??
-      this.accountInspectionLookup[vkDomainOrId] ??
-      this.reinspectAccount(vkDomainOrId)
+      this.pendingAccountInspectionLookup[vkDomain] ??
+      this.accountInspectionLookup[vkDomain] ??
+      this.reinspectAccount(vkDomain)
     );
   }
 
   async pollAccountInspection(
     lastPollVersion: PollVersion | undefined,
     vkDomain: VkDomain,
-  ): Promise<PollResult<AccountInspection>> {
+  ): Promise<PollResult<ResultOfInspectAccount>> {
     this.pollableAccountInspectionLookup[vkDomain] ??=
-      new Pollable<AccountInspection>(
+      new Pollable<ResultOfInspectAccount>(
         await this.getAccountInspection(vkDomain),
       );
 
@@ -252,51 +266,57 @@ export class InspectorService {
     text: string;
     trigger: InspectorTrigger;
     vkDomain: VkDomain;
-  }): Promise<ReportSubmission> {
+  }): Promise<ResultOfReportAccount> {
     const { vkDomain, tagSuggestion, text, trigger } = payload;
 
     if (text.length < reportTextMinLength) {
       return {
-        errorKind: "invalidText",
-        errorMessage: `Минимальная длина текста: ${reportTextMinLength} символов`,
+        problem: true,
+        type: "bn:ext:invalid-payload",
+        description: `Минимальная длина текста: ${reportTextMinLength} символов`,
+        fields: ["text"],
       };
     }
 
     if (text.length > reportTextMaxLength) {
       return {
-        errorKind: "invalidText",
-        errorMessage: `Максимальная длина текста: ${reportTextMaxLength} символов`,
+        problem: true,
+        type: "bn:ext:invalid-payload",
+        description: `Максимальная длина текста: ${reportTextMaxLength} символов`,
+        fields: ["text"],
       };
     }
 
-    const vkDomainOrId =
-      (await this.vkDomainResolver.resolve(vkDomain)) ?? vkDomain;
+    const vkId = await this.vkDomainResolver.resolve(vkDomain);
+    if (!vkId) {
+      return {
+        problem: true,
+        type: "bn:ext:unforeseen-error",
+        description: "Не получилось получить ID аккаунта",
+      };
+    }
 
-    const responseBody =
-      await this.authService.fetchFromDynamicApiWithAccessCode("report", {
-        link: `https://vk.com/wall${trigger.wallVkId}_${trigger.postVkId}?reply=${trigger.commentVkId}`,
-        text,
-        type: tagSuggestion === "untagged" ? "-1" : tagSuggestion,
-        vkDomainOrId,
-      });
+    const outcome = await this.authService.fetchFromDynamicApiWithAccessCode(
+      "reportAccount",
+      { tagSuggestion, text, trigger, vkId },
+    );
 
-    if ("errorKind" in responseBody) {
-      if (responseBody.errorKind === "unauthorized") {
+    if (outcome.problem) {
+      if (outcome.type === "bn:ext:invalid-access-code") {
         void this.authService.checkAuth();
       }
-      return responseBody;
+
+      return outcome;
     }
 
-    if (responseBody.data.remainingPermissionLookup) {
-      this.authService.patchPermissionLookup(
-        responseBody.data.remainingPermissionLookup,
-      );
+    if (outcome.remainingPermissionLookup) {
+      this.authService.patchPermissionLookup(outcome.remainingPermissionLookup);
     }
 
-    if (responseBody.data.remainingPoints !== undefined) {
-      this.authService.patchPointCount(responseBody.data.remainingPoints);
+    if (outcome.remainingPointCount !== undefined) {
+      this.authService.patchPointCount(outcome.remainingPointCount);
     }
 
-    return { data: { message: responseBody.data.message } };
+    return outcome;
   }
 }

@@ -1,18 +1,18 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import { vkIdSchema } from "@/shared/@model/primitives";
+import { positiveVkIdSchema, vkIdSchema } from "@/shared/@model/primitives";
 import { affiliationService, frontendService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 
 import { defineInsertion } from "../insertion-basics";
 import { extractVkDomainFromAuthorLink } from "./shared/comment-location";
 import {
-  extractCommenterAvatarUrlBySelector,
   extractCommenterNameBySelector,
+  getCommenterAvatarUrlWithFallback,
 } from "./shared/comment-meta";
-import type { CommentLocation } from "./shared/types";
+import type { ReviewLocation } from "./shared/types";
 import { renderCommentUi } from "./shared/ui-comment";
 
-function extractReviewLocation(root: HTMLElement): CommentLocation | undefined {
+function extractReviewLocation(root: HTMLElement): ReviewLocation | undefined {
   const idAttr = root.getAttribute("id");
   if (!idAttr) {
     return;
@@ -31,12 +31,11 @@ function extractReviewLocation(root: HTMLElement): CommentLocation | undefined {
   }
 
   const wallVkId = vkIdSchema.parse(ownerNumber);
-  const reviewVkId = vkIdSchema.parse(reviewNumber);
+  const reviewVkId = positiveVkIdSchema.parse(reviewNumber);
 
   return {
     wallVkId,
-    postVkId: reviewVkId,
-    commentVkId: reviewVkId,
+    reviewVkId,
   };
 }
 
@@ -68,9 +67,7 @@ export default defineInsertion({
       return;
     }
 
-    const nameElement = element.querySelector<HTMLElement>(
-      '[data-testid="review-name"]',
-    );
+    const nameElement = element.querySelector('[data-testid="review-name"]');
     const badgeAnchor = nameElement?.closest("a");
 
     if (!(badgeAnchor instanceof HTMLAnchorElement)) {
@@ -85,11 +82,9 @@ export default defineInsertion({
       return;
     }
 
-    const actionAnchor = element.querySelector<HTMLElement>(
-      '[data-testid="review-reply"]',
-    );
+    const actionAnchor = element.querySelector('[data-testid="review-reply"]');
 
-    if (!actionAnchor) {
+    if (!(actionAnchor instanceof HTMLElement)) {
       return;
     }
 
@@ -102,10 +97,9 @@ export default defineInsertion({
       extractCommenterNameBySelector(element, '[data-testid="review-name"]') ??
       vkDomain;
 
-    const commenterAvatarUrl =
-      extractCommenterAvatarUrlBySelector(element, [
-        '[data-testid="review-avatar-link"] img',
-      ]) ?? "https://vk.com/images/camera_200.png";
+    const commenterAvatarUrl = getCommenterAvatarUrlWithFallback(element, [
+      '[data-testid="review-avatar-link"] img',
+    ]);
 
     let inspectorInstancePayload: InspectorInstancePayload | undefined;
     if (location) {
@@ -116,7 +110,7 @@ export default defineInsertion({
           avatarUrl: commenterAvatarUrl,
         },
         trigger: {
-          type: "comment",
+          type: "review",
           ...location,
         },
       };
