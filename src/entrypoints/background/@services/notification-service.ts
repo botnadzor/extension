@@ -11,8 +11,8 @@ import {
 import {
   type ContentId,
   contentIdSchema,
-  type IsoTime,
-  isoTimeSchema,
+  type IsoDateTime,
+  isoDateTimeSchema,
 } from "@/shared/@model/primitives";
 import {
   Pollable,
@@ -24,10 +24,10 @@ import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
 
 const globalNotificationsStateSchema = z.readonly(
   z.object({
-    welcomeMessageShownAt: z.exactOptional(isoTimeSchema),
-    welcomeMessageReadAt: z.exactOptional(isoTimeSchema),
+    welcomeMessageShownAt: z.exactOptional(isoDateTimeSchema),
+    welcomeMessageReadAt: z.exactOptional(isoDateTimeSchema),
     announcementReadAtByCreatedAt: z.readonly(
-      z._default(z.record(z.string(), isoTimeSchema), {}),
+      z._default(z.record(z.string(), isoDateTimeSchema), {}),
     ),
   }),
 );
@@ -123,7 +123,7 @@ export class NotificationService {
     }
 
     const newValue = payload
-      ? { ...payload, triggeredAt: isoTimeSchema.parse(new Date()) }
+      ? { ...payload, triggeredAt: isoDateTimeSchema.parse(new Date()) }
       : undefined;
 
     pollableTriggeredNotification.setValue(newValue);
@@ -165,19 +165,19 @@ export class NotificationService {
 
   markWelcomeAnnouncementAsShown(): void {
     this.updateGlobalNotificationsState((draft) => {
-      draft.welcomeMessageShownAt = isoTimeSchema.parse(new Date());
+      draft.welcomeMessageShownAt = isoDateTimeSchema.parse(new Date());
     });
   }
 
   markWelcomeAnnouncementAsRead(): void {
     this.updateGlobalNotificationsState((draft) => {
-      draft.welcomeMessageReadAt = isoTimeSchema.parse(new Date());
+      draft.welcomeMessageReadAt = isoDateTimeSchema.parse(new Date());
     });
   }
 
-  markAnnouncementAsRead(createdAt: IsoTime): void {
+  markAnnouncementAsRead(createdAt: IsoDateTime): void {
     this.updateGlobalNotificationsState((draft) => {
-      draft.announcementReadAtByCreatedAt[createdAt] = isoTimeSchema.parse(
+      draft.announcementReadAtByCreatedAt[createdAt] = isoDateTimeSchema.parse(
         new Date(),
       );
     });

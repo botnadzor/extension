@@ -12,7 +12,7 @@ import {
 import {
   type ContentId,
   contentIdSchema,
-  isoTimeSchema,
+  isoDateTimeSchema,
   isPositiveVkId,
   type TagSuggestion,
   type VkDomain,
@@ -161,7 +161,7 @@ export class InspectorService {
       this.setInstanceConfig(contentId, {
         ...payload,
         tab: "activity",
-        triggeredAt: isoTimeSchema.parse(new Date()),
+        triggeredAt: isoDateTimeSchema.parse(new Date()),
       }),
     ]);
   }

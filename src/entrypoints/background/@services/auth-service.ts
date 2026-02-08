@@ -7,7 +7,7 @@ import {
   type AuthStatus,
   type PermissionLookup,
 } from "@/shared/@model/auth";
-import { isoTimeSchema } from "@/shared/@model/primitives";
+import { isoDateTimeSchema } from "@/shared/@model/primitives";
 import {
   Pollable,
   type PollResult,
@@ -39,7 +39,7 @@ const authInputStore = defineStoreWithSchema(
 
 const defaultAuthInput: AuthInput = {
   accessCode: "",
-  accessCodeEnteredAt: isoTimeSchema.parse(new Date(0)),
+  accessCodeEnteredAt: isoDateTimeSchema.parse(new Date(0)),
 };
 
 export class AuthService {
@@ -130,7 +130,7 @@ export class AuthService {
 
     this.pollableAuthCheck.setValue({
       state: "ongoing",
-      startedAt: isoTimeSchema.parse(new Date()),
+      startedAt: isoDateTimeSchema.parse(new Date()),
     });
 
     const authInput = await this.getAuthInput();
@@ -181,7 +181,7 @@ export class AuthService {
       accessCode: accessCode
         .slice(0, 1000) // mitigate accidental pastes of large strings
         .trim(),
-      accessCodeEnteredAt: isoTimeSchema.parse(new Date()),
+      accessCodeEnteredAt: isoDateTimeSchema.parse(new Date()),
     });
     void this.checkAuth();
   }
@@ -215,9 +215,13 @@ export class AuthService {
     }
 
     if (error) {
-      logger.error("Failed to fetch from dynamic API: {error}", {
-        error,
-      });
+      logger.error(
+        "Failed to fetch from dynamic API: {error}\nIssues: {issues}",
+        {
+          error,
+          issues: "issues" in error ? error.issues : undefined,
+        },
+      );
 
       return {
         problem: true,

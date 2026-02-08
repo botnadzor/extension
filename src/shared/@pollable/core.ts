@@ -1,4 +1,4 @@
-import { isEqual } from "es-toolkit";
+import { delay, isEqual } from "es-toolkit";
 import type { JsonValue, Tagged } from "type-fest";
 
 /**
@@ -12,17 +12,24 @@ export type PollResult<Value extends JsonValue | undefined> = Readonly<{
 }>;
 
 /**
- * Wraps a value and makes it pollable. Each call to .set(value) is internally
- * versioned. Calling .poll(lastPollVersion) immediately returns the current value
- * the provided version is smaller than the current version. Otherwise the method
- * returns a promise. It resolves to the new value when a new version is produced.
+ * Wraps a value and exposes a pollable interface. Each call to
+ * .setValue(newValue) updates the value and advances its internal version
+ * if the new value is structurally different from the current value.
  *
- * Pollable structure is used inside services to watch for updates in outer services.
- * It also helps implement React hooks with real-time data from the background worker.
+ * Using .poll(lastPollVersion) immediately returns the current value if
+ * lastPollVersion is undefined or less than the current version. Otherwise,
+ * .poll returns a promise that resolves either when a new version is set or
+ * after a 60-second timeout (whichever comes first). This timeout ensures
+ * subscribers regularly re-issue poll requests and helps detect stale data.
+ *
+ * Pollable is typically used within services to monitor updates from
+ * external dependencies, and is also useful for implementing React hooks
+ * that consume real-time data from the background worker.
  */
 export class Pollable<Value extends JsonValue | undefined> {
   private current: PollResult<Value>;
   private future: PromiseWithResolvers<PollResult<Value>>;
+  private maxPollDurationInMs: number = 60 * 1000;
 
   constructor(value: Value) {
     this.current = {
@@ -56,9 +63,16 @@ export class Pollable<Value extends JsonValue | undefined> {
   public async poll(
     lastPollVersion: PollVersion | undefined,
   ): Promise<PollResult<Value>> {
-    return lastPollVersion === undefined ||
+    if (
+      lastPollVersion === undefined ||
       lastPollVersion < this.current.version
-      ? this.current
-      : this.future.promise;
+    ) {
+      return this.current;
+    }
+
+    return await Promise.race([
+      this.future.promise,
+      delay(this.maxPollDurationInMs).then(() => this.current),
+    ]);
   }
 }

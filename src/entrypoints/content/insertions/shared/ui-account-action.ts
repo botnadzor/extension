@@ -3,10 +3,10 @@ import type { InspectorInstancePayload } from "@/shared/@model/inspector";
 import type {
   ContentId,
   IsoDate,
-  IsoTime,
+  IsoDateTime,
   VkDomain,
 } from "@/shared/@model/primitives";
-import { formatTimeOrDate } from "@/shared/formatting";
+import { formatDateWithOptionalTime } from "@/shared/formatting";
 import {
   inspectorService,
   notificationService,
@@ -56,10 +56,10 @@ function hideRegDateButton(event: MouseEvent): void {
 
 function injectRegDateText(
   event: MouseEvent,
-  regDate: IsoDate | IsoTime,
+  regDate: IsoDate | IsoDateTime,
   registrationDateAnchor: HTMLElement,
 ): void {
-  const formattedDate = formatTimeOrDate(regDate).split(" ")[0];
+  const formattedDate = formatDateWithOptionalTime(regDate).split(" ")[0];
   const injectionTextContent = `Дата регистрации: ${formattedDate}`;
 
   const paragraph = document.createElement("p");

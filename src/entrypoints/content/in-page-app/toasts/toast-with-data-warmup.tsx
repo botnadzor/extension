@@ -1,14 +1,14 @@
 import { clamp, round } from "es-toolkit";
 import * as React from "react";
+import type { JsonValue } from "type-fest";
 
-import type { ConfigValue } from "@/shared/@model/primitives";
 import { useStaticListMetadata } from "@/shared/@ui-helpers/data-hooks";
-import { notificationService } from "@/shared/proxy-services";
 
-import { useContentId } from "../../content-id-context";
 import { Toast } from "./toast";
 
-function extractItemCountFromRawSummary(summary: ConfigValue): number {
+function extractItemCountFromRawSummary(
+  summary: JsonValue | undefined,
+): number {
   if (summary && typeof summary === "object") {
     const itemCount = "itemCount" in summary ? summary["itemCount"] : undefined;
     if (itemCount && typeof itemCount === "number") {
@@ -19,7 +19,6 @@ function extractItemCountFromRawSummary(summary: ConfigValue): number {
 }
 
 export function ToastWithDataWarmup({ onClose }: { onClose: () => void }) {
-  const contentId = useContentId();
   const tagsMetadata = useStaticListMetadata("tags");
   const accountsMetadata = useStaticListMetadata("accounts");
 
@@ -27,12 +26,9 @@ export function ToastWithDataWarmup({ onClose }: { onClose: () => void }) {
 
   React.useEffect(() => {
     if (done) {
-      void notificationService.trigger(contentId, {
-        type: "dataWarmupComplete",
-      });
       onClose();
     }
-  }, [done, contentId, onClose]);
+  }, [done, onClose]);
 
   const nextExpectedItemCount =
     (accountsMetadata.next?.upstreamInfo.itemCount ?? 0) +

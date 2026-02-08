@@ -2,7 +2,7 @@ import { EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react";
 import * as React from "react";
 
 import type { AuthCheck, AuthStatus } from "@/shared/@model/auth";
-import { isoTimeSchema } from "@/shared/@model/primitives";
+import { isoDateTimeSchema } from "@/shared/@model/primitives";
 import {
   useAuthCheck,
   useAuthStatus,
@@ -11,7 +11,7 @@ import {
 import { useAnimate } from "@/shared/@ui-helpers/use-animate";
 import { Button } from "@/shared/@ui-primitives/button";
 import { ButtonWithLoadingState } from "@/shared/@ui-primitives/button-with-loading-state";
-import { formatInt, formatTime } from "@/shared/formatting";
+import { formatDateTime, formatInt } from "@/shared/formatting";
 import { authService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 
@@ -47,7 +47,7 @@ function UnauthorizedForm({
     unsavedAccessCode === authStatus.accessCode;
 
   const authCheckRef = React.useRef<AuthCheck>(authCheck);
-  const [mountedAt] = React.useState(isoTimeSchema.parse(undefined));
+  const [mountedAt] = React.useState(isoDateTimeSchema.parse(undefined));
 
   React.useEffect(() => {
     if (
@@ -185,7 +185,7 @@ function AuthorizedForm({
       >
         <p>Код доступа установлен</p>
         {authStatus.expiresAt && (
-          <p>Код работает до {formatTime(authStatus.expiresAt)}</p>
+          <p>Код работает до {formatDateTime(authStatus.expiresAt)}</p>
         )}
         <p>Уровень доступа: {authStatus.accessLevel}</p>
         <p>Очки: {formatInt(authStatus.pointCount)}</p>

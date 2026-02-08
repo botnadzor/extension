@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { isoTimeSchema } from "@/shared/@model/primitives";
+import { isoDateTimeSchema } from "@/shared/@model/primitives";
 
 /*
  * Naming is inspired by https://www.rfc-editor.org/rfc/rfc9457.html
@@ -42,7 +42,7 @@ export const problemSchemaForRateLimited = z.object({
   problem: z.literal(true),
   type: z.literal("bn:ext:rate-limited"),
   description: z.string(),
-  waitUntil: z.exactOptional(isoTimeSchema),
+  waitUntil: z.exactOptional(isoDateTimeSchema),
 });
 
 export const problemSchemaForRejected = z.object({

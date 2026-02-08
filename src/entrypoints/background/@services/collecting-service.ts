@@ -4,7 +4,7 @@ import { LRUCache } from "lru-cache";
 import { z } from "zod/mini";
 
 import {
-  isoTimeSchema,
+  isoDateTimeSchema,
   type PositiveVkId,
   positiveVkIdSchema,
   type VkDomain,
@@ -26,14 +26,14 @@ const logger = getBackgroundLogger(["collecting-service"]);
 /** Maximum number of wallVkIds to keep in service cache */
 const wallSkippedCacheMaxSize = 1000;
 
-/** Idle time between comment collection and persisting to IndexedDB */
-const persistingDebounceTimeout = 5000;
+/** Interval between persist operations */
+const persistingThrottleInterval = 5000;
 /** Maximum number of comments to keep in IndexedDB before pruning the oldest ones */
 const persistedCommentMaxCount = 10_000;
 
-/** Idle time between persisting and uploading */
-const uploadingDebounceTimeout = 30_000;
-const uploadedCommentsMinCount = 50;
+/** Interval between upload operations */
+const uploadingThrottleInterval = 5 * 60 * 1000;
+const uploadedCommentsMinCount = 5;
 const uploadedCommentsMaxCount = 1000;
 
 /** Idle time between user opting out and service reset (users may opt out and then quickly opt back in) */
@@ -61,14 +61,14 @@ type CommentToCollect = {
 };
 
 const notUploaded = "-";
-const uploadedAtSchema = z.union([z.literal(notUploaded), isoTimeSchema]);
+const uploadedAtSchema = z.union([z.literal(notUploaded), isoDateTimeSchema]);
 
 const persistedCommentSchema = z.object({
   wallVkId: vkIdSchema,
   postVkId: positiveVkIdSchema,
   commentVkId: positiveVkIdSchema,
   commenterVkDomain: vkDomainSchema,
-  persistedAt: isoTimeSchema,
+  persistedAt: isoDateTimeSchema,
   uploadedAt: uploadedAtSchema,
 });
 type PersistedComment = z.infer<typeof persistedCommentSchema>;
@@ -77,7 +77,7 @@ const persistedPostSchema = z.object({
   wallVkId: vkIdSchema,
   postVkId: positiveVkIdSchema,
   postCommentCount: z.number(),
-  persistedAt: isoTimeSchema,
+  persistedAt: isoDateTimeSchema,
 });
 type PersistedPost = z.infer<typeof persistedPostSchema>;
 
@@ -93,8 +93,8 @@ export class CollectingService {
 
   private notYetPersistedComments: CommentToCollect[] = [];
 
-  private persistingDebounceTimeout: ReturnType<typeof setTimeout> | undefined;
-  private uploadingDebounceTimeout: ReturnType<typeof setTimeout> | undefined;
+  private persistingThrottleTimeout: ReturnType<typeof setTimeout> | undefined;
+  private uploadingThrottleTimeout: ReturnType<typeof setTimeout> | undefined;
   private resettingDebounceTimeout: ReturnType<typeof setTimeout> | undefined;
 
   private state: "idle" | "persisting" | "uploading" | "pruning" | "resetting" =
@@ -130,7 +130,11 @@ export class CollectingService {
       while (!this.disposed) {
         const result = await userConfigService.poll(lastPollVersion);
         const { collectingComments } = result.value;
-        if (!collectingComments) {
+        if (lastPollVersion === result.version) {
+          continue;
+        }
+
+        if (!collectingComments && this.cachedUserOptedIn !== false) {
           this.resetWithDebounce();
         }
         this.cachedUserOptedIn = undefined;
@@ -159,7 +163,7 @@ export class CollectingService {
       }
     })();
 
-    this.uploadPersistedCommentsWithDebounce();
+    void this.uploadPersistedCommentsIfNeeded();
   }
 
   [Symbol.dispose](): void {
@@ -305,17 +309,17 @@ export class CollectingService {
       commentSlug,
     });
 
-    this.persistRegisteredCommentsWithDebounce();
+    this.scheduleNextPersist();
   }
 
-  private persistRegisteredCommentsWithDebounce(): void {
-    if (this.persistingDebounceTimeout) {
-      clearTimeout(this.persistingDebounceTimeout);
+  private scheduleNextPersist(): void {
+    if (this.persistingThrottleTimeout) {
+      return; // Already scheduled
     }
-    this.persistingDebounceTimeout = setTimeout(
-      () => void this.persistRegisteredCommentsIfNeeded(),
-      persistingDebounceTimeout,
-    );
+    this.persistingThrottleTimeout = setTimeout(() => {
+      this.persistingThrottleTimeout = undefined;
+      void this.persistRegisteredCommentsIfNeeded();
+    }, persistingThrottleInterval);
   }
 
   async persistRegisteredCommentsIfNeeded(): Promise<void> {
@@ -327,7 +331,7 @@ export class CollectingService {
 
     this.state = "persisting";
 
-    const persistedAt = isoTimeSchema.parse(undefined);
+    const persistedAt = isoDateTimeSchema.parse(undefined);
     const commentsTable = this.getCommentsTable();
     const postsTable = this.getPostsTable();
 
@@ -405,17 +409,17 @@ export class CollectingService {
 
     this.state = "idle";
 
-    this.uploadPersistedCommentsWithDebounce();
+    this.scheduleNextUpload();
   }
 
-  private uploadPersistedCommentsWithDebounce(): void {
-    if (this.uploadingDebounceTimeout) {
-      clearTimeout(this.uploadingDebounceTimeout);
+  private scheduleNextUpload(): void {
+    if (this.uploadingThrottleTimeout) {
+      return; // Already scheduled
     }
-    this.uploadingDebounceTimeout = setTimeout(
-      () => void this.uploadPersistedCommentsIfNeeded(),
-      uploadingDebounceTimeout,
-    );
+    this.uploadingThrottleTimeout = setTimeout(() => {
+      this.uploadingThrottleTimeout = undefined;
+      void this.uploadPersistedCommentsIfNeeded();
+    }, uploadingThrottleInterval);
   }
 
   async uploadPersistedCommentsIfNeeded(): Promise<void> {
@@ -426,8 +430,7 @@ export class CollectingService {
     const commentsTable = this.getCommentsTable();
     const postsTable = this.getPostsTable();
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- loop until break
-    while (true) {
+    for (;;) {
       // Get comments without uploadedAt, ordered by persistedAt (oldest first)
       // We query by persistedAt index and filter out those already uploaded
 
@@ -527,7 +530,7 @@ export class CollectingService {
 
       // Mark comments as uploaded
 
-      const uploadedAt = isoTimeSchema.parse(undefined);
+      const uploadedAt = isoDateTimeSchema.parse(undefined);
       const bulkUpdateKeysAndChanges: Array<{
         key: [VkId, PositiveVkId, PositiveVkId];
         changes: { uploadedAt: string };

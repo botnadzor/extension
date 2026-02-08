@@ -15,17 +15,15 @@ export function createChartShell(
   initialInfoText: string,
 ): ChartDomShell {
   const wrapper = document.createElement("div");
-  wrapper.className = cn(`
-    bn:mt-4 bn:mb-8 bn:box-border bn:block bn:h-[260px] bn:w-full
-  `);
+  wrapper.className = `
+    bn:mt-4 bn:mb-8 bn:box-border bn:block bn:w-full
+  `;
 
   const canvas = document.createElement("canvas");
   canvas.className = cn("bn:box-border bn:block bn:size-full");
 
   const info = document.createElement("div");
-  info.className = cn(
-    "bn:mt-0 bn:ml-4 bn:text-[13px] bn:leading-snug bn:text-foreground",
-  );
+  info.className = cn("bn:mt-0 bn:ml-4 bn:text-sm/snug bn:text-foreground");
 
   const infoText = document.createElement("span");
   infoText.textContent = initialInfoText;
@@ -56,8 +54,16 @@ export function createChartShell(
       const loadMoreButton = document.querySelector<HTMLButtonElement>(
         "button.ui_load_more_btn",
       );
+
       if (loadMoreButton) {
         loadMoreButton.click();
+      } else {
+        if (host.lastChild && host.lastChild instanceof HTMLElement) {
+          host.lastChild.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+          });
+        }
       }
     }, 1000);
   }
@@ -87,7 +93,13 @@ export function createChartShell(
 
   info.append(infoText, document.createElement("br"), infoButton);
 
-  wrapper.append(canvas);
+  const canvasWrapper = document.createElement("div");
+  canvasWrapper.className = cn(`
+    bn:mt-4 bn:mb-8 bn:box-border bn:block bn:h-[260px] bn:w-full
+  `);
+  canvasWrapper.append(canvas);
+
+  wrapper.append(canvasWrapper);
   wrapper.append(info);
   host.before(wrapper);
 
@@ -116,18 +128,21 @@ export function observeFansRowsUpdates(
   root: Element,
   onChange: () => Promise<void> | void,
 ): () => void {
+  const changed = new Set();
+
   const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.addedNodes.length > 0) {
-        void onChange();
-        break;
-      }
+    for (const m of mutations) {
+      changed.add(m.target);
     }
+    queueMicrotask(() => {
+      void onChange();
+      changed.clear();
+    });
   });
 
   observer.observe(root, {
     childList: true,
-    subtree: true,
+    subtree: false,
   });
 
   return () => {

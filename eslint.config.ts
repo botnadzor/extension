@@ -2,6 +2,7 @@ import eslintJs from "@eslint/js";
 import eslintPluginEslintCommentsConfigs from "@eslint-community/eslint-plugin-eslint-comments/configs";
 import eslintReactEslintPlugin from "@eslint-react/eslint-plugin";
 import eslintPluginStylistic from "@stylistic/eslint-plugin";
+import type { Linter } from "eslint";
 import { defineConfig } from "eslint/config";
 import eslintPluginBetterTailwindcss from "eslint-plugin-better-tailwindcss";
 import { getDefaultCallees } from "eslint-plugin-better-tailwindcss/api/defaults";
@@ -16,6 +17,16 @@ import eslintPluginRegexp from "eslint-plugin-regexp";
 import eslintPluginSimpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import typescriptEslint from "typescript-eslint";
+
+const ruleArgsForNoRestrictedSyntax = [
+  "warn",
+  {
+    selector:
+      "CallExpression[callee.object.name='z'][callee.property.name='optional']",
+    message:
+      "Use `z.exactOptional` instead to avoid setting `{ someKey: undefined }` (the key is lost when serialized to JSON and Object.keys can work unreliably).",
+  },
+] satisfies Linter.RuleSeverityAndOptions<unknown[]>;
 
 export default defineConfig(
   {
@@ -36,18 +47,12 @@ export default defineConfig(
       "no-implicit-coercion": "error",
       "no-param-reassign": "error",
       "no-restricted-syntax": [
-        "warn",
+        ...ruleArgsForNoRestrictedSyntax,
         {
           selector:
             "ThrowStatement:not(TryStatement > BlockStatement ThrowStatement)",
           message:
             "Avoid throwing errors that are not handled locally. Avoid using `throw` or wrap it with `try/catch` within the same function. To report errors, use `{ success: false, ...errorDetails }` for type safety. This helps avoid 'happy path blindness'.",
-        },
-        {
-          selector:
-            "CallExpression[callee.object.name='z'][callee.property.name='optional']",
-          message:
-            "Use `z.exactOptional` instead to avoid setting `{ someKey: undefined }` (the key is lost when serialized to JSON and Object.keys can work unreliably).",
         },
       ],
       "no-useless-rename": "warn",
@@ -273,6 +278,8 @@ export default defineConfig(
   {
     files: ["*.config.{js,ts}", "scripts/**"],
     rules: {
+      "no-restricted-syntax": ruleArgsForNoRestrictedSyntax,
+
       "import/no-default-export": "off",
       "import/no-extraneous-dependencies": [
         "error",

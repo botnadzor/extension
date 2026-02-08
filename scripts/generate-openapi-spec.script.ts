@@ -15,7 +15,7 @@ import { inspectorTriggerSchema } from "@/shared/@model/inspector";
 import {
   accessCodeSchema,
   isoDateSchema,
-  isoTimeSchema,
+  isoDateTimeSchema,
   positiveVkIdSchema,
   vkDomainSchema,
   vkIdSchema,
@@ -47,7 +47,7 @@ async function main() {
       AccessCode: { schema: accessCodeSchema },
       InspectorTrigger: { schema: inspectorTriggerSchema },
       IsoDate: { schema: isoDateSchema },
-      IsoTime: { schema: isoTimeSchema },
+      IsoDateTime: { schema: isoDateTimeSchema },
       PositiveVkId: { schema: positiveVkIdSchema },
       VkDomain: { schema: vkDomainSchema },
       VkId: { schema: vkIdSchema },

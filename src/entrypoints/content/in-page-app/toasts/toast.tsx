@@ -1,7 +1,7 @@
 import { XIcon } from "lucide-react";
 import * as React from "react";
 
-import type { IsoTime } from "@/shared/@model/primitives";
+import type { IsoDateTime } from "@/shared/@model/primitives";
 import { useAnimate } from "@/shared/@ui-helpers/use-animate";
 import { Button } from "@/shared/@ui-primitives/button";
 import { cn } from "@/shared/tailwindcss-helpers";
@@ -17,12 +17,12 @@ export function Toast({
   extensionName?: "short" | "default";
   header?: React.ReactNode;
   onClose?: (() => void) | undefined;
-  triggeredAt?: IsoTime | undefined;
+  triggeredAt?: IsoDateTime | undefined;
 }) {
   const [triggeredForTheFirstTime, setTriggeredForTheFirstTime] =
     React.useState(true);
   const [lastTriggeredAt, setLastTriggeredAt] = React.useState<
-    IsoTime | undefined
+    IsoDateTime | undefined
   >(triggeredAt);
 
   const { animationClassName, animate } = useAnimate();

@@ -3,8 +3,8 @@ import { LRUCache } from "lru-cache";
 
 import {
   type IsoDate,
-  type IsoTime,
-  isoTimeSchema,
+  type IsoDateTime,
+  isoDateTimeSchema,
   isPositiveVkId,
   type PositiveVkId,
 } from "@/shared/@model/primitives";
@@ -16,13 +16,13 @@ import type { AuthService } from "./auth-service";
 const symbolForPending = Symbol("pending");
 
 type RegDateInfo = DynamicApiEndpointOutcome<"getRegDate"> & {
-  checkedAt: IsoTime;
+  checkedAt: IsoDateTime;
 };
 
 type CachedRegDateInfo =
   | {
-      value: IsoDate | IsoTime;
-      checkedAt: IsoTime;
+      value: IsoDate | IsoDateTime;
+      checkedAt: IsoDateTime;
     }
   | typeof symbolForPending;
 
@@ -60,7 +60,7 @@ export class RegDateService {
 
     if (!vkId) {
       return {
-        checkedAt: isoTimeSchema.parse(undefined),
+        checkedAt: isoDateTimeSchema.parse(undefined),
 
         problem: true,
         type: "bn:ext:invalid-payload",
@@ -71,7 +71,7 @@ export class RegDateService {
 
     if (!isPositiveVkId(vkId)) {
       return {
-        checkedAt: isoTimeSchema.parse(undefined),
+        checkedAt: isoDateTimeSchema.parse(undefined),
 
         problem: true,
         type: "bn:ext:invalid-payload",
@@ -83,7 +83,7 @@ export class RegDateService {
     const authStatus = this.authService.getAuthStatus();
     if (authStatus.state !== "valid") {
       return {
-        checkedAt: isoTimeSchema.parse(undefined),
+        checkedAt: isoDateTimeSchema.parse(undefined),
 
         problem: true,
         type: "bn:ext:invalid-access-code",
@@ -93,7 +93,7 @@ export class RegDateService {
 
     if (!authStatus.permissionLookup.getRegDate) {
       return {
-        checkedAt: isoTimeSchema.parse(undefined),
+        checkedAt: isoDateTimeSchema.parse(undefined),
 
         problem: true,
         type: "bn:ext:missing-permission",
@@ -114,7 +114,7 @@ export class RegDateService {
       { vkId },
     );
 
-    const checkedAt = isoTimeSchema.parse(undefined);
+    const checkedAt = isoDateTimeSchema.parse(undefined);
 
     if (!outcome.problem) {
       const info = {

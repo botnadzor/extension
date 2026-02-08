@@ -1,9 +1,9 @@
 import {
   ChevronDownIcon,
-  MessageCircleIcon,
-  MessageSquareTextIcon,
+  HeartIcon,
+  MessageSquareMoreIcon,
+  MessageSquarePlusIcon,
   StarIcon,
-  ThumbsUpIcon,
 } from "lucide-react";
 import * as React from "react";
 
@@ -38,19 +38,19 @@ const likeTitleMessage = createMessage(
 );
 
 const advancedCommentTitleMessage = createMessage(
-  "Комментарии в {groupCount, plural, one {# группе} other {# группах}} (уровень 4)",
+  "Комментарии в {groupCount, plural, one {# другой группе} other {# других группах}} (уровень 4)",
 );
 
 type Comment = NonNullable<
   (ReturnType<typeof useAccountInspection> & {
     problem?: never;
-  })["classic"]["comments"]
+  })["legacy"]["comments"]
 >[number];
 
 type LikeToBot = NonNullable<
   (ReturnType<typeof useAccountInspection> & {
     problem?: never;
-  })["classic"]["likes"]
+  })["legacy"]["likes"]
 >[number];
 
 type LikeLink = LikeToBot["links"][number];
@@ -61,9 +61,8 @@ function CommentRow({ comment }: { comment: Comment }) {
       {/* Colored dot indicator */}
       <div
         className="size-2 rounded-full"
-        style={{
-          backgroundColor: comment.color ?? "transparent",
-        }}
+        title={comment.reg_name ?? undefined}
+        style={comment.color ? { backgroundColor: comment.color } : undefined}
       />
 
       {/* Auto-sized count, right-aligned */}
@@ -102,6 +101,7 @@ function ReviewRow({ comment }: { comment: Comment }) {
       {/* Colored dot indicator */}
       <div
         className="size-2 rounded-full"
+        title={comment.reg_name ?? undefined}
         style={{
           backgroundColor: comment.color ?? "transparent",
         }}
@@ -290,13 +290,13 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
     );
   }
 
-  const classicData = accountInspection.classic;
+  const legacyData = accountInspection.legacy;
 
-  const hasComments = classicData.comments && classicData.comments.length > 0;
-  const hasLikes = classicData.likes && classicData.likes.length > 0;
-  const hasReviews = classicData.reviews && classicData.reviews.length > 0;
+  const hasComments = legacyData.comments && legacyData.comments.length > 0;
+  const hasLikes = legacyData.likes && legacyData.likes.length > 0;
+  const hasReviews = legacyData.reviews && legacyData.reviews.length > 0;
   const hasCommentsAdvanced =
-    classicData.comments_advanced && classicData.comments_advanced.length > 0;
+    legacyData.comments_advanced && legacyData.comments_advanced.length > 0;
 
   return (
     <ScrollArea
@@ -312,18 +312,16 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
             <AccordionItem value="comments">
               <AccordionTrigger>
                 <div className="flex items-center gap-2.5 text-sm">
-                  <MessageCircleIcon className="size-4" />
+                  <MessageSquareMoreIcon className="size-4" />
                   <span>
                     {commentTitleMessage.format(
-                      calculateCommentSummary(
-                        classicData.comments ?? undefined,
-                      ),
+                      calculateCommentSummary(legacyData.comments ?? undefined),
                     )}
                   </span>
                 </div>
               </AccordionTrigger>
               <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr] items-center gap-2">
-                {classicData.comments?.map((comment, index) => (
+                {legacyData.comments?.map((comment, index) => (
                   // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                   <CommentRow key={index} comment={comment} />
                 ))}
@@ -335,16 +333,16 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
             <AccordionItem value="likes">
               <AccordionTrigger>
                 <div className="flex items-center gap-2.5 text-sm">
-                  <ThumbsUpIcon className="size-4" />
+                  <HeartIcon className="size-4" />
                   <span>
                     {likeTitleMessage.format(
-                      calculateLikeSummary(classicData.likes ?? undefined),
+                      calculateLikeSummary(legacyData.likes ?? undefined),
                     )}
                   </span>
                 </div>
               </AccordionTrigger>
               <AccordionContent childClassName="pr-2.5 grid gap-2 grid-cols-[auto_1fr]">
-                {classicData.likes?.map((like, index) => (
+                {legacyData.likes?.map((like, index) => (
                   // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                   <LikeRow key={index} like={like} />
                 ))}
@@ -359,13 +357,13 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
                   <StarIcon className="size-4" />
                   <span>
                     {reviewTitleMessage.format(
-                      calculateCommentSummary(classicData.reviews ?? undefined),
+                      calculateCommentSummary(legacyData.reviews ?? undefined),
                     )}
                   </span>
                 </div>
               </AccordionTrigger>
               <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr] items-center gap-2">
-                {classicData.reviews?.map((comment, index) => (
+                {legacyData.reviews?.map((comment, index) => (
                   // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                   <ReviewRow key={index} comment={comment} />
                 ))}
@@ -379,16 +377,16 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
               <AccordionItem value="comments-advanced">
                 <AccordionTrigger>
                   <div className="flex items-center gap-2.5 text-sm">
-                    <MessageSquareTextIcon className="size-4" />
+                    <MessageSquarePlusIcon className="size-4" />
                     <span>
                       {advancedCommentTitleMessage.format({
-                        groupCount: classicData.comments_advanced?.length ?? 0,
+                        groupCount: legacyData.comments_advanced?.length ?? 0,
                       })}
                     </span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr] items-center gap-2">
-                  {classicData.comments_advanced?.map((comment, index) => (
+                  {legacyData.comments_advanced?.map((comment, index) => (
                     // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
                     <CommentRow key={index} comment={comment} />
                   ))}

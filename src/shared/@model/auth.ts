@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { type IsoTime, isoTimeSchema } from "./primitives";
+import { type IsoDateTime, isoDateTimeSchema } from "./primitives";
 
 export const permissionLookupSchema = z.readonly(
   z.object({
@@ -14,7 +14,7 @@ export type PermissionLookup = z.infer<typeof permissionLookupSchema>;
 export const authInputSchema = z.readonly(
   z.object({
     accessCode: z.string(),
-    accessCodeEnteredAt: isoTimeSchema,
+    accessCodeEnteredAt: isoDateTimeSchema,
   }),
 );
 
@@ -24,18 +24,18 @@ export type AuthStatus =
   | {
       state: "empty";
       accessCode: string;
-      accessCodeEnteredAt: IsoTime;
+      accessCodeEnteredAt: IsoDateTime;
     }
   | {
       state: "invalid";
       accessCode: string;
-      accessCodeEnteredAt: IsoTime;
+      accessCodeEnteredAt: IsoDateTime;
       accessCodeRecognized: boolean;
       errorMessage: string;
     }
   | {
       state: "valid";
-      expiresAt?: IsoTime;
+      expiresAt?: IsoDateTime;
       accessLevel: number;
       pointCount: number;
       permissionLookup: PermissionLookup;
@@ -47,9 +47,9 @@ export type AuthStatus =
 export type AuthCheck =
   | {
       state: "idle";
-      lastFinishedAt?: IsoTime;
+      lastFinishedAt?: IsoDateTime;
     }
   | {
       state: "ongoing";
-      startedAt: IsoTime;
+      startedAt: IsoDateTime;
     };

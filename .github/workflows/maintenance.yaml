@@ -1,0 +1,99 @@
+name: Maintenance
+
+on:
+  schedule:
+    - cron: "0 0 * * *" ## Daily at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  sync-root-config-seed:
+    name: Sync root config seed
+    runs-on: ubuntu-24.04
+    if: github.repository_owner == 'botnadzor'
+
+    env:
+      BRANCH: github-actions/sync-root-config-seed
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+
+      - uses: actions/setup-node@v6
+        with:
+          cache: pnpm
+          node-version-file: .tool-versions
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Call script to sync root config seed
+        run: npx tsx scripts/sync-root-config-seed.script.ts
+
+      - name: Check for changes
+        id: check
+        run: |
+          if git diff --quiet src/shared/@model/root-config/seed.json; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Report no changes
+        if: steps.check.outputs.has_changes == 'false'
+        run: |
+          echo "Root config seed is up to date"
+          echo ""
+          echo "Current seed.json:"
+          cat src/shared/@model/root-config/seed.json
+
+      - name: Close stale PR and delete branch if needed
+        if: steps.check.outputs.has_changes == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "Closing stale PR #$EXISTING_PR and deleting branch"
+            gh pr close "$EXISTING_PR" --delete-branch
+          fi
+
+      - name: Commit and push branch
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$BRANCH"
+          git add src/shared/@model/root-config/seed.json
+          git commit -m "Sync root config seed"
+          git push -f origin "$BRANCH"
+
+      - name: Create or update PR
+        if: steps.check.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "Updating existing PR #$EXISTING_PR"
+            gh pr comment "$EXISTING_PR" --body "Automated sync of root config seed.\n\nWorkflow run: $WORKFLOW_URL"
+            PR_URL=$(gh pr view "$EXISTING_PR" --json url --jq '.url')
+          else
+            echo "Creating new PR"
+            PR_URL=$(gh pr create \
+              --title "Sync root config seed" \
+              --body "Automated sync of root config seed.\n\nWorkflow run: $WORKFLOW_URL")
+          fi
+
+          echo ""
+          echo "PR: $PR_URL"

@@ -1,13 +1,13 @@
 import type { WritableDeep } from "type-fest";
 import { z } from "zod/mini";
 
-import { isoTimeSchema, itemCountSchema } from "./primitives";
+import { isoDateTimeSchema, itemCountSchema } from "./primitives";
 
 export const receivedTagIdSchema = z.union([z.number(), z.string()]);
 
 export const staticListUpstreamInfoSchema = z.readonly(
   z.object({
-    generatedAt: isoTimeSchema,
+    generatedAt: isoDateTimeSchema,
     itemCount: itemCountSchema,
   }),
 );

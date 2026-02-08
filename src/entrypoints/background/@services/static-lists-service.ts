@@ -1,16 +1,17 @@
 import type { Logger } from "@logtape/logtape";
-import type { JobScheduler } from "@webext-core/job-scheduler";
 import { Dexie, type Table } from "dexie";
 import { delay } from "es-toolkit";
 import { nanoid } from "nanoid";
 import type { Writable } from "type-fest";
 import type { z } from "zod/mini";
 
-import { type IsoTime, isoTimeSchema } from "@/shared/@model/primitives";
+import {
+  type IsoDateTime,
+  isoDateTimeSchema,
+} from "@/shared/@model/primitives";
 import type {
   StaticListDefinition,
   StaticListInstance,
-  StaticListUpstreamInfo,
 } from "@/shared/@model/static-list-helpers";
 import {
   type StaticListMetadata,
@@ -33,6 +34,7 @@ import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import { fetchFromRemoteSystem } from "../@service-helpers/fetch-from-remote-system";
+import type { RootConfigService } from "./root-config-service";
 
 const logger = getBackgroundLogger(["static-lists-service"]);
 
@@ -106,9 +108,9 @@ type PopulateFromUrlIfOutdatedResult =
 
 export class StaticListsService {
   private readonly aliasManagerForStaticApi: AliasManager;
+  private readonly rootConfigService: RootConfigService;
   private disposed = false;
   private readonly db: Dexie;
-  private readonly jobScheduler: JobScheduler;
 
   private pollableListMetadataByListId: Readonly<
     Record<StaticListId, Pollable<StaticListMetadata | undefined>>
@@ -125,13 +127,13 @@ export class StaticListsService {
 
   constructor({
     aliasManagerForStaticApi,
-    jobScheduler,
+    rootConfigService,
   }: {
-    jobScheduler: JobScheduler;
     aliasManagerForStaticApi: AliasManager;
+    rootConfigService: RootConfigService;
   }) {
     this.aliasManagerForStaticApi = aliasManagerForStaticApi;
-    this.jobScheduler = jobScheduler;
+    this.rootConfigService = rootConfigService;
 
     this.db = new Dexie("static-lists");
     this.db.version(1).stores({
@@ -222,7 +224,7 @@ export class StaticListsService {
       );
 
       this.pollableNextListSummaryByListId[listId].setValue(
-        extractSummaryFromMetadata(metadata),
+        extractSummaryFromMetadata(metadata, "next"),
       );
     }
 
@@ -378,25 +380,48 @@ export class StaticListsService {
 
   private isListUpToDate(
     listMetadata: StaticListMetadata,
-    upstreamGeneratedAt: IsoTime,
+    upstreamGeneratedAt: IsoDateTime,
+    toleranceInMinutes: number | undefined,
   ): boolean {
-    const startedAtLocally = listMetadata.active?.startedAt;
-    return startedAtLocally ? startedAtLocally >= upstreamGeneratedAt : false;
+    const activeStartedAtLocally = listMetadata.active?.startedAt;
+    if (!activeStartedAtLocally) {
+      return false;
+    }
+
+    if (activeStartedAtLocally >= upstreamGeneratedAt) {
+      return true;
+    }
+
+    return (
+      new Date(upstreamGeneratedAt).getTime() +
+        (toleranceInMinutes ?? 0) * 60 * 1000 >=
+      Date.now()
+    );
   }
 
-  async populateFromUrlIfOutdated(
+  public async populateListIfOutdated(
     listId: StaticListId,
-    upstreamInfo: StaticListUpstreamInfo,
+    toleranceInMinutes: number | undefined,
   ): Promise<PopulateFromUrlIfOutdatedResult> {
     const listLogger = this.getListLogger(listId);
-    listLogger.info("Populating from URL if outdated");
+    listLogger.info("Populating from if outdated");
     const startedAt = Date.now();
 
     const lockId = nanoid(8);
 
+    const rootConfig = await this.rootConfigService.get();
+    const upstreamInfo =
+      rootConfig.remoteSystemLookup.staticApi.listLookup[listId];
+
     try {
       const initialMetadata = await this.getListMetadata(listId);
-      if (this.isListUpToDate(initialMetadata, upstreamInfo.generatedAt)) {
+      if (
+        this.isListUpToDate(
+          initialMetadata,
+          upstreamInfo.generatedAt,
+          toleranceInMinutes,
+        )
+      ) {
         listLogger.info("List is up to date");
         return { success: true, data: "updateNotNeeded" };
       }
@@ -410,7 +435,13 @@ export class StaticListsService {
       do {
         lockMetadata = await this.waitForAnotherLock(listId, lockMetadata);
 
-        if (this.isListUpToDate(lockMetadata, upstreamInfo.generatedAt)) {
+        if (
+          this.isListUpToDate(
+            lockMetadata,
+            upstreamInfo.generatedAt,
+            toleranceInMinutes,
+          )
+        ) {
           return { success: true, data: "updateNotNeeded" };
         }
 
@@ -418,9 +449,9 @@ export class StaticListsService {
           ...lockMetadata,
           next: {
             lockId,
-            startedAt: isoTimeSchema.parse(startedAt),
+            startedAt: isoDateTimeSchema.parse(startedAt),
             summary: structuredClone(mutableSummary),
-            updatedAt: isoTimeSchema.parse(startedAt),
+            updatedAt: isoDateTimeSchema.parse(startedAt),
             upstreamInfo,
           },
         });
@@ -434,7 +465,10 @@ export class StaticListsService {
       });
 
       if (!fetchResult.success) {
-        return { success: false, error: fetchResult.reason };
+        return {
+          success: false,
+          error: `Failed to fetch list from static API (reason: ${fetchResult.reason})`,
+        };
       }
 
       if (fetchResult.response.status !== 200) {
@@ -507,7 +541,7 @@ export class StaticListsService {
             next: {
               ...lockMetadataNext,
               summary: structuredClone(mutableSummary),
-              updatedAt: isoTimeSchema.parse(undefined),
+              updatedAt: isoDateTimeSchema.parse(undefined),
             },
           });
         }
@@ -589,9 +623,9 @@ export class StaticListsService {
         listId,
         activeInstance: nextInstance,
         active: {
-          startedAt: isoTimeSchema.parse(startedAt),
+          startedAt: isoDateTimeSchema.parse(startedAt),
           summary: finalSummary,
-          updatedAt: isoTimeSchema.parse(startedAt),
+          updatedAt: isoDateTimeSchema.parse(startedAt),
           upstreamInfo,
         },
       });
@@ -637,6 +671,15 @@ export class StaticListsService {
       }
 
       return { success: false, error: errorMessage };
+    }
+  }
+
+  public updateIfNeeded(payload?: {
+    listIds?: StaticListId[] | undefined;
+    toleranceInMinutes?: number | undefined;
+  }): void {
+    for (const listId of payload?.listIds ?? staticListIds) {
+      void this.populateListIfOutdated(listId, payload?.toleranceInMinutes);
     }
   }
 

@@ -1,6 +1,9 @@
 import { produce } from "immer";
 
-import { type IsoTime, isoTimeSchema } from "@/shared/@model/primitives";
+import {
+  type IsoDateTime,
+  isoDateTimeSchema,
+} from "@/shared/@model/primitives";
 import {
   Pollable,
   type PollResult,
@@ -36,12 +39,12 @@ type AliasStatus = Readonly<
     }
   | {
       state: "available";
-      confirmedAt: IsoTime;
+      confirmedAt: IsoDateTime;
     }
   | {
       state: "unavailable";
-      confirmedAt: IsoTime;
-      confirmedUntil: IsoTime;
+      confirmedAt: IsoDateTime;
+      confirmedUntil: IsoDateTime;
       reason: UnavailableAliasReason;
     }
 >;
@@ -165,7 +168,7 @@ export class AliasManager {
     this.aliasStatusLookup = produce(this.aliasStatusLookup, (draft) => {
       draft[baseUrl] = {
         state: "available",
-        confirmedAt: isoTimeSchema.parse(now),
+        confirmedAt: isoDateTimeSchema.parse(now),
       };
     });
 
@@ -194,8 +197,8 @@ export class AliasManager {
     this.aliasStatusLookup = produce(this.aliasStatusLookup, (draft) => {
       draft[baseUrl] = {
         state: "unavailable",
-        confirmedAt: isoTimeSchema.parse(now),
-        confirmedUntil: isoTimeSchema.parse(now + expiryTimeout),
+        confirmedAt: isoDateTimeSchema.parse(now),
+        confirmedUntil: isoDateTimeSchema.parse(now + expiryTimeout),
         reason,
       };
     });
@@ -211,12 +214,12 @@ export class AliasManager {
   }
 
   private resetExpiredStatuses(): void {
-    const isoTime = isoTimeSchema.parse(Date.now());
+    const isoDateTime = isoDateTimeSchema.parse(Date.now());
     let resetCount = 0;
 
     this.aliasStatusLookup = produce(this.aliasStatusLookup, (draft) => {
       for (const [url, status] of Object.entries(draft)) {
-        if ("confirmedUntil" in status && status.confirmedUntil < isoTime) {
+        if ("confirmedUntil" in status && status.confirmedUntil < isoDateTime) {
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete --  baseUrl originates from iteration over Object.entries (should be safe)
           delete draft[url];
           resetCount += 1;

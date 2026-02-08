@@ -1,6 +1,6 @@
+import type { JsonValue } from "type-fest";
 import type { z } from "zod/mini";
 
-import type { ConfigValue } from "@/shared/@model/primitives";
 import { getAppConfig } from "@/shared/app-config";
 import { getStoreLogger } from "@/shared/logging";
 import { storage, type StorageItemKey } from "#imports";
@@ -18,19 +18,18 @@ function patchNameIfNeeded(name: StorageItemKey): StorageItemKey {
   return name;
 }
 
-export type StoreWithSchema<T extends z.ZodMiniType<ConfigValue | undefined>> =
-  {
-    getValue: () => Promise<z.infer<T> | undefined>;
-    setValue: (value: z.infer<T>) => Promise<void>;
-    watch: (callback: (value: z.infer<T>) => void) => () => void;
-  };
+export type StoreWithSchema<T extends z.ZodMiniType<JsonValue | undefined>> = {
+  getValue: () => Promise<z.infer<T> | undefined>;
+  setValue: (value: z.infer<T>) => Promise<void>;
+  watch: (callback: (value: z.infer<T>) => void) => () => void;
+};
 
-export function defineStoreWithSchema<T extends z.ZodMiniType<ConfigValue>>(
+export function defineStoreWithSchema<T extends z.ZodMiniType<JsonValue>>(
   name: StorageItemKey,
   schema: T,
 ): StoreWithSchema<T> {
   const patchedName = patchNameIfNeeded(name);
-  const storageItem = storage.defineItem<ConfigValue | undefined>(patchedName);
+  const storageItem = storage.defineItem<JsonValue | undefined>(patchedName);
 
   const logger = getStoreLogger([patchedName]);
 

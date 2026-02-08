@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { isoTimeSchema } from "./primitives";
+import { isoDateTimeSchema } from "./primitives";
 import {
   staticListInstanceSchema,
   staticListUpstreamInfoSchema,
@@ -14,9 +14,9 @@ export const staticListMetadataSchema = z.readonly(
     active: z.exactOptional(
       z.readonly(
         z.object({
-          startedAt: isoTimeSchema,
+          startedAt: isoDateTimeSchema,
           summary: z.json(),
-          updatedAt: isoTimeSchema,
+          updatedAt: isoDateTimeSchema,
           upstreamInfo: staticListUpstreamInfoSchema,
         }),
       ),
@@ -25,9 +25,9 @@ export const staticListMetadataSchema = z.readonly(
       z.readonly(
         z.object({
           lockId: z.string(),
-          startedAt: isoTimeSchema,
+          startedAt: isoDateTimeSchema,
           summary: z.json(),
-          updatedAt: isoTimeSchema,
+          updatedAt: isoDateTimeSchema,
           upstreamInfo: staticListUpstreamInfoSchema,
         }),
       ),

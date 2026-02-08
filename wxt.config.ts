@@ -1,3 +1,6 @@
+// Ensure that the build fails if the root config seed is not valid
+import "./src/shared/@model/root-config";
+
 import fs from "node:fs";
 
 import tailwindcss from "@tailwindcss/vite";

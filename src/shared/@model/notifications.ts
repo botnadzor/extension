@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { isoTimeSchema } from "./primitives";
+import { isoDateTimeSchema } from "./primitives";
 
 export const triggeredNotificationSchema = z.readonly(
   z.object({
@@ -14,7 +14,7 @@ export const triggeredNotificationSchema = z.readonly(
       "regDateUnavailable",
       "test",
     ]),
-    triggeredAt: isoTimeSchema,
+    triggeredAt: isoDateTimeSchema,
   }),
 );
 

@@ -4,13 +4,12 @@ import { nanoid } from "nanoid";
 import * as React from "react";
 import type { JsonValue } from "type-fest";
 
-import type { ConfigValue } from "../@model/primitives";
 import { getContentLogger, getPopupLogger } from "../logging";
 import type { PollResult, PollVersion } from "./core";
 
 type UsePollableValue<
-  Payload extends ConfigValue = never,
-  Result extends ConfigValue = undefined,
+  Payload extends JsonValue | undefined = never,
+  Result extends JsonValue | undefined = undefined,
 > = [Payload] extends [never] ? () => Result : (payload: Payload) => Result;
 
 const minStaleTimeout = 100;
@@ -91,8 +90,7 @@ export function createPollableValueHook<
     latestRecord = { ...latestRecord, watcherId };
     payloadKeyRecordMap.set(payloadKey, latestRecord);
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- breaking inside the loop
-    while (true) {
+    for (;;) {
       if (throttleInterval && throttleInterval > 0) {
         await delay(throttleInterval);
       }

@@ -3,9 +3,12 @@ import * as React from "react";
 
 import type { StaticListUpstreamInfo } from "@/shared/@model/static-list-helpers";
 import { staticListDefinitionLookup } from "@/shared/@model/static-lists";
-import { useStaticListMetadata } from "@/shared/@ui-helpers/data-hooks";
+import {
+  useStaticListMetadata,
+  useStaticListsAutoUpdate,
+} from "@/shared/@ui-helpers/data-hooks";
 import { Logo } from "@/shared/@ui-primitives/logo";
-import { formatTime } from "@/shared/formatting";
+import { formatDateTime } from "@/shared/formatting";
 
 function Percentage({
   extractFrom,
@@ -56,12 +59,24 @@ function AccountListMetadata() {
   return (
     <>
       Список аккаунтов от{" "}
-      {formatTime(accountsMetadata.active.upstreamInfo.generatedAt)}
+      {formatDateTime(accountsMetadata.active.upstreamInfo.generatedAt)}
     </>
   );
 }
 
 export function Header() {
+  useStaticListsAutoUpdate({
+    listIds: ["accounts", "tags"],
+    // When a user triggers the popup, we can tolerate accounts and tags being outdated
+    // for one day. This can save some CPU and network traffic. The delay is not set
+    // in content script where we want to mark bots based on fresh data.
+    toleranceInMinutes: 60 * 24,
+  });
+
+  useStaticListsAutoUpdate({
+    listIds: ["announcements"],
+  });
+
   return (
     <div className="flex items-center justify-between px-3 py-4">
       <div className="flex-0">

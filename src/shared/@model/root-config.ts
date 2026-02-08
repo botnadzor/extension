@@ -1,10 +1,11 @@
 import { z } from "zod/mini";
 
 import {
-  isoTimeSchema,
+  isoDateTimeSchema,
   itemCountSchema,
   semverRangeSchema,
 } from "./primitives";
+import rootConfigSeedJson from "./root-config/seed.json";
 import { staticListIds } from "./static-lists";
 
 export const remoteSystemAliasLookupSchema = z.readonly(
@@ -17,7 +18,7 @@ export const remoteSystemAliasLookupSchema = z.readonly(
 export const rootConfigSchema = z.readonly(
   z.object({
     extensionVersionRange: semverRangeSchema,
-    generatedAt: isoTimeSchema,
+    generatedAt: isoDateTimeSchema,
     remoteSystemLookup: z.readonly(
       z.object({
         dynamicApi: z.readonly(
@@ -40,7 +41,7 @@ export const rootConfigSchema = z.readonly(
                 z.enum(staticListIds),
                 z.readonly(
                   z.object({
-                    generatedAt: isoTimeSchema,
+                    generatedAt: isoDateTimeSchema,
                     itemCount: itemCountSchema,
                   }),
                 ),
@@ -54,3 +55,5 @@ export const rootConfigSchema = z.readonly(
 );
 /** @public */
 export type RootConfig = z.infer<typeof rootConfigSchema>;
+
+export const rootConfigSeed = rootConfigSchema.parse(rootConfigSeedJson);

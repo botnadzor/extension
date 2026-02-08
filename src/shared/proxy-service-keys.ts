@@ -8,6 +8,7 @@ import type { InspectorService } from "../entrypoints/background/@services/inspe
 import type { NotificationService } from "../entrypoints/background/@services/notification-service";
 import type { PopupService } from "../entrypoints/background/@services/popup-service";
 import type { RegDateService } from "../entrypoints/background/@services/reg-date-service";
+import type { RootConfigService } from "../entrypoints/background/@services/root-config-service";
 import type { StaticListsService } from "../entrypoints/background/@services/static-lists-service";
 import type { UserConfigService } from "../entrypoints/background/@services/user-config-service";
 
@@ -32,6 +33,9 @@ export const popupServiceKey: ProxyServiceKey<PopupService> = "popup-service";
 
 export const regDateServiceKey: ProxyServiceKey<RegDateService> =
   "reg-date-service";
+
+export const rootConfigServiceKey: ProxyServiceKey<RootConfigService> =
+  "root-config-service";
 
 export const staticListsServiceKey: ProxyServiceKey<StaticListsService> =
   "static-lists-service";

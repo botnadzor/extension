@@ -30,9 +30,9 @@ function AccountMark({ vkDomain }: { vkDomain: VkDomain }) {
 
   return (
     <OptionalMark
-      mark={accountInspection.classic.mark ?? undefined}
-      markTitle={accountInspection.classic.mark_title ?? undefined}
-      markColor={accountInspection.classic.mark_color ?? undefined}
+      mark={accountInspection.legacy.mark ?? undefined}
+      markTitle={accountInspection.legacy.mark_title ?? undefined}
+      markColor={accountInspection.legacy.mark_color ?? undefined}
     />
   );
 }

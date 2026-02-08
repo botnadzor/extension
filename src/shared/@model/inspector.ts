@@ -1,7 +1,7 @@
 import { z } from "zod/mini";
 
 import {
-  isoTimeSchema,
+  isoDateTimeSchema,
   positiveVkIdSchema,
   vkDomainSchema,
   vkIdSchema,
@@ -52,7 +52,7 @@ export type InspectorTab = z.infer<typeof inspectorTabSchema>;
 export const inspectorInstanceConfigSchema = z.readonly(
   z.extend(inspectorInstancePayloadSchema, {
     tab: inspectorTabSchema,
-    triggeredAt: isoTimeSchema,
+    triggeredAt: isoDateTimeSchema,
   }),
 );
 export type InspectorInstanceConfig = z.infer<

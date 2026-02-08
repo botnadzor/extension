@@ -2,6 +2,7 @@ import * as React from "react";
 import ReactDOM from "react-dom/client";
 
 import type { ContentId } from "@/shared/@model/primitives";
+import { useStaticListsAutoUpdate } from "@/shared/@ui-helpers/data-hooks";
 import { RadixPortalContainer } from "@/shared/@ui-primitives/radix-portal-container";
 import isolatedUiStyling from "@/shared/isolated-ui-styling.css?inline";
 import { cn } from "@/shared/tailwindcss-helpers";
@@ -18,6 +19,8 @@ function InPageApp({
   contentId: ContentId;
   darkTheme: boolean;
 }) {
+  useStaticListsAutoUpdate();
+
   return (
     <ContentIdContext value={contentId}>
       <div className={cn("font-ubuntu", darkTheme ? "dark-theme" : undefined)}>

@@ -72,29 +72,17 @@ export class FrontendService {
   }
 
   async getBaseUrl(): Promise<string> {
-    await this.checkAliasAvailabilityIfNeeded();
-
-    return (
-      this.aliasManagerForFrontend.findAliasToUse()?.baseUrl ??
-      frontendFallbackBaseUrl
-    );
+    const result = await this.pollBaseUrl(undefined);
+    return result.value;
   }
 
   async pollBaseUrl(
     lastPollVersion: PollVersion | undefined,
   ): Promise<PollResult<string>> {
-    await this.checkAliasAvailabilityIfNeeded();
+    void this.checkAliasAvailabilityIfNeeded();
 
-    const resultPromise =
-      this.aliasManagerForFrontend.pollAliasToUse(lastPollVersion);
-
-    const intervalId = setInterval(() => {
-      void this.checkAliasAvailabilityIfNeeded();
-    }, frontendAvailabilityCheckInterval);
-
-    const result = await resultPromise;
-
-    clearInterval(intervalId);
+    const result =
+      await this.aliasManagerForFrontend.pollAliasToUse(lastPollVersion);
 
     return {
       value: result.value?.baseUrl ?? frontendFallbackBaseUrl,

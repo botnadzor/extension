@@ -4,7 +4,7 @@ import { permissionLookupSchema } from "@/shared/@model/auth";
 import {
   accessCodeSchema,
   isoDateSchema,
-  isoTimeSchema,
+  isoDateTimeSchema,
   positiveVkIdSchema,
 } from "@/shared/@model/primitives";
 
@@ -37,7 +37,7 @@ export const contractForGetRegDate = base
         z.object({
           problem: z.exactOptional(z.literal(false)),
 
-          value: z.union([isoDateSchema, isoTimeSchema]),
+          value: z.union([isoDateSchema, isoDateTimeSchema]),
           remainingPermissionLookup: z.exactOptional(permissionLookupSchema),
           remainingPointCount: z.exactOptional(z.number()),
         }),

@@ -1,6 +1,6 @@
 import { IntlMessageFormat } from "intl-messageformat";
 
-import type { IsoDate, IsoTime } from "./@model/primitives";
+import type { IsoDate, IsoDateTime } from "./@model/primitives";
 
 const locale = "ru";
 
@@ -32,20 +32,22 @@ export function formatInt(n: number): string {
  * formatDate("2000-01-31"); // "31.1.2000"
  * formatDate("2000-01-31T06:42:00Z"); // "31.1.2000"
  */
-export function formatDate(isoTime: IsoTime | IsoDate): string {
-  return new Date(isoTime)
+export function formatDate(
+  isoDateWithOptionalTime: IsoDate | IsoDateTime,
+): string {
+  return new Date(isoDateWithOptionalTime)
     .toLocaleDateString(locale)
     .replaceAll(/0(\d)\./g, "$1.");
 }
 
 /**
- * Formats an ISO time using Russian locale conventions in the local time zone
+ * Formats an ISO date and time using Russian locale conventions in the local time zone
  *
  * @example
  * formatTime("2000-01-31T06:42:00Z"); // "31.1.2000 9:42" if running in UTC+3
  */
-export function formatTime(isoTime: IsoTime): string {
-  return new Date(isoTime)
+export function formatDateTime(isoDateTime: IsoDateTime): string {
+  return new Date(isoDateTime)
     .toLocaleString(locale, {
       dateStyle: "short",
       timeStyle: "short",
@@ -61,19 +63,21 @@ export function formatTime(isoTime: IsoTime): string {
  * isIsoDate("2000-01-31"); // true
  * isIsoDate("2000-01-31T06:42:00Z"); // false
  */
-function isIsoDate(isoTimeOrDate: IsoTime | IsoDate): isoTimeOrDate is IsoDate {
-  return isoTimeOrDate.length === 10;
+function isIsoDate(
+  isoDateWithOptionalTime: IsoDate | IsoDateTime,
+): isoDateWithOptionalTime is IsoDate {
+  return isoDateWithOptionalTime.length === 10;
 }
 
 /**
- * Formats time or date to a string in the local time zone
+ * Formats date with optional time to a string in the local time zone
  *
  * @example
  * formatTimeOrDate("2000-01-31"); // "31.1.2000"
  * formatTimeOrDate("2000-01-31T06:42:00Z"); // "31.1.2000 9:42" if running in UTC+3
  */
-export function formatTimeOrDate(isoTimeOrDate: IsoTime | IsoDate): string {
-  return isIsoDate(isoTimeOrDate)
-    ? formatDate(isoTimeOrDate)
-    : formatTime(isoTimeOrDate);
+export function formatDateWithOptionalTime(
+  value: IsoDate | IsoDateTime,
+): string {
+  return isIsoDate(value) ? formatDate(value) : formatDateTime(value);
 }

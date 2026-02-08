@@ -57,7 +57,7 @@ export function ReportForm({
   const [submitting, setSubmitting] = React.useState(false);
 
   const reportingInvalidTag =
-    !accountInspection.problem && accountInspection.classic.mark;
+    !accountInspection.problem && accountInspection.legacy.mark;
 
   const selectElementRef = React.useRef<HTMLButtonElement>(null);
   const textElementRef = React.useRef<HTMLTextAreaElement>(null);

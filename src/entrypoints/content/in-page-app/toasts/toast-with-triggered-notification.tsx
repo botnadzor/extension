@@ -74,7 +74,9 @@ export function ToastWithTriggeredNotification({
       children = (
         <>
           Данные для подсветки ботов готовы.{" "}
-          <a href={window.location.href}>Обновите страницу</a>{" "}
+          <a href={window.location.href} onClick={handleClose}>
+            Обновите страницу
+          </a>{" "}
           или&nbsp;попробуйте открыть VK-паблик, где часто бывают боты:{" "}
           {[
             // cspell:ignore rt_russian vesti
@@ -85,7 +87,9 @@ export function ToastWithTriggeredNotification({
           ].map((page, index) => (
             <React.Fragment key={page}>
               {index > 0 && ", "}
-              <a href={`${vkBaseUrl}/${page}`}>{page}</a>
+              <a href={`${vkBaseUrl}/${page}`} onClick={handleClose}>
+                {page}
+              </a>
             </React.Fragment>
           ))}
           .
@@ -99,9 +103,9 @@ export function ToastWithTriggeredNotification({
         <>
           Для доступа к{" "}
           <a
-            target="_blank"
             href={`${frontendBaseUrl}/docs/extension#inspector`}
             rel="noopener noreferrer"
+            target="_blank"
           >
             инспектору
           </a>
@@ -117,9 +121,9 @@ export function ToastWithTriggeredNotification({
         <>
           Чтобы открыть{" "}
           <a
-            target="_blank"
             href={`${frontendBaseUrl}/docs/extension#inspector`}
             rel="noopener noreferrer"
+            target="_blank"
           >
             инспектор
           </a>
@@ -168,10 +172,10 @@ export function ToastWithTriggeredNotification({
           <p>Тестовое уведомление + ссылка:</p>
           <div className="truncate">
             <a
-              href={frontendBaseUrl}
-              target="_blank"
-              rel="noopener noreferrer"
               className="truncate"
+              href={frontendBaseUrl}
+              rel="noopener noreferrer"
+              target="_blank"
             >
               {frontendBaseUrl.replace("https://", "")}
             </a>

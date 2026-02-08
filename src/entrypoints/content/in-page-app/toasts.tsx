@@ -9,14 +9,25 @@ import {
 } from "@/shared/@ui-helpers/data-hooks";
 import { Button } from "@/shared/@ui-primitives/button";
 import { getAppConfig } from "@/shared/app-config";
-import { notificationService } from "@/shared/proxy-services";
+import {
+  notificationService,
+  staticListsService,
+} from "@/shared/proxy-services";
 
 import { useContentId } from "../content-id-context";
-import { checkIfDataWarmupToastNeeded } from "./toasts/helpers";
 import { ToastWithAnnouncement } from "./toasts/toast-with-announcement";
 import { ToastWithDataWarmup } from "./toasts/toast-with-data-warmup";
 import { ToastWithTriggeredNotification } from "./toasts/toast-with-triggered-notification";
 import { ToastWithWelcomeMessage } from "./toasts/toast-with-welcome-message";
+
+export async function checkIfDataWarmupToastNeeded(): Promise<boolean> {
+  const [accountsMetadata, tagsMetadata] = await Promise.all([
+    staticListsService.getListMetadata("accounts"),
+    staticListsService.getListMetadata("tags"),
+  ]);
+
+  return !accountsMetadata.active || !tagsMetadata.active;
+}
 
 const useTriggeredNotification = createPollableValueHook(
   (lastPollVersion, contentId: ContentId) =>
@@ -31,25 +42,42 @@ export function Toasts() {
 
   const { welcomeMessageReadAt, announcementReadAtByCreatedAt } =
     useGlobalNotificationsState();
+  const [welcomeMessageWasNeededAtMount] =
+    React.useState(!welcomeMessageReadAt);
+  const dataWarmupToastWasNeededPreviouslyRef = React.useRef(false);
 
   const [dataWarmupToastNeeded, setDataWarmupToastNeeded] =
     React.useState(false);
 
-  const welcomeMessageReadAtRef = React.useRef(welcomeMessageReadAt);
-
   React.useEffect(() => {
-    void checkIfDataWarmupToastNeeded().then(async (needed) => {
+    void checkIfDataWarmupToastNeeded().then((needed) => {
       setDataWarmupToastNeeded(needed);
-
-      if (!needed && !welcomeMessageReadAtRef.current) {
-        await notificationService.trigger(contentId, {
-          type: "dataWarmupComplete",
-        });
+      if (needed) {
+        dataWarmupToastWasNeededPreviouslyRef.current = true;
       }
-
-      welcomeMessageReadAtRef.current = welcomeMessageReadAt;
     });
   }, [contentId, welcomeMessageReadAt]);
+
+  React.useEffect(() => {
+    if (
+      dataWarmupToastNeeded ||
+      !welcomeMessageReadAt ||
+      (!welcomeMessageWasNeededAtMount &&
+        !dataWarmupToastWasNeededPreviouslyRef.current)
+    ) {
+      return;
+    }
+
+    void notificationService.trigger(contentId, {
+      type: "dataWarmupComplete",
+    });
+  }, [
+    contentId,
+    welcomeMessageWasNeededAtMount,
+    dataWarmupToastWasNeededPreviouslyRef,
+    dataWarmupToastNeeded,
+    welcomeMessageReadAt,
+  ]);
 
   if (triggeredNotification) {
     return (

@@ -1,7 +1,7 @@
 import { z } from "zod/mini";
 
 import {
-  isoTimeSchema,
+  isoDateTimeSchema,
   itemCountSchema,
   semverRangeSchema,
 } from "../primitives";
@@ -9,7 +9,7 @@ import type { StaticListDefinition } from "../static-list-helpers";
 
 const announcementListItemSchema = z.readonly(
   z.tuple([
-    isoTimeSchema, // createdAt
+    isoDateTimeSchema, // createdAt
     z // extensionVersionRange or [extensionVersionRange, extensionVersionRangeForToast]
       .union([
         semverRangeSchema,
@@ -24,7 +24,7 @@ export type AnnouncementListItem = z.infer<typeof announcementListItemSchema>;
 
 const storedAnnouncementListItemSchema = z.readonly(
   z.object({
-    createdAt: isoTimeSchema,
+    createdAt: isoDateTimeSchema,
     extensionVersionRange: semverRangeSchema,
     extensionVersionRangeForToast: z.exactOptional(semverRangeSchema),
     header: z.string(),

@@ -1,7 +1,10 @@
 import { z } from "zod/mini";
 
 import { permissionLookupSchema } from "@/shared/@model/auth";
-import { accessCodeSchema, isoTimeSchema } from "@/shared/@model/primitives";
+import {
+  accessCodeSchema,
+  isoDateTimeSchema,
+} from "@/shared/@model/primitives";
 
 import { base } from "./base";
 import {
@@ -27,7 +30,7 @@ export const contractForGetMe = base
           problem: z.exactOptional(z.literal(false)),
 
           accessLevel: z.number(),
-          expiresAt: z.exactOptional(isoTimeSchema),
+          expiresAt: z.exactOptional(isoDateTimeSchema),
           permissionLookup: permissionLookupSchema,
           pointCount: z.number().check(z.minimum(0), z.maximum(1_000_000_000)),
         }),

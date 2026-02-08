@@ -25,7 +25,7 @@ export const isoDateSchema = z
 /** @public */
 export type IsoDate = z.infer<typeof isoDateSchema>;
 
-export const isoTimeSchema = z
+export const isoDateTimeSchema = z
   .pipe(
     z.transform((input: unknown) =>
       input === undefined
@@ -41,9 +41,9 @@ export const isoTimeSchema = z
       z.overwrite((value: string) => value.replace(/\.\d{3}Z/, "Z")),
     ),
   )
-  .brand<"IsoString">();
+  .brand<"IsoDateTime">();
 /** @public */
-export type IsoTime = z.infer<typeof isoTimeSchema>;
+export type IsoDateTime = z.infer<typeof isoDateTimeSchema>;
 
 export const itemCountSchema = z.number().check(z.int(), z.nonnegative());
 /** @public */
@@ -140,11 +140,3 @@ export const semverRangeSchema = z
   .brand<"SemverRange">();
 /** @public */
 export type SemverRange = z.infer<typeof semverRangeSchema>;
-
-// These types are similar to Json* types from 'type-fest', but they also support `undefined`
-export type ConfigObject = { [Key in string]: ConfigValue } & {
-  [Key in string]?: ConfigValue;
-};
-export type ConfigArray = ConfigValue[] | readonly ConfigValue[];
-export type ConfigPrimitive = string | number | boolean | null | undefined;
-export type ConfigValue = ConfigPrimitive | ConfigObject | ConfigArray;

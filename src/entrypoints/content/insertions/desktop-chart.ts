@@ -14,7 +14,7 @@ import { createChartShell, observeFansRowsUpdates } from "./shared/chart-shell";
 import { renderActionButton } from "./shared/ui-action-buttons";
 import { getVkDomainFromRow } from "./shared/vk-identifies";
 
-function getNumericIdFromDomain(domain: string): number | undefined {
+function getNumericIdFromNumericDomain(domain: string): number | undefined {
   const match = /^id(\d+)$/.exec(domain);
   if (!match) {
     return;
@@ -28,17 +28,49 @@ function getNumericIdFromDomain(domain: string): number | undefined {
   return id;
 }
 
-function getTotalCountFromPage(element: Element): number {
-  const totalCountText =
-    element.parentElement?.parentElement
-      ?.querySelector<HTMLDivElement>(".ui_tab_sel")
-      ?.textContent.replaceAll(/\D/g, "") ??
-    element.parentElement?.parentElement
-      ?.querySelector<HTMLDivElement>(".wk_voting_option_count_extended")
-      ?.textContent.replaceAll(/\D/g, "") ??
-    "0";
+function getUserNumericIdFromElement(el: HTMLElement): string {
+  if (el.dataset["id"]) {
+    return el.dataset["id"];
+  }
 
-  return Number.parseInt(totalCountText, 10);
+  const childWithData = el.querySelector(
+    'div[data-testid*="followers-modal-user-cell"]',
+  );
+
+  if (!(childWithData instanceof HTMLElement)) {
+    return "0";
+  }
+
+  if (!childWithData.dataset["testid"]) {
+    return "0";
+  }
+
+  return childWithData.dataset["testid"].split("-").pop() ?? "0";
+}
+
+function getTotalCountFromPage(element: Element): number {
+  const container = element.parentElement?.parentElement;
+  if (!container) {
+    return 0;
+  }
+
+  const selectors = [
+    ".ui_tab_sel",
+    ".wk_voting_option_count_extended",
+    ".vkuiTabsItem__status", // New VK design
+  ];
+
+  for (const selector of selectors) {
+    const countElement = container.querySelector<HTMLDivElement>(selector);
+    if (countElement?.textContent) {
+      const digitsOnly = countElement.textContent.replaceAll(/\D/g, "");
+      if (digitsOnly) {
+        return Number.parseInt(digitsOnly, 10);
+      }
+    }
+  }
+
+  return 0;
 }
 
 function extractVkDomainsAndIds(rows: HTMLElement[]): {
@@ -54,7 +86,7 @@ function extractVkDomainsAndIds(rows: HTMLElement[]): {
       continue;
     }
 
-    const numericId = getNumericIdFromDomain(vkDomain);
+    const numericId = getNumericIdFromNumericDomain(vkDomain);
     if (numericId === undefined) {
       continue;
     }
@@ -68,11 +100,13 @@ function extractVkDomainsAndIds(rows: HTMLElement[]): {
 
 export default defineInsertion({
   appliesTo: "desktopVkWebsite",
-  elementSelector: ".fans_rows",
+  elementSelector: [
+    ".fans_rows",
+    ".vkitInternalModalBox", // New VK design
+  ].join(", "),
 
   init: async ({ contentId, element, logger }) => {
     const frontendBaseUrl = await frontendService.getBaseUrl();
-    const userConfig = await userConfigService.get();
 
     const chartModule = await import("chart.js/auto");
     const {
@@ -96,8 +130,15 @@ export default defineInsertion({
 
     const totalCount = getTotalCountFromPage(element);
 
+    const shellHost = element.classList.contains(".fans_rows")
+      ? element
+      : element.querySelector(".vkuiCustomScrollView__host");
+    if (!shellHost) {
+      return;
+    }
+
     const shell = createChartShell(
-      element,
+      shellHost,
       `График показан только для загруженных аккаунтов. Подгрузка происходит, когда вы скроллите окно вниз. Соцсеть может скрывать некоторых лайкнувших. Загружено: 0 / ${totalCount} `,
     );
 
@@ -190,21 +231,31 @@ export default defineInsertion({
     let pendingUpdate = false;
     let isDestroyed = false;
 
-    async function handleTableView(likesDisplay: string) {
-      if (likesDisplay !== "table" && pendingUpdate) {
-        return;
-      }
+    function extractDatasetFromContainer(container: HTMLElement) {
+      // Filter out table elements and only get div children
+      const childElements = [...container.children].filter(
+        (el): el is HTMLElement =>
+          el instanceof HTMLElement && el.tagName !== "TABLE",
+      );
 
-      const container = document.querySelector(".fans_rows");
+      const datasetSource =
+        childElements.map((el) => {
+          return el.dataset["testid"] && el.dataset["testid"] === "modalheader";
+        }).length > 0
+          ? [
+              ...container.querySelectorAll("div[class*=vkitGridItem__root]"),
+            ].filter((el) => el.tagName !== "TABLE")
+          : childElements;
 
-      if (!(container instanceof HTMLElement)) {
-        return;
-      }
-
-      const dataset = [...container.childNodes]
+      return datasetSource
         .filter((el): el is HTMLElement => el instanceof HTMLElement)
         .map((el) => {
-          const linkElement = el.querySelector("a.fans_fan_lnk");
+          const linkElement = el.querySelector(
+            [
+              "a.fans_fan_lnk",
+              "a[class*=vkitLink__link]", // New VK design
+            ].join(", "),
+          );
           if (!(linkElement instanceof HTMLAnchorElement)) {
             return;
           }
@@ -214,10 +265,10 @@ export default defineInsertion({
             return;
           }
 
-          const numericId = el.dataset["id"] ?? undefined;
+          const numericId = getUserNumericIdFromElement(el);
+
           const name = linkElement.textContent;
-          const avatarUrl =
-            el.querySelector("img.fans_fan_img")?.getAttribute("src") ?? "";
+          const avatarUrl = el.querySelector("img")?.getAttribute("src") ?? "";
 
           const inspectorInstancePayload: InspectorInstancePayload = {
             accountInfo: {
@@ -245,130 +296,124 @@ export default defineInsertion({
             inspectorInstancePayload,
           };
         });
+    }
 
-      // Fetch affiliations for all accounts
-      const affiliations = await Promise.all(
-        dataset.map((item) =>
-          item?.vkDomain
-            ? affiliationService.checkAccount(item.vkDomain)
-            : Promise.resolve(undefined),
-        ),
-      );
+    function createTableRow(
+      index: number,
+      item:
+        | {
+            link: string;
+            image: string;
+            name: string | null;
+            profile: string;
+            vkDomain: string;
+            numericId: string;
+            inspectorInstancePayload: InspectorInstancePayload;
+          }
+        | undefined,
+      affiliation:
+        | {
+            color: string;
+            tags: Array<{ name: string }>;
+          }
+        | undefined,
+    ): HTMLTableRowElement {
+      const row = document.createElement("tr");
 
-      container.textContent = "";
+      // Column 1: Index
+      const indexCell = document.createElement("td");
+      indexCell.className = cn("bn:font-mono");
+      indexCell.textContent = String(index + 1);
+      row.append(indexCell);
 
-      const table = document.createElement("table");
-      table.className = cn(
-        "bn:w-full bn:border-collapse bn:text-(--vkui--color_text_primary)",
-      );
-      const tbody = document.createElement("tbody");
+      // Column 2: VK Numeric ID
+      const idCell = document.createElement("td");
+      idCell.className = cn("bn:text-center bn:font-mono");
+      idCell.textContent = item?.numericId ?? "";
+      row.append(idCell);
 
-      for (const [index, item] of dataset.entries()) {
-        const row = document.createElement("tr");
+      // Column 3: Avatar + Name
+      const nameCell = document.createElement("td");
+      const nameWrapper = document.createElement("div");
+      nameWrapper.className = cn("bn:flex bn:items-center bn:gap-2");
 
-        // Column 1: Index
-        const indexCell = document.createElement("td");
-        indexCell.className = cn("bn:font-mono");
-        indexCell.textContent = String(index + 1);
-        row.append(indexCell);
-
-        // Column 2: VK Numeric ID
-        const idCell = document.createElement("td");
-        idCell.className = cn("bn:text-center bn:font-mono");
-        idCell.textContent = item?.numericId ?? "";
-        row.append(idCell);
-
-        // Column 3: Avatar + Name
-        const nameCell = document.createElement("td");
-        const nameWrapper = document.createElement("div");
-        nameWrapper.className = cn("bn:flex bn:items-center bn:gap-2");
-
-        const avatarWrapper = document.createElement("div");
-        avatarWrapper.className = cn(
-          `
+      const avatarWrapper = document.createElement("div");
+      avatarWrapper.className = `
             bn:group/avatar
             bn:flex bn:size-6 bn:items-center
-          `,
-        );
+          `;
 
-        const avatarImg = document.createElement("img");
-        avatarImg.className = cn(
-          `
+      const avatarImg = document.createElement("img");
+      avatarImg.className = `
             bn:pointer-events-none bn:w-full
             bn:group-hover/avatar:scale-[10]
-          `,
-        );
-        avatarImg.src = item?.image ?? "";
-        avatarWrapper.append(avatarImg);
+          `;
+      avatarImg.src = item?.image ?? "";
+      avatarWrapper.append(avatarImg);
 
-        const nameLink = document.createElement("a");
-        nameLink.href = item?.link ?? "";
-        nameLink.target = "_blank";
-        nameLink.rel = "noreferrer";
-        nameLink.style.color = "var(--vkui--color_text_primary)";
-        nameLink.textContent = item?.name ?? "";
+      const nameLink = document.createElement("a");
+      nameLink.href = item?.link ?? "";
+      nameLink.target = "_blank";
+      nameLink.rel = "noreferrer";
+      nameLink.style.color = "var(--vkui--color_text_primary)";
+      nameLink.textContent = item?.name ?? "";
 
-        nameWrapper.append(avatarWrapper, nameLink);
-        nameCell.append(nameWrapper);
-        row.append(nameCell);
+      nameWrapper.append(avatarWrapper, nameLink);
+      nameCell.append(nameWrapper);
+      row.append(nameCell);
 
-        // Column 4: Affiliation
-        const affiliationCell = document.createElement("td");
-        const affiliationDiv = document.createElement("div");
-        affiliationDiv.className = cn("bn:p-1 bn:text-center");
-        if (affiliations[index]) {
-          affiliationDiv.style.background = affiliations[index].color;
-          affiliationDiv.textContent = affiliations[index].tags[0].name;
-        }
-        affiliationCell.append(affiliationDiv);
-        row.append(affiliationCell);
-
-        // Column 5: Actions
-        const actionsCell = document.createElement("td");
-        actionsCell.className = cn("bn:relative");
-        const actionsWrapper = document.createElement("div");
-        actionsWrapper.className = cn(
-          "bn:flex bn:h-full bn:justify-end bn:gap-2 bn:text-center",
-        );
-
-        const iconClasses = cn(
-          "bn:size-4 bn:fill-(--vkui--color_text_primary)! bn:opacity-50",
-        );
-
-        const actionUi = renderActionButton({
-          icons: [
-            {
-              id: "squareMenu",
-              kind: "link",
-              href:
-                frontendBaseUrl + "/account/" + String(item?.vkDomain ?? ""),
-            },
-            {
-              id: "userSearch",
-              kind: "button",
-              onClick: () => {
-                void inspectorService.trigger(
-                  contentId,
-                  item?.inspectorInstancePayload,
-                );
-              },
-            },
-          ],
-          containerClassName: cn(
-            "bn:flex bn:h-full bn:items-center bn:justify-end bn:gap-2",
-          ),
-          actionClassName: iconClasses,
-        });
-
-        actionsWrapper.append(actionUi.element);
-        actionsCell.append(actionsWrapper);
-        row.append(actionsCell);
-
-        tbody.append(row);
+      // Column 4: Affiliation
+      const affiliationCell = document.createElement("td");
+      const affiliationDiv = document.createElement("div");
+      affiliationDiv.className = cn("bn:p-1 bn:text-center");
+      if (affiliation) {
+        affiliationDiv.style.background = affiliation.color;
+        affiliationDiv.textContent = affiliation.tags[0]?.name ?? "";
       }
+      affiliationCell.append(affiliationDiv);
+      row.append(affiliationCell);
 
-      table.append(tbody);
-      container.append(table);
+      // Column 5: Actions
+      const actionsCell = document.createElement("td");
+      actionsCell.className = cn("bn:relative");
+      const actionsWrapper = document.createElement("div");
+      actionsWrapper.className = cn(
+        "bn:flex bn:h-full bn:justify-end bn:gap-2 bn:text-center",
+      );
+
+      const iconClasses = cn(
+        "bn:size-4 bn:fill-(--vkui--color_text_primary)! bn:opacity-50",
+      );
+
+      const actionUi = renderActionButton({
+        icons: [
+          {
+            id: "squareMenu",
+            kind: "link",
+            href: frontendBaseUrl + "/account/" + (item?.vkDomain ?? ""),
+          },
+          {
+            id: "userSearch",
+            kind: "button",
+            onClick: () => {
+              void inspectorService.trigger(
+                contentId,
+                item?.inspectorInstancePayload,
+              );
+            },
+          },
+        ],
+        containerClassName: cn(
+          "bn:flex bn:h-full bn:items-center bn:justify-end bn:gap-2",
+        ),
+        actionClassName: iconClasses,
+      });
+
+      actionsWrapper.append(actionUi.element);
+      actionsCell.append(actionsWrapper);
+      row.append(actionsCell);
+
+      return row;
     }
 
     async function updateChartFromDom() {
@@ -385,8 +430,84 @@ export default defineInsertion({
       pendingUpdate = false;
 
       try {
+        const currentUserConfig = await userConfigService.get();
+        const container = element.classList.contains("fans_rows")
+          ? element
+          : element.querySelector('[class*="vkitGrid__root"]'); // New VK design
+
+        if (!container || !(container instanceof HTMLElement)) {
+          return;
+        }
+
+        // Convert divs to table if table view is enabled
+        if (currentUserConfig.likesDisplay === "table") {
+          const dataset = extractDatasetFromContainer(container);
+
+          if (dataset.length > 0) {
+            // Fetch affiliations for all accounts
+            const affiliations = await Promise.all(
+              dataset.map((item) =>
+                item?.vkDomain
+                  ? affiliationService.checkAccount(item.vkDomain)
+                  : Promise.resolve(undefined),
+              ),
+            );
+
+            // Find or create table
+            let table = container.querySelector("table");
+            let tbody: HTMLTableSectionElement;
+
+            if (table === null) {
+              // Create new table if it doesn't exist
+              table = document.createElement("table");
+              table.className = cn(
+                `
+                  bn:w-full bn:border-collapse
+                  bn:text-(--vkui--color_text_primary)
+                `,
+              );
+              tbody = document.createElement("tbody");
+              table.append(tbody);
+              container.append(table);
+            } else {
+              // Use existing tbody
+              tbody =
+                table.querySelector("tbody") ?? document.createElement("tbody");
+              if (!table.contains(tbody)) {
+                table.append(tbody);
+              }
+            }
+
+            // Get current row count to continue indexing
+            const currentRowCount = tbody.querySelectorAll("tr").length;
+
+            // Append new rows for the new dataset items
+            for (const [index, item] of dataset.entries()) {
+              const row = createTableRow(
+                currentRowCount + index,
+                item,
+                affiliations[index],
+              );
+              tbody.append(row);
+            }
+
+            // Remove the processed div elements from container
+            const divsToRemove = [...container.children].filter(
+              (el) => el instanceof HTMLElement && el.tagName !== "TABLE",
+            );
+            for (const div of divsToRemove) {
+              div.remove();
+            }
+          }
+        }
+
         const rows = [
-          ...element.querySelectorAll<HTMLElement>(".fans_fan_row"),
+          ...element.querySelectorAll<HTMLElement>(
+            [
+              ".fans_fan_row",
+              'table > tbody > tr, [data-testid="grid-item"]', // New VK design
+            ].join(", "),
+          ),
         ];
 
         const loadCount = rows.length;
@@ -395,23 +516,7 @@ export default defineInsertion({
           `График показан только для загруженных аккаунтов. Подгрузка происходит, когда вы скроллите окно вниз. Соцсеть может скрывать некоторых лайкнувших. Загружено: ${loadCount} / ${totalCount} `,
         );
 
-        function checkLoadMoreButton() {
-          const loadMoreButton = document.querySelector(
-            "button.ui_load_more_btn",
-          );
-
-          if (!(loadMoreButton instanceof HTMLElement)) {
-            return false;
-          }
-
-          if (loadMoreButton.style.display === "none") {
-            return false;
-          }
-
-          return true;
-        }
-
-        if (!checkLoadMoreButton() || loadCount >= totalCount) {
+        if (loadCount >= totalCount) {
           shell.stopAutoLoad();
           shell.hideAutoLoadButton();
         }
@@ -502,11 +607,19 @@ export default defineInsertion({
       }
     }
 
+    const container = element.classList.contains("fans_rows")
+      ? element
+      : element.querySelector('[class*="vkitGrid__root"]'); // New VK design
+
+    if (!container || !(container instanceof HTMLElement)) {
+      logger.warn("likes-chart: container not found");
+      shell.destroy();
+      return;
+    }
+
     await updateChartFromDom();
 
-    const disconnect = observeFansRowsUpdates(element, updateChartFromDom);
-
-    await handleTableView(userConfig.likesDisplay);
+    const disconnect = observeFansRowsUpdates(container, updateChartFromDom);
 
     return () => {
       isDestroyed = true;
