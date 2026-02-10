@@ -5,10 +5,6 @@ import { nanoid } from "nanoid";
 import type { Writable } from "type-fest";
 import type { z } from "zod/mini";
 
-import {
-  type IsoDateTime,
-  isoDateTimeSchema,
-} from "@/shared/@model/primitives";
 import type {
   StaticListDefinition,
   StaticListInstance,
@@ -30,6 +26,10 @@ import {
   type PollResult,
   type PollVersion,
 } from "@/shared/@pollable/core";
+import {
+  type IsoDateTime,
+  isoDateTimeSchema,
+} from "@/shared/@primitives/temporal";
 import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";

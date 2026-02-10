@@ -24,9 +24,8 @@ export const inlineAffiliationStripClassListTokens: string[] = cnl(`
 `);
 
 export const inlineAffiliationOverlayBaseClassListTokens: string[] = cnl(`
-  bn:pointer-events-none bn:absolute bn:inset-0 bn:-z-10 bn:mt-[-2px]
-  bn:mr-[-2px] bn:mb-[-5px] bn:border-l-3
-  bn:border-l-(--bn-inline-affiliation-border)
+  bn:absolute bn:inset-0 bn:-z-10 bn:mt-[-2px] bn:mr-[-2px] bn:mb-[-5px]
+  bn:border-l-3 bn:border-l-(--bn-inline-affiliation-border)
   bn:bg-(--bn-inline-affiliation-color) bn:px-[2px] bn:pt-[2px] bn:pb-[5px]
   bn:dark:border-l-(--bn-inline-affiliation-border)/50
   bn:dark:bg-(--bn-inline-affiliation-color)/20

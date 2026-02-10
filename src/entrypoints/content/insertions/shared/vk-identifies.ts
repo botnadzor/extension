@@ -1,4 +1,4 @@
-import { type VkDomain, vkDomainSchema } from "@/shared/@model/primitives";
+import { type VkDomain, vkDomainSchema } from "@/shared/@primitives/vk";
 
 export function extractVkDomainFromHref(
   href: string | null,

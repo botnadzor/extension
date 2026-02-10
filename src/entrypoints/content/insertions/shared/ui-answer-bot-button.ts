@@ -1,4 +1,4 @@
-import type { VkDomain } from "@/shared/@model/primitives";
+import type { VkDomain } from "@/shared/@primitives/vk";
 import { cn } from "@/shared/tailwindcss-helpers";
 import { generateCardUrl } from "@/shared/url-helpers";
 

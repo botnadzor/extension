@@ -5,7 +5,7 @@ import {
   type HexColor,
   hexColorSchema,
   type TagId,
-} from "@/shared/@model/primitives";
+} from "@/shared/@primitives/misc";
 import {
   useNextStaticListSummary,
   useStaticListItems,

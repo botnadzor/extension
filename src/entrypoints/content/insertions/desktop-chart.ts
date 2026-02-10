@@ -1,5 +1,5 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import { vkIdSchema } from "@/shared/@model/primitives";
+import { vkIdSchema } from "@/shared/@primitives/vk";
 import {
   affiliationService,
   frontendService,

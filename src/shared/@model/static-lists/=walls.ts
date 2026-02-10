@@ -1,6 +1,7 @@
 import { z } from "zod/mini";
 
-import { itemCountSchema, vkIdSchema } from "../primitives";
+import { itemCountSchema } from "../../@primitives/misc";
+import { vkIdSchema } from "../../@primitives/vk";
 import type { StaticListDefinition } from "../static-list-helpers";
 
 const receivedWallListItemSchema = z.union([

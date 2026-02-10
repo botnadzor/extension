@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { type IsoDateTime, isoDateTimeSchema } from "./primitives";
+import { type IsoDateTime, isoDateTimeSchema } from "../@primitives/temporal";
 
 export const permissionLookupSchema = z.readonly(
   z.object({

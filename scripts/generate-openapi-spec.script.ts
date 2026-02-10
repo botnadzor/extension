@@ -12,14 +12,16 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { stringify as stringifyYaml } from "yaml";
 
 import { inspectorTriggerSchema } from "@/shared/@model/inspector";
+import { accessCodeSchema } from "@/shared/@primitives/misc";
 import {
-  accessCodeSchema,
   isoDateSchema,
   isoDateTimeSchema,
+} from "@/shared/@primitives/temporal";
+import {
   positiveVkIdSchema,
   vkDomainSchema,
   vkIdSchema,
-} from "@/shared/@model/primitives";
+} from "@/shared/@primitives/vk";
 
 import {
   orpcContractLookup,

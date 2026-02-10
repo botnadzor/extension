@@ -64,8 +64,6 @@ export default defineInsertion({
 
     let badgeUI: ReturnType<typeof renderInlineBadge> | undefined;
     let actionUI: ReturnType<typeof renderAccountAction> | undefined;
-    let overlay: HTMLDivElement | undefined;
-    let addedClasses: string[] = [];
 
     const commentContent = authorLink.nextElementSibling;
 
@@ -82,7 +80,13 @@ export default defineInsertion({
     if (!(badgeAnchor instanceof HTMLAnchorElement)) {
       return;
     }
+
+    const likeElement = element
+      .querySelector('[data-liked="true"]')
+      ?.closest<HTMLElement>('[class*="groupLike"]');
+
     const actionAnchor =
+      likeElement ??
       element.querySelector('[data-testid="comment-share"]') ??
       element.querySelector('[data-testid="wall_comment_date"]') ??
       commentContent;
@@ -92,19 +96,11 @@ export default defineInsertion({
     }
 
     if (accountAffiliation) {
-      addedClasses = cnl("bn:relative bn:z-0");
-      commentContent.classList.add(...addedClasses);
-
       applyInlineAffiliationVars(commentContent, accountAffiliation.color);
-
-      overlay = document.createElement("div");
-      const overlayClassListTokens = cnl(
+      commentContent.classList.add(
         ...inlineAffiliationOverlayBaseClassListTokens,
-        "bn:ml-[2px]",
+        ...cnl("bn:relative bn:z-0 bn:ml-[6px] bn:pl-[3px]!"),
       );
-
-      overlay.classList.add(...overlayClassListTokens);
-      commentContent.prepend(overlay);
 
       badgeUI = renderInlineBadge({
         mountAfter: badgeAnchor,
@@ -199,14 +195,13 @@ export default defineInsertion({
     }
 
     return () => {
-      if (overlay) {
-        overlay.remove();
-      }
-
-      if (addedClasses.length > 0) {
-        commentContent.classList.remove(...addedClasses);
-      }
       commentContent.classList.remove(...cnl("bn:group"));
+      if (accountAffiliation) {
+        commentContent.classList.remove(
+          ...inlineAffiliationOverlayBaseClassListTokens,
+          ...cnl("bn:relative bn:z-0 bn:ml-[6px] bn:pl-[3px]!"),
+        );
+      }
       clearInlineAffiliationVars(commentContent);
       badgeUI?.destroy();
       actionUI?.destroy();

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import type { ContentId } from "@/shared/@model/primitives";
+import type { ContentId } from "@/shared/@primitives/misc";
 
 export const ContentIdContext = React.createContext<ContentId | undefined>(
   undefined,

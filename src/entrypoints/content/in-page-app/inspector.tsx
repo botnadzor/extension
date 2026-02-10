@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import type { ContentId } from "@/shared/@model/primitives";
 import { createPollableValueHook } from "@/shared/@pollable/react";
+import type { ContentId } from "@/shared/@primitives/misc";
 import {
   useAuthStatus,
   useFrontendBaseUrl,

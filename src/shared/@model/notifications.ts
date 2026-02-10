@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { isoDateTimeSchema } from "./primitives";
+import { isoDateTimeSchema } from "../@primitives/temporal";
 
 export const triggeredNotificationSchema = z.readonly(
   z.object({

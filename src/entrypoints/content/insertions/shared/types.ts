@@ -1,4 +1,4 @@
-import type { PositiveVkId, VkId } from "@/shared/@model/primitives";
+import type { PositiveVkId, VkId } from "@/shared/@primitives/vk";
 
 export type CommentLocation = {
   postType: "photo" | "video" | "wall";

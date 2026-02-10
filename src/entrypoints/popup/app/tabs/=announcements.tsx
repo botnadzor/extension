@@ -1,9 +1,8 @@
 import Markdown from "marked-react";
-import semverSatisfies from "semver/functions/satisfies";
 
 import {
+  useFilteredAnnouncements,
   useFrontendBaseUrl,
-  useStaticListItems,
 } from "@/shared/@ui-helpers/data-hooks";
 import {
   Accordion,
@@ -11,20 +10,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/shared/@ui-primitives/accordion";
-import { getAppConfig } from "@/shared/app-config";
 import { formatDate } from "@/shared/formatting";
 
 export function AnnouncementsTabBody() {
-  const announcements = useStaticListItems("announcements");
+  const announcements = useFilteredAnnouncements("default");
   const frontendBaseUrl = useFrontendBaseUrl();
 
-  const announcementsToShow = announcements
-    .filter(({ extensionVersionRange }) =>
-      semverSatisfies(getAppConfig().extensionVersion, extensionVersionRange, {
-        includePrerelease: true,
-      }),
-    )
-    .toReversed();
+  const announcementsToShow = announcements.toReversed();
 
   return (
     <div className="px-3 pt-2 pb-4">

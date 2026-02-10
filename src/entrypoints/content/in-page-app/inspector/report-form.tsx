@@ -10,8 +10,8 @@ import {
   tagIdSchema,
   type TagSuggestion,
   tagSuggestionSchema,
-  type VkDomain,
-} from "@/shared/@model/primitives";
+} from "@/shared/@primitives/misc";
+import type { VkDomain } from "@/shared/@primitives/vk";
 import {
   useAccountInspection,
   useAuthStatus,

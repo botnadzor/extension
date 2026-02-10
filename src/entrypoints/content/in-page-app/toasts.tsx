@@ -1,14 +1,13 @@
 import * as React from "react";
-import semverSatisfies from "semver/functions/satisfies";
 
-import type { ContentId } from "@/shared/@model/primitives";
 import { createPollableValueHook } from "@/shared/@pollable/react";
+import type { ContentId } from "@/shared/@primitives/misc";
 import {
+  useExtensionVersionInfo,
+  useFilteredAnnouncements,
   useGlobalNotificationsState,
-  useStaticListItems,
 } from "@/shared/@ui-helpers/data-hooks";
 import { Button } from "@/shared/@ui-primitives/button";
-import { getAppConfig } from "@/shared/app-config";
 import {
   notificationService,
   staticListsService,
@@ -17,6 +16,7 @@ import {
 import { useContentId } from "../content-id-context";
 import { ToastWithAnnouncement } from "./toasts/toast-with-announcement";
 import { ToastWithDataWarmup } from "./toasts/toast-with-data-warmup";
+import { ToastWithDeprecatedExtensionVersion } from "./toasts/toast-with-deprecated-extension-version";
 import { ToastWithTriggeredNotification } from "./toasts/toast-with-triggered-notification";
 import { ToastWithWelcomeMessage } from "./toasts/toast-with-welcome-message";
 
@@ -36,9 +36,10 @@ const useTriggeredNotification = createPollableValueHook(
 );
 
 export function Toasts() {
-  const announcements = useStaticListItems("announcements");
+  const announcements = useFilteredAnnouncements("toast");
   const contentId = useContentId();
   const triggeredNotification = useTriggeredNotification(contentId);
+  const extensionVersionInfo = useExtensionVersionInfo();
 
   const { welcomeMessageReadAt, announcementReadAtByCreatedAt } =
     useGlobalNotificationsState();
@@ -108,14 +109,9 @@ export function Toasts() {
   }
 
   const announcementToShow = announcements.find(
-    ({ createdAt, extensionVersionRangeForToast, extensionVersionRange }) =>
+    ({ createdAt }) =>
       !announcementReadAtByCreatedAt[createdAt] &&
-      createdAt > welcomeMessageReadAt &&
-      semverSatisfies(
-        getAppConfig().extensionVersion,
-        extensionVersionRangeForToast ?? extensionVersionRange,
-        { includePrerelease: true },
-      ),
+      createdAt > welcomeMessageReadAt,
   );
 
   if (announcementToShow) {
@@ -124,6 +120,17 @@ export function Toasts() {
         key={announcementToShow.createdAt}
         {...announcementToShow}
       />
+    );
+  }
+
+  if (extensionVersionInfo.deprecation) {
+    return (
+      <React.Suspense>
+        <ToastWithDeprecatedExtensionVersion
+          {...extensionVersionInfo}
+          deprecation={extensionVersionInfo.deprecation}
+        />
+      </React.Suspense>
     );
   }
 

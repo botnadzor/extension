@@ -1,15 +1,17 @@
 import * as React from "react";
 import type { JsonValue } from "type-fest";
 
-import type { VkDomain } from "../@model/primitives";
+import type { AnnouncementVersionFilter } from "../../entrypoints/background/@services/extension-version-service";
 import type {
   StaticListId,
   StaticListItem,
   StaticListSummary,
 } from "../@model/static-lists";
 import { createPollableValueHook } from "../@pollable/react";
+import type { VkDomain } from "../@primitives/vk";
 import {
   authService,
+  extensionVersionService,
   frontendService,
   inspectorService,
   notificationService,
@@ -37,6 +39,17 @@ export const useAuthCheck = createPollableValueHook(
 export const useAuthStatus = createPollableValueHook(
   (lastPollVersion) => authService.pollAuthStatus(lastPollVersion),
   { hookNameForDebugging: "useAuthStatus" },
+);
+
+export const useExtensionVersionInfo = createPollableValueHook(
+  (lastPollVersion) => extensionVersionService.pollInfo(lastPollVersion),
+  { hookNameForDebugging: "useExtensionVersionInfo" },
+);
+
+export const useFilteredAnnouncements = createPollableValueHook(
+  (lastPollVersion, filter: AnnouncementVersionFilter) =>
+    extensionVersionService.pollFilteredAnnouncements(lastPollVersion, filter),
+  { hookNameForDebugging: "useFilteredAnnouncements" },
 );
 
 export const useFrontendBaseUrl = createPollableValueHook(

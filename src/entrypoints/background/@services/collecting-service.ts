@@ -3,16 +3,18 @@ import { delay, uniqBy } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 import { z } from "zod/mini";
 
+import type { PollVersion } from "@/shared/@pollable/core";
+import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 import {
-  isoDateTimeSchema,
+  parseVkDomain,
   type PositiveVkId,
   positiveVkIdSchema,
   type VkDomain,
-  vkDomainSchema,
   type VkId,
   vkIdSchema,
-} from "@/shared/@model/primitives";
-import type { PollVersion } from "@/shared/@pollable/core";
+  type VkNickname,
+  vkNicknameSchema,
+} from "@/shared/@primitives/vk";
 import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AuthService } from "./auth-service";
@@ -67,7 +69,7 @@ const persistedCommentSchema = z.object({
   wallVkId: vkIdSchema,
   postVkId: positiveVkIdSchema,
   commentVkId: positiveVkIdSchema,
-  commenterVkDomain: vkDomainSchema,
+  commenterVkIdOrNickname: z.union([positiveVkIdSchema, vkNicknameSchema]),
   persistedAt: isoDateTimeSchema,
   uploadedAt: uploadedAtSchema,
 });
@@ -370,14 +372,20 @@ export class CollectingService {
         await commentsTable.get(commentItemKey),
       );
 
-      commentItemsToPersist.push({
-        wallVkId: commentToPersist.wallVkId,
-        postVkId: commentToPersist.postVkId,
-        commentVkId: commentToPersist.commentVkId,
-        commenterVkDomain: commentToPersist.commenterVkDomain,
-        persistedAt,
-        uploadedAt: alreadyPersistedComment?.uploadedAt ?? notUploaded,
-      });
+      const parsedVkDomain = parseVkDomain(commentToPersist.commenterVkDomain);
+      if (
+        parsedVkDomain.kind === "vkNickname" ||
+        (parsedVkDomain.kind === "vkId" && parsedVkDomain.prefix === "id")
+      ) {
+        commentItemsToPersist.push({
+          wallVkId: commentToPersist.wallVkId,
+          postVkId: commentToPersist.postVkId,
+          commentVkId: commentToPersist.commentVkId,
+          commenterVkIdOrNickname: parsedVkDomain.value,
+          persistedAt,
+          uploadedAt: alreadyPersistedComment?.uploadedAt ?? notUploaded,
+        });
+      }
     }
     await commentsTable.bulkPut(commentItemsToPersist);
 
@@ -464,7 +472,7 @@ export class CollectingService {
           postVkId: PositiveVkId;
           comments: Array<{
             commentVkId: PositiveVkId;
-            commenterVkDomain: VkDomain;
+            commenterVkIdOrNickname: PositiveVkId | VkNickname;
           }>;
         }
       >();
@@ -482,7 +490,7 @@ export class CollectingService {
         }
         post.comments.push({
           commentVkId: comment.commentVkId,
-          commenterVkDomain: comment.commenterVkDomain,
+          commenterVkIdOrNickname: comment.commenterVkIdOrNickname,
         });
       }
 
@@ -494,7 +502,7 @@ export class CollectingService {
         commentCount?: number;
         comments: Array<{
           commentVkId: PositiveVkId;
-          commenterVkDomain: VkDomain;
+          commenterVkIdOrNickname: PositiveVkId | VkNickname;
         }>;
       }> = [];
 

@@ -1,10 +1,8 @@
 import { z } from "zod/mini";
 
 import { permissionLookupSchema } from "@/shared/@model/auth";
-import {
-  accessCodeSchema,
-  positiveVkIdSchema,
-} from "@/shared/@model/primitives";
+import { accessCodeSchema } from "@/shared/@primitives/misc";
+import { positiveVkIdSchema } from "@/shared/@primitives/vk";
 
 import { base } from "./base";
 import {

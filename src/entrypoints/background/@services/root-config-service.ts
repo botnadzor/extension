@@ -1,6 +1,7 @@
 import { delay } from "es-toolkit";
 
 import {
+  fallbackRootConfigSchema,
   type RootConfig,
   rootConfigSchema,
   rootConfigSeed,
@@ -10,6 +11,7 @@ import {
   type PollResult,
   type PollVersion,
 } from "@/shared/@pollable/core";
+import type { SemverRange } from "@/shared/@primitives/semver";
 import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
@@ -29,6 +31,7 @@ export class RootConfigService {
   private lastFetchAttempt: { success: boolean; fetchedAt: number } | undefined;
 
   private pollableRootConfig: Pollable<RootConfig>;
+  private pollableExtensionVersionRange: Pollable<SemverRange>;
 
   constructor({
     aliasManagerForStaticApi,
@@ -37,6 +40,9 @@ export class RootConfigService {
   }) {
     this.aliasManagerForStaticApi = aliasManagerForStaticApi;
     this.pollableRootConfig = new Pollable(rootConfigSeed);
+    this.pollableExtensionVersionRange = new Pollable(
+      rootConfigSeed.extensionVersionRange,
+    );
     this.state = "idle";
   }
 
@@ -57,6 +63,17 @@ export class RootConfigService {
     while (this.state !== "idle") {
       await delay(100);
     }
+  }
+
+  async getExtensionVersionRange(): Promise<SemverRange> {
+    const result = await this.pollExtensionVersionRange(undefined);
+    return result.value;
+  }
+
+  async pollExtensionVersionRange(
+    lastPollVersion: PollVersion | undefined,
+  ): Promise<PollResult<SemverRange>> {
+    return this.pollableExtensionVersionRange.poll(lastPollVersion);
   }
 
   private async updateIfNeeded(): Promise<void> {
@@ -113,9 +130,9 @@ export class RootConfigService {
         return;
       }
 
-      const parseResult = rootConfigSchema.safeParse(
-        await fetchResult.response.json(),
-      );
+      const json: unknown = await fetchResult.response.json();
+
+      const parseResult = rootConfigSchema.safeParse(json);
 
       if (!parseResult.success) {
         logger.error(
@@ -125,6 +142,26 @@ export class RootConfigService {
             error: parseResult.error,
           },
         );
+
+        const fallbackParseResult = fallbackRootConfigSchema.safeParse(json);
+
+        if (fallbackParseResult.success) {
+          this.pollableExtensionVersionRange.setValue(
+            fallbackParseResult.data.extensionVersionRange,
+          );
+
+          logger.info(
+            "Extracted extension version range from incompatible root config: {extensionVersionRange}",
+            {
+              extensionVersionRange:
+                fallbackParseResult.data.extensionVersionRange,
+            },
+          );
+
+          this.lastFetchAttempt = { success: false, fetchedAt: Date.now() };
+          this.state = "idle";
+          return;
+        }
 
         if (attempt < maxRetryCount - 1) {
           continue;
@@ -136,6 +173,9 @@ export class RootConfigService {
       }
 
       this.pollableRootConfig.setValue(parseResult.data);
+      this.pollableExtensionVersionRange.setValue(
+        parseResult.data.extensionVersionRange,
+      );
       this.lastFetchAttempt = { success: true, fetchedAt: Date.now() };
       this.state = "idle";
 

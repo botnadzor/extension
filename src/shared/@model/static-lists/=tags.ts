@@ -6,7 +6,7 @@ import {
   optionalTrueSchema,
   tagIdSchema,
   tagTypeSchema,
-} from "../primitives";
+} from "../../@primitives/misc";
 import {
   receivedTagIdSchema,
   type StaticListDefinition,

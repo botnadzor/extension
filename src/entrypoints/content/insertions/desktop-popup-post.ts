@@ -1,5 +1,5 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import type { VkDomain } from "@/shared/@model/primitives";
+import type { VkDomain } from "@/shared/@primitives/vk";
 import {
   affiliationService,
   collectingService,

@@ -1,6 +1,6 @@
 import { z } from "zod/mini";
 
-import { isoDateTimeSchema } from "@/shared/@model/primitives";
+import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 
 /*
  * Naming is inspired by https://www.rfc-editor.org/rfc/rfc9457.html

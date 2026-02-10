@@ -8,7 +8,7 @@ import reactCompiler from "babel-plugin-react-compiler";
 import { defineConfig } from "wxt";
 
 import { contentScriptMatches } from "./src/entrypoints/content/hosts-and-matches";
-import { determineExtensionVersioning } from "./src/wxt-helpers";
+import { generateBaseExtensionVersionInfo } from "./src/wxt-helpers";
 
 export default defineConfig({
   autoIcons: { baseIconPath: "icon.png" },
@@ -45,15 +45,10 @@ export default defineConfig({
     },
 
     "zip:done": (wxt, zipFiles) => {
-      const { extensionVersionName } = determineExtensionVersioning(
-        wxt.config.mode,
-      );
+      const { versionName } = generateBaseExtensionVersionInfo(wxt.config.mode);
 
       for (const zipFilePath of zipFiles) {
-        fs.renameSync(
-          zipFilePath,
-          zipFilePath.replace("latest", extensionVersionName),
-        );
+        fs.renameSync(zipFilePath, zipFilePath.replace("latest", versionName));
       }
     },
   },
@@ -61,15 +56,15 @@ export default defineConfig({
   imports: false,
 
   manifest: (configEnv) => {
-    const { extensionVersion, extensionVersionName, publishableToStores } =
-      determineExtensionVersioning(configEnv.mode);
+    const { lifecycle, version, versionName } =
+      generateBaseExtensionVersionInfo(configEnv.mode);
 
     const description = "Подсветка ботов в VK";
 
-    // Firefox does not support version_name, so we extract the value from the description (see app.config.ts)
+    // Firefox does not support version_name, so we add it to the description to show it in extension details
     const patchedDescription =
-      configEnv.browser === "firefox"
-        ? `Подсветка ботов в VK${extensionVersionName ? ` (${extensionVersionName})` : ""}`
+      configEnv.browser === "firefox" && versionName !== version
+        ? `Подсветка ботов в VK (${versionName})`
         : description;
 
     return {
@@ -77,10 +72,10 @@ export default defineConfig({
       description: patchedDescription,
       permissions: ["activeTab", "alarms", "storage", "unlimitedStorage"],
 
-      version: extensionVersion,
-      version_name: extensionVersionName,
+      version,
+      version_name: versionName,
 
-      ...(publishableToStores && configEnv.browser === "firefox"
+      ...(lifecycle === "release" && configEnv.browser === "firefox"
         ? {
             browser_specific_settings: {
               gecko: { id: "extension@botnadzor.org" },
@@ -104,7 +99,12 @@ export default defineConfig({
 
   srcDir: "src",
 
-  vite: () => ({
+  vite: (configEnv) => ({
+    define: {
+      __BASE_EXTENSION_VERSION_INFO__: JSON.stringify(
+        generateBaseExtensionVersionInfo(configEnv.mode),
+      ),
+    },
     plugins: [
       tailwindcss(),
       {

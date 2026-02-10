@@ -3,7 +3,7 @@ import {
   type VkDomain,
   vkDomainSchema,
   vkIdSchema,
-} from "@/shared/@model/primitives";
+} from "@/shared/@primitives/vk";
 
 import type { CommentLocation } from "./types";
 

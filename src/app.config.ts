@@ -2,8 +2,6 @@ import { z } from "zod/mini";
 
 import { browser, defineAppConfig } from "#imports";
 
-import { type Semver, semverSchema } from "./shared/@model/primitives";
-
 const manifest = browser.runtime.getManifest();
 
 declare module "wxt/utils/define-app-config" {
@@ -22,26 +20,9 @@ declare module "wxt/utils/define-app-config" {
      */
     persistentContentId: boolean;
 
-    /**
-     * Same value as in manifest but typed more narrowly than string
-     */
-    extensionVersion: Semver;
-
-    /**
-     * Same as in manifest, but fixed for Firefox
-     * (version_name not supported in manifest, so we extract it from the description)
-     */
-    extensionVersionName: string;
-
     syncStorageAllowed: boolean;
   }
 }
-
-const extensionVersion = semverSchema.parse(manifest.version);
-const extensionVersionName =
-  manifest.version_name ??
-  manifest.description?.match(/\((\S+)\)$/)?.[1] ?? // Firefox does not support version_name, so we extract it from the description
-  extensionVersion;
 
 const syncStorageAllowed: boolean = (() => {
   if (import.meta.env.BROWSER !== "firefox") {
@@ -59,7 +40,5 @@ export default defineAppConfig({
     .stringbool()
     .parse(import.meta.env["WXT_PERSISTENT_CONTENT_ID"]),
 
-  extensionVersion,
-  extensionVersionName,
   syncStorageAllowed,
 });

@@ -1,14 +1,14 @@
 import { produce } from "immer";
 
 import {
-  type IsoDateTime,
-  isoDateTimeSchema,
-} from "@/shared/@model/primitives";
-import {
   Pollable,
   type PollResult,
   type PollVersion,
 } from "@/shared/@pollable/core";
+import {
+  type IsoDateTime,
+  isoDateTimeSchema,
+} from "@/shared/@primitives/temporal";
 import { getBackgroundLogger } from "@/shared/logging";
 
 type RemoteSystem = "dynamicApi" | "frontend" | "staticApi";

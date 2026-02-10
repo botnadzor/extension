@@ -9,16 +9,15 @@ import {
   triggeredNotificationSchema,
 } from "@/shared/@model/notifications";
 import {
-  type ContentId,
-  contentIdSchema,
-  type IsoDateTime,
-  isoDateTimeSchema,
-} from "@/shared/@model/primitives";
-import {
   Pollable,
   type PollResult,
   type PollVersion,
 } from "@/shared/@pollable/core";
+import { type ContentId, contentIdSchema } from "@/shared/@primitives/misc";
+import {
+  type IsoDateTime,
+  isoDateTimeSchema,
+} from "@/shared/@primitives/temporal";
 
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
 

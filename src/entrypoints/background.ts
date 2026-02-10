@@ -8,6 +8,7 @@ import {
   affiliationServiceKey,
   authServiceKey,
   collectingServiceKey,
+  extensionVersionServiceKey,
   frontendServiceKey,
   inspectorServiceKey,
   notificationServiceKey,
@@ -24,6 +25,7 @@ import { VkDomainResolver } from "./background/@service-helpers/vk-domain-resolv
 import { AffiliationService } from "./background/@services/affiliation-service";
 import { AuthService } from "./background/@services/auth-service";
 import { CollectingService } from "./background/@services/collecting-service";
+import { ExtensionVersionService } from "./background/@services/extension-version-service";
 import { FrontendService } from "./background/@services/frontend-service";
 import { InspectorService } from "./background/@services/inspector-service";
 import { NotificationService } from "./background/@services/notification-service";
@@ -147,6 +149,11 @@ export default defineBackground(() => {
     rootConfigService,
   });
 
+  const extensionVersionService = new ExtensionVersionService({
+    rootConfigService,
+    staticListsService,
+  });
+
   const userConfigService = new UserConfigService();
 
   const vkDomainResolver = new VkDomainResolver({
@@ -178,6 +185,7 @@ export default defineBackground(() => {
   registerService(affiliationServiceKey, affiliationService);
   registerService(authServiceKey, authService);
   registerService(collectingServiceKey, collectingService);
+  registerService(extensionVersionServiceKey, extensionVersionService);
   registerService(frontendServiceKey, frontendService);
   registerService(inspectorServiceKey, inspectorService);
   registerService(notificationServiceKey, notificationService);

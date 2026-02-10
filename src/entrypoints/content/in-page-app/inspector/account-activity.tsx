@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
-import type { VkDomain } from "@/shared/@model/primitives";
+import type { VkDomain } from "@/shared/@primitives/vk";
 import {
   useAccountInspection,
   useAuthStatus,

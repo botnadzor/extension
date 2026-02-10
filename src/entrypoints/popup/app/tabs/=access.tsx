@@ -2,7 +2,7 @@ import { EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react";
 import * as React from "react";
 
 import type { AuthCheck, AuthStatus } from "@/shared/@model/auth";
-import { isoDateTimeSchema } from "@/shared/@model/primitives";
+import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 import {
   useAuthCheck,
   useAuthStatus,

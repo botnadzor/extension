@@ -86,13 +86,13 @@ jobs:
 
           if [ -n "$EXISTING_PR" ]; then
             echo "Updating existing PR #$EXISTING_PR"
-            gh pr comment "$EXISTING_PR" --body "Automated sync of root config seed.\n\nWorkflow run: $WORKFLOW_URL"
+            gh pr comment "$EXISTING_PR" --body $'Automated sync of root config seed.\n\nWorkflow run: '"$WORKFLOW_URL"
             PR_URL=$(gh pr view "$EXISTING_PR" --json url --jq '.url')
           else
             echo "Creating new PR"
             PR_URL=$(gh pr create \
               --title "Sync root config seed" \
-              --body "Automated sync of root config seed.\n\nWorkflow run: $WORKFLOW_URL")
+              --body $'Automated sync of root config seed.\n\nWorkflow run: '"$WORKFLOW_URL")
           fi
 
           echo ""

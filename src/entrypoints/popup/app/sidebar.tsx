@@ -3,9 +3,9 @@ import * as React from "react";
 import { type PopupTab, popupTabs } from "@/shared/@model/popup";
 import {
   useActivePopupTab,
+  useExtensionVersionInfo,
   useFrontendBaseUrl,
 } from "@/shared/@ui-helpers/data-hooks";
-import { getAppConfig } from "@/shared/app-config";
 import { popupService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 import { generateUrl } from "@/shared/url-helpers";
@@ -63,14 +63,16 @@ function StoreAwareTabs() {
  * while still allowing the version to be copy-pasted.
  */
 function Version() {
-  const versionName = getAppConfig().extensionVersionName;
-  const startsWithNumber = /^\d/.test(versionName);
-  const shouldHaveGithubRelease = /^[2-9]/.test(versionName);
+  const extensionVersionInfo = useExtensionVersionInfo();
+
+  const taggedOnGitHub =
+    extensionVersionInfo.lifecycle === "release" ||
+    extensionVersionInfo.lifecycle === "prerelease";
 
   const reactNodeWithVersion = (
     <>
-      {startsWithNumber && "v"}
-      {versionName.split(".").map((part, index) => (
+      {taggedOnGitHub && "v"}
+      {extensionVersionInfo.versionName.split(".").map((part, index) => (
         // eslint-disable-next-line @eslint-react/no-array-index-key -- value does not change between rerenders
         <React.Fragment key={index}>
           {index > 0 && (
@@ -91,13 +93,13 @@ function Version() {
           pr-3 pl-0.75 -indent-0.75 text-balance text-muted-foreground
           tabular-nums
         `,
-        !startsWithNumber && "text-xs",
+        !taggedOnGitHub && "text-xs",
       )}
     >
-      {shouldHaveGithubRelease ? (
+      {taggedOnGitHub ? (
         <a
           className="u-link-secondary"
-          href={`https://github.com/botnadzor/extension/releases/tag/v${versionName}`}
+          href={`https://github.com/botnadzor/extension/releases/tag/v${extensionVersionInfo.versionName}`}
           rel="noopener noreferrer"
           target="_blank"
         >
@@ -112,6 +114,7 @@ function Version() {
 
 function LinksBelowNav() {
   const frontendBaseUrl = useFrontendBaseUrl();
+
   return (
     <div className="pl-3 text-sm">
       <Version />

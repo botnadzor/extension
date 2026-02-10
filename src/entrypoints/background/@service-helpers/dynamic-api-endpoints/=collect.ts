@@ -1,11 +1,11 @@
 import { z } from "zod/mini";
 
+import { accessCodeSchema } from "@/shared/@primitives/misc";
 import {
-  accessCodeSchema,
   positiveVkIdSchema,
   vkDomainSchema,
   vkIdSchema,
-} from "@/shared/@model/primitives";
+} from "@/shared/@primitives/vk";
 
 import { base } from "./base";
 import {
@@ -31,7 +31,10 @@ export const contractForCollect = base
             comments: z.array(
               z.object({
                 commentVkId: positiveVkIdSchema,
-                commenterVkDomain: vkDomainSchema,
+                commenterVkIdOrNickname: z.union([
+                  positiveVkIdSchema,
+                  vkDomainSchema,
+                ]),
               }),
             ),
           }),

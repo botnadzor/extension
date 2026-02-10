@@ -1,6 +1,6 @@
 import { IntlMessageFormat } from "intl-messageformat";
 
-import type { IsoDate, IsoDateTime } from "./@model/primitives";
+import type { IsoDate, IsoDateTime } from "./@primitives/temporal";
 
 const locale = "ru";
 

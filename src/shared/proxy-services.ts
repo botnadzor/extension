@@ -4,6 +4,7 @@ import {
   affiliationServiceKey,
   authServiceKey,
   collectingServiceKey,
+  extensionVersionServiceKey,
   frontendServiceKey,
   inspectorServiceKey,
   notificationServiceKey,
@@ -16,6 +17,9 @@ import {
 export const affiliationService = createProxyService(affiliationServiceKey);
 export const authService = createProxyService(authServiceKey);
 export const collectingService = createProxyService(collectingServiceKey);
+export const extensionVersionService = createProxyService(
+  extensionVersionServiceKey,
+);
 export const frontendService = createProxyService(frontendServiceKey);
 export const inspectorService = createProxyService(inspectorServiceKey);
 export const notificationService = createProxyService(notificationServiceKey);

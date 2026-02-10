@@ -1,5 +1,5 @@
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import { positiveVkIdSchema, vkIdSchema } from "@/shared/@model/primitives";
+import { positiveVkIdSchema, vkIdSchema } from "@/shared/@primitives/vk";
 import { affiliationService, frontendService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 

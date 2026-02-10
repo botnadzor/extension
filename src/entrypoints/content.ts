@@ -1,4 +1,4 @@
-import { type ContentId, contentIdSchema } from "@/shared/@model/primitives";
+import { type ContentId, contentIdSchema } from "@/shared/@primitives/misc";
 import { getAppConfig } from "@/shared/app-config";
 import { configureLogging, getContentLogger } from "@/shared/logging";
 import { browser, defineContentScript } from "#imports";

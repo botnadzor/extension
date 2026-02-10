@@ -1,11 +1,7 @@
 import { z } from "zod/mini";
 
-import {
-  itemCountSchema,
-  tagIdSchema,
-  vkIdSchema,
-  vkNicknameSchema,
-} from "../primitives";
+import { itemCountSchema, tagIdSchema } from "../../@primitives/misc";
+import { vkIdSchema, vkNicknameSchema } from "../../@primitives/vk";
 import {
   receivedTagIdSchema,
   type StaticListDefinition,

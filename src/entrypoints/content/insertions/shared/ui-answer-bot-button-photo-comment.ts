@@ -1,4 +1,4 @@
-import type { VkDomain } from "@/shared/@model/primitives";
+import type { VkDomain } from "@/shared/@primitives/vk";
 import { affiliationService } from "@/shared/proxy-services";
 
 import { renderAnswerBotAction } from "./ui-answer-bot-button";

@@ -1,6 +1,10 @@
 import { z } from "zod/mini";
 
-import { hexColorSchema, optionalTrueSchema, tagIdSchema } from "./primitives";
+import {
+  hexColorSchema,
+  optionalTrueSchema,
+  tagIdSchema,
+} from "../@primitives/misc";
 
 const tagOverrideSchema = z.object({
   color: z.exactOptional(hexColorSchema),

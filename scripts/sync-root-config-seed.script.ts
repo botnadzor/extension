@@ -9,11 +9,9 @@ import path from "node:path";
 
 import * as prettier from "prettier";
 
-import {
-  isoDateTimeSchema,
-  semverRangeSchema,
-} from "@/shared/@model/primitives";
 import { type RootConfig, rootConfigSchema } from "@/shared/@model/root-config";
+import { semverRangeSchema } from "@/shared/@primitives/semver";
+import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 
 const logger = console;
 

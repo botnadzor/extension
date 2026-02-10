@@ -9,8 +9,8 @@ import {
 import {
   accessCodeSchema,
   tagSuggestionSchema,
-  vkIdSchema,
-} from "@/shared/@model/primitives";
+} from "@/shared/@primitives/misc";
+import { vkIdSchema } from "@/shared/@primitives/vk";
 
 import { base } from "./base";
 import {

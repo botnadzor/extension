@@ -1,11 +1,11 @@
 import { z } from "zod/mini";
 
+import { isoDateTimeSchema } from "../@primitives/temporal";
 import {
-  isoDateTimeSchema,
   positiveVkIdSchema,
   vkDomainSchema,
   vkIdSchema,
-} from "./primitives";
+} from "../@primitives/vk";
 
 export const inspectorAccountInfoSchema = z.readonly(
   z.object({

@@ -5,9 +5,8 @@ import {
   type IsoDate,
   type IsoDateTime,
   isoDateTimeSchema,
-  isPositiveVkId,
-  type PositiveVkId,
-} from "@/shared/@model/primitives";
+} from "@/shared/@primitives/temporal";
+import { isPositiveVkId, type PositiveVkId } from "@/shared/@primitives/vk";
 
 import type { DynamicApiEndpointOutcome } from "../@service-helpers/dynamic-api-endpoints";
 import type { VkDomainResolver } from "../@service-helpers/vk-domain-resolver";

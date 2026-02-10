@@ -1,5 +1,6 @@
 import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
-import type { ContentId, VkDomain } from "@/shared/@model/primitives";
+import type { ContentId } from "@/shared/@primitives/misc";
+import type { VkDomain } from "@/shared/@primitives/vk";
 import { cn, cnl } from "@/shared/tailwindcss-helpers";
 
 import {

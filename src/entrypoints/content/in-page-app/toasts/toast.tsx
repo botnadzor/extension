@@ -1,7 +1,7 @@
 import { XIcon } from "lucide-react";
 import * as React from "react";
 
-import type { IsoDateTime } from "@/shared/@model/primitives";
+import type { IsoDateTime } from "@/shared/@primitives/temporal";
 import { useAnimate } from "@/shared/@ui-helpers/use-animate";
 import { Button } from "@/shared/@ui-primitives/button";
 import { cn } from "@/shared/tailwindcss-helpers";

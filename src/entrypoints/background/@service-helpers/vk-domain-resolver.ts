@@ -2,48 +2,16 @@ import { delay } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 
 import {
+  parseVkDomain,
   type VkId,
   vkIdSchema,
   type VkNickname,
-  vkNicknameSchema,
-} from "@/shared/@model/primitives";
+} from "@/shared/@primitives/vk";
 import { getBackgroundLogger } from "@/shared/logging";
 
 import type { StaticListsService } from "../@services/static-lists-service";
 
 const logger = getBackgroundLogger(["vk-domain-resolver"]);
-
-type ParsedVkDomain =
-  | { kind: "vkId"; value: VkId }
-  | { kind: "vkNickname"; value: VkNickname }
-  | { kind: "undetermined" };
-
-function parseVkDomain(vkDomain: string): ParsedVkDomain {
-  const [, vkIdPrefix, rawVkId] =
-    /^((?:album|albums|clip|clips|club|group|id|photo|photos|poll|public|video|wall|write)?)(-?\d+)(_(\d+))?(_r(\d+))?$/.exec(
-      vkDomain,
-    ) ?? [];
-
-  const vkIdResult = vkIdSchema.safeParse(Number.parseInt(rawVkId ?? ""));
-  if (vkIdResult.success && vkIdPrefix) {
-    switch (vkIdPrefix) {
-      case "id": {
-        return { kind: "vkId", value: vkIdResult.data };
-      }
-      case "club":
-      case "group":
-      case "public": {
-        return { kind: "vkId", value: vkIdSchema.parse(vkIdResult.data * -1) };
-      }
-
-      default: {
-        return { kind: "undetermined" };
-      }
-    }
-  }
-
-  return { kind: "vkNickname", value: vkNicknameSchema.parse(vkDomain) };
-}
 
 const symbolForUndefined = Symbol("undefined");
 const symbolForPending = Symbol("pending");

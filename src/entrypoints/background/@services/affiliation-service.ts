@@ -4,13 +4,9 @@ import {
   type AccountAffiliation,
   fallbackHexColor,
 } from "@/shared/@model/account-affiliation";
-import {
-  hexColorSchema,
-  tagIdSchema,
-  vkIdSchema,
-  vkNicknameSchema,
-} from "@/shared/@model/primitives";
 import type { TagListItem } from "@/shared/@model/static-lists";
+import { hexColorSchema, tagIdSchema } from "@/shared/@primitives/misc";
+import { vkIdSchema, vkNicknameSchema } from "@/shared/@primitives/vk";
 import { getAppConfig } from "@/shared/app-config";
 import { getBackgroundLogger } from "@/shared/logging";
 

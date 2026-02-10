@@ -3,6 +3,7 @@ import type { ProxyServiceKey } from "@webext-core/proxy-service";
 import type { AffiliationService } from "../entrypoints/background/@services/affiliation-service";
 import type { AuthService } from "../entrypoints/background/@services/auth-service";
 import type { CollectingService } from "../entrypoints/background/@services/collecting-service";
+import type { ExtensionVersionService } from "../entrypoints/background/@services/extension-version-service";
 import type { FrontendService } from "../entrypoints/background/@services/frontend-service";
 import type { InspectorService } from "../entrypoints/background/@services/inspector-service";
 import type { NotificationService } from "../entrypoints/background/@services/notification-service";
@@ -19,6 +20,9 @@ export const authServiceKey: ProxyServiceKey<AuthService> = "auth-service";
 
 export const collectingServiceKey: ProxyServiceKey<CollectingService> =
   "collecting-service";
+
+export const extensionVersionServiceKey: ProxyServiceKey<ExtensionVersionService> =
+  "extension-version-service";
 
 export const frontendServiceKey: ProxyServiceKey<FrontendService> =
   "frontend-service";

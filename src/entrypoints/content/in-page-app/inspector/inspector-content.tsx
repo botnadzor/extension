@@ -7,7 +7,7 @@ import {
   type InspectorTab,
   inspectorTabSchema,
 } from "@/shared/@model/inspector";
-import type { VkDomain } from "@/shared/@model/primitives";
+import type { VkDomain } from "@/shared/@primitives/vk";
 import { useAccountInspection } from "@/shared/@ui-helpers/data-hooks";
 import {
   Tabs,

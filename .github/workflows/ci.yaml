@@ -65,7 +65,7 @@ jobs:
           ## If there are commits in base..PR_HEAD (i.e., base is ahead), PR is behind
           COMMITS_BEHIND=$(git rev-list --count "$PR_HEAD..$BASE_REF")
           if [ "$COMMITS_BEHIND" -gt 0 ]; then
-            echo "WXT_PR_BEHIND_BASE=true" >> $GITHUB_ENV
+            echo "WXT_MERGED_WITH_BASE=true" >> $GITHUB_ENV
           fi
 
       - name: Run `pnpm zip`

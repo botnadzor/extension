@@ -1,10 +1,8 @@
 import { z } from "zod/mini";
 
-import {
-  isoDateTimeSchema,
-  itemCountSchema,
-  semverRangeSchema,
-} from "../primitives";
+import { itemCountSchema } from "../../@primitives/misc";
+import { semverRangeSchema } from "../../@primitives/semver";
+import { isoDateTimeSchema } from "../../@primitives/temporal";
 import type { StaticListDefinition } from "../static-list-helpers";
 
 const announcementListItemSchema = z.readonly(

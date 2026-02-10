@@ -1,6 +1,6 @@
 import { customAlphabet } from "nanoid";
 
-import type { VkDomain } from "./@model/primitives";
+import type { VkDomain } from "./@primitives/vk";
 
 export type SearchParamsAsObject = Readonly<
   Record<string, string | string[] | number | undefined>

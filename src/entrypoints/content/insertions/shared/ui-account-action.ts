@@ -1,11 +1,8 @@
 import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
 import type { InspectorInstancePayload } from "@/shared/@model/inspector";
-import type {
-  ContentId,
-  IsoDate,
-  IsoDateTime,
-  VkDomain,
-} from "@/shared/@model/primitives";
+import type { ContentId } from "@/shared/@primitives/misc";
+import type { IsoDate, IsoDateTime } from "@/shared/@primitives/temporal";
+import type { VkDomain } from "@/shared/@primitives/vk";
 import { formatDateWithOptionalTime } from "@/shared/formatting";
 import {
   inspectorService,

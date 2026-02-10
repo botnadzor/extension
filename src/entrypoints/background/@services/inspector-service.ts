@@ -10,18 +10,17 @@ import {
   reportTextMinLength,
 } from "@/shared/@model/inspector";
 import {
-  type ContentId,
-  contentIdSchema,
-  isoDateTimeSchema,
-  isPositiveVkId,
-  type TagSuggestion,
-  type VkDomain,
-} from "@/shared/@model/primitives";
-import {
   Pollable,
   type PollResult,
   type PollVersion,
 } from "@/shared/@pollable/core";
+import {
+  type ContentId,
+  contentIdSchema,
+  type TagSuggestion,
+} from "@/shared/@primitives/misc";
+import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
+import { isPositiveVkId, type VkDomain } from "@/shared/@primitives/vk";
 
 import type { DynamicApiEndpointOutcome } from "../@service-helpers/dynamic-api-endpoints";
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
