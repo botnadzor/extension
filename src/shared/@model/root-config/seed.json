@@ -8,7 +8,10 @@
       }
     },
     "frontend": {
-      "aliasLookup": { "https://botnadzor.org": { "role": "primary" } }
+      "aliasLookup": {
+        "https://botnadzor.org": { "role": "primary" },
+        "https://botnadzor-epe1uraet-botnadzors-projects.vercel.app": {}
+      }
     },
     "staticApi": {
       "aliasLookup": {
