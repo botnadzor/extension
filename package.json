@@ -78,7 +78,7 @@
     "@eslint-community/eslint-plugin-eslint-comments": "4.6.0",
     "@eslint-react/eslint-plugin": "2.12.2",
     "@eslint/js": "9.39.2",
-    "@orpc/openapi": "1.13.4",
+    "@orpc/openapi": "1.13.5",
     "@orpc/openapi-client": "1.13.4",
     "@orpc/zod": "1.13.4",
     "@stylistic/eslint-plugin": "5.7.1",
