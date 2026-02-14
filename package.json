@@ -80,7 +80,7 @@
     "@eslint/js": "9.39.2",
     "@orpc/openapi": "1.13.5",
     "@orpc/openapi-client": "1.13.5",
-    "@orpc/zod": "1.13.4",
+    "@orpc/zod": "1.13.5",
     "@stylistic/eslint-plugin": "5.7.1",
     "@tailwindcss/vite": "4.1.18",
     "@tsconfig/node-ts": "23.6.3",
