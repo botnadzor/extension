@@ -61,7 +61,7 @@
     "es-toolkit": "1.44.0",
     "immer": "11.1.4",
     "intl-messageformat": "11.1.2",
-    "lru-cache": "11.2.5",
+    "lru-cache": "11.2.6",
     "lucide-react": "0.563.0",
     "lucide-static": "0.563.0",
     "marked-react": "3.0.2",
