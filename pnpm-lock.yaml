@@ -115,8 +115,8 @@ importers:
         specifier: 1.13.5
         version: 1.13.5
       '@orpc/openapi-client':
-        specifier: 1.13.4
-        version: 1.13.4
+        specifier: 1.13.5
+        version: 1.13.5
       '@orpc/zod':
         specifier: 1.13.4
         version: 1.13.4(@orpc/contract@1.13.4)(@orpc/server@1.13.5)(zod@4.3.6)
