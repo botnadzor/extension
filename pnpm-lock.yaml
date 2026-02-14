@@ -15,8 +15,8 @@ importers:
         specifier: 1.13.4
         version: 1.13.4
       '@orpc/contract':
-        specifier: 1.13.4
-        version: 1.13.4
+        specifier: 1.13.5
+        version: 1.13.5
       '@radix-ui/react-accordion':
         specifier: 1.2.12
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -119,7 +119,7 @@ importers:
         version: 1.13.5
       '@orpc/zod':
         specifier: 1.13.5
-        version: 1.13.5(@orpc/contract@1.13.4)(@orpc/server@1.13.5)(zod@4.3.6)
+        version: 1.13.5(@orpc/contract@1.13.5)(@orpc/server@1.13.5)(zod@4.3.6)
       '@stylistic/eslint-plugin':
         specifier: 5.7.1
         version: 5.7.1(eslint@9.39.2(jiti@2.6.1))
@@ -1092,9 +1092,6 @@ packages:
 
   '@orpc/client@1.13.5':
     resolution: {integrity: sha512-j0VJpiWiFv9Xfan3NOoouHL07nSiHX8haxYaZzHYWSdWh+ABzwa8aRTwQSUpuCfD6i0EtYEZJAB6gVwtAnQoxQ==}
-
-  '@orpc/contract@1.13.4':
-    resolution: {integrity: sha512-TIxyaF67uOlihCRcasjHZxguZpbqfNK7aMrDLnhoufmQBE4OKvguNzmrOFHgsuM0OXoopX0Nuhun1ccaxKP10A==}
 
   '@orpc/contract@1.13.5':
     resolution: {integrity: sha512-JeklRu2kxsRKyaPeKqA40YHsGRLjQdAuEGNCNU6VxA3v4UReh8ZsDG+WvEoHfXIOLRn2VWBzEsbE1G2MwRCGsg==}
@@ -5737,15 +5734,6 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/contract@1.13.4':
-    dependencies:
-      '@orpc/client': 1.13.4
-      '@orpc/shared': 1.13.4
-      '@standard-schema/spec': 1.1.0
-      openapi-types: 12.1.3
-    transitivePeerDependencies:
-      - '@opentelemetry/api'
-
   '@orpc/contract@1.13.5':
     dependencies:
       '@orpc/client': 1.13.5
@@ -5889,9 +5877,9 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/zod@1.13.5(@orpc/contract@1.13.4)(@orpc/server@1.13.5)(zod@4.3.6)':
+  '@orpc/zod@1.13.5(@orpc/contract@1.13.5)(@orpc/server@1.13.5)(zod@4.3.6)':
     dependencies:
-      '@orpc/contract': 1.13.4
+      '@orpc/contract': 1.13.5
       '@orpc/json-schema': 1.13.5
       '@orpc/openapi': 1.13.5
       '@orpc/server': 1.13.5
