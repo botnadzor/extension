@@ -83,7 +83,7 @@
     "@orpc/zod": "1.13.5",
     "@stylistic/eslint-plugin": "5.7.1",
     "@tailwindcss/vite": "4.1.18",
-    "@tsconfig/node-ts": "23.6.3",
+    "@tsconfig/node-ts": "23.6.4",
     "@tsconfig/node24": "24.0.4",
     "@tsconfig/strictest": "2.0.8",
     "@types/eslint-plugin-jsx-a11y": "6.10.1",
