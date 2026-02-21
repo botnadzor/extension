@@ -69,11 +69,11 @@ importers:
         specifier: 11.2.6
         version: 11.2.6
       lucide-react:
-        specifier: 0.563.0
-        version: 0.563.0(react@19.2.4)
+        specifier: 0.575.0
+        version: 0.575.0(react@19.2.4)
       lucide-static:
-        specifier: 0.563.0
-        version: 0.563.0
+        specifier: 0.575.0
+        version: 0.575.0
       marked-react:
         specifier: 3.0.2
         version: 3.0.2(react@19.2.4)
@@ -3713,13 +3713,13 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@0.563.0:
-    resolution: {integrity: sha512-8dXPB2GI4dI8jV4MgUDGBeLdGk8ekfqVZ0BdLcrRzocGgG75ltNEmWS+gE7uokKF/0oSUuczNDT+g9hFJ23FkA==}
+  lucide-react@0.575.0:
+    resolution: {integrity: sha512-VuXgKZrk0uiDlWjGGXmKV6MSk9Yy4l10qgVvzGn2AWBx1Ylt0iBexKOAoA6I7JO3m+M9oeovJd3yYENfkUbOeg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  lucide-static@0.563.0:
-    resolution: {integrity: sha512-O7ZlK+VFfc/G5KYwUb9jO60RlPNKV6Dyu+OgQC/QCiO4FMPIK9qrIIkYHHG6PLgLKvmELmf1eKSAso+D/vAvcg==}
+  lucide-static@0.575.0:
+    resolution: {integrity: sha512-XbHfIufz9ZDW6iLjUphffUmcEWg6gLjufIQOb6heDjYZCRk+ePRbkp8Ax/Rq3Ek4OkT8tyBO/gTCOPDvFMuC4w==}
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -8526,11 +8526,11 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@0.563.0(react@19.2.4):
+  lucide-react@0.575.0(react@19.2.4):
     dependencies:
       react: 19.2.4
 
-  lucide-static@0.563.0: {}
+  lucide-static@0.575.0: {}
 
   magic-string@0.30.21:
     dependencies:
