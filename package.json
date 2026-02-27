@@ -42,7 +42,7 @@
     ]
   },
   "dependencies": {
-    "@logtape/logtape": "2.0.2",
+    "@logtape/logtape": "2.0.4",
     "@orpc/client": "1.13.5",
     "@orpc/contract": "1.13.5",
     "@radix-ui/react-accordion": "1.2.12",
