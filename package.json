@@ -117,7 +117,7 @@
     "type-fest": "5.4.4",
     "typescript": "5.9.3",
     "typescript-eslint": "8.56.0",
-    "wxt": "0.20.17",
+    "wxt": "0.20.18",
     "yaml": "2.8.2"
   },
   "packageManager": "pnpm@10.30.1"
