@@ -1,4 +1,4 @@
-@source not "../entrypoints/content/insertions";
+@source not "../entrypoints/content/insertion-variants";
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -139,14 +139,14 @@ body {
       height: 0;
     }
     to {
-      height: var(--radix-accordion-content-height);
+      height: var(--accordion-panel-height);
     }
   }
 
   --animate-accordion-up: accordion-up 0.2s ease-out;
   @keyframes accordion-up {
     from {
-      height: var(--radix-accordion-content-height);
+      height: var(--accordion-panel-height);
     }
     to {
       height: 0;

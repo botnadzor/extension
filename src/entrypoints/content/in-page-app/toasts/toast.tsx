@@ -50,7 +50,10 @@ export function Toast({
       </div>
       {onClose && (
         <Button
-          className="absolute top-0.5 right-0.5"
+          className="
+            absolute top-0.5 right-0.5
+            dark:hover:bg-accent
+          "
           size="iconSm"
           variant="ghost"
           onClick={onClose}

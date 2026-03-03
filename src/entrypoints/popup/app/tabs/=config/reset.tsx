@@ -40,67 +40,129 @@ function CircleProgress({
 const fps = 20;
 const timeToRestore = 10_000;
 
+type ResetState =
+  | { status: "idle" }
+  | {
+      status: "resetting";
+      timeRemaining: number;
+      configToRestore: UserConfig;
+      seenDefaults: boolean;
+    };
+
 export function Reset() {
   const userConfig = useUserConfig();
   const actionButtonRef = React.useRef<HTMLButtonElement>(null);
 
-  const [userConfigToRestore, setUserConfigToRestore] = React.useState<
-    UserConfig | undefined
-  >(undefined);
-
-  const [timeRemaining, setTimeRemaining] =
-    React.useState<number>(timeToRestore);
+  const [resetState, setResetState] = React.useState<ResetState>({
+    status: "idle",
+  });
 
   const configIsDefault = isEqual(userConfig, defaultUserConfig);
 
   async function resetUserConfig() {
+    // Capture current config in state before any async operations
+    setResetState({
+      status: "resetting",
+      timeRemaining: timeToRestore,
+      configToRestore: userConfig,
+      seenDefaults: false,
+    });
     await userConfigService.set(defaultUserConfig);
-    setUserConfigToRestore(userConfig);
     await delay(100);
     actionButtonRef.current?.focus();
   }
 
   async function restoreUserConfig() {
-    setUserConfigToRestore(undefined);
-    setTimeRemaining(timeToRestore);
-    await userConfigService.set(userConfigToRestore ?? defaultUserConfig);
+    if (resetState.status !== "resetting") {
+      return;
+    }
+
+    const configToRestore = resetState.configToRestore;
+    setResetState({ status: "idle" });
+    await userConfigService.set(configToRestore);
     await delay(100);
     actionButtonRef.current?.focus();
   }
 
+  // Timer countdown and cancellation effect
   React.useEffect(() => {
-    if (!userConfigToRestore) {
+    if (resetState.status !== "resetting") {
       return;
     }
 
-    let ticksElapsed = 0;
+    const configIsAtDefaults = isEqual(userConfig, defaultUserConfig);
+    const configMatchesSavedConfig = isEqual(
+      userConfig,
+      resetState.configToRestore,
+    );
+
+    // Update seenDefaults flag if we've seen the config at defaults
+    const updatedSeenDefaults = resetState.seenDefaults || configIsAtDefaults;
+
+    // If user manually restored after seeing defaults, exit resetting state
+    if (
+      updatedSeenDefaults &&
+      configMatchesSavedConfig &&
+      !configIsAtDefaults
+    ) {
+      const timeoutId = setTimeout(() => {
+        setResetState({ status: "idle" });
+      }, 0);
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
+
+    // If user changed config to something else entirely, cancel the restore
+    const configChangedExternally =
+      !configIsAtDefaults && !configMatchesSavedConfig;
+
+    if (configChangedExternally) {
+      const timeoutId = setTimeout(() => {
+        setResetState({ status: "idle" });
+      }, 0);
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
+
+    // Update seenDefaults in state if it changed
+    if (updatedSeenDefaults !== resetState.seenDefaults) {
+      const timeoutId = setTimeout(() => {
+        setResetState({
+          ...resetState,
+          seenDefaults: updatedSeenDefaults,
+        });
+      }, 0);
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
 
     const interval = setInterval(() => {
-      ticksElapsed += 1;
-      const newTimeRemaining = timeToRestore - ticksElapsed * (1000 / fps);
-      setTimeRemaining(newTimeRemaining);
+      const newTimeRemaining = resetState.timeRemaining - 1000 / fps;
 
       if (newTimeRemaining <= 0) {
         void userConfigService.set(defaultUserConfig);
-        setUserConfigToRestore(undefined);
-        clearInterval(interval);
+        setResetState({ status: "idle" });
+      } else {
+        setResetState({
+          ...resetState,
+          timeRemaining: newTimeRemaining,
+        });
       }
     }, 1000 / fps);
+
     return () => {
       clearInterval(interval);
     };
-  }, [userConfigToRestore]);
+  }, [resetState, userConfig]);
 
-  if (configIsDefault && !userConfigToRestore) {
+  if (configIsDefault && resetState.status === "idle") {
     return;
   }
 
-  if (userConfigToRestore && !isEqual(userConfig, defaultUserConfig)) {
-    setUserConfigToRestore(undefined);
-    setTimeRemaining(timeToRestore);
-  }
-
-  if (userConfigToRestore) {
+  if (resetState.status === "resetting") {
     return (
       <Button
         key="restore"
@@ -113,7 +175,7 @@ export function Reset() {
         Отменить сброс настроек
         <CircleProgress
           className="-mr-0.5 size-5"
-          value={timeRemaining / timeToRestore}
+          value={resetState.timeRemaining / timeToRestore}
         />
       </Button>
     );

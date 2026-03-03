@@ -6,7 +6,7 @@ import { z } from "zod/mini";
 import type { PollVersion } from "@/shared/@pollable/core";
 import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 import {
-  parseVkDomain,
+  interpretVkDomain,
   type PositiveVkId,
   positiveVkIdSchema,
   type VkDomain,
@@ -372,16 +372,20 @@ export class CollectingService {
         await commentsTable.get(commentItemKey),
       );
 
-      const parsedVkDomain = parseVkDomain(commentToPersist.commenterVkDomain);
+      const interpretedVkDomain = interpretVkDomain(
+        commentToPersist.commenterVkDomain,
+      );
+
       if (
-        parsedVkDomain.kind === "vkNickname" ||
-        (parsedVkDomain.kind === "vkId" && parsedVkDomain.prefix === "id")
+        interpretedVkDomain.kind === "vkNickname" ||
+        (interpretedVkDomain.kind === "vkId" &&
+          interpretedVkDomain.prefix === "id")
       ) {
         commentItemsToPersist.push({
           wallVkId: commentToPersist.wallVkId,
           postVkId: commentToPersist.postVkId,
           commentVkId: commentToPersist.commentVkId,
-          commenterVkIdOrNickname: parsedVkDomain.value,
+          commenterVkIdOrNickname: interpretedVkDomain.value,
           persistedAt,
           uploadedAt: alreadyPersistedComment?.uploadedAt ?? notUploaded,
         });

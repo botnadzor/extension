@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 
 import type { ContentId } from "@/shared/@primitives/misc";
 import { useStaticListsAutoUpdate } from "@/shared/@ui-helpers/data-hooks";
-import { RadixPortalContainer } from "@/shared/@ui-primitives/radix-portal-container";
+import { PortalContainer } from "@/shared/@ui-primitives/portal-container";
 import isolatedUiStyling from "@/shared/isolated-ui-styling.css?inline";
 import { cn } from "@/shared/tailwindcss-helpers";
 import { type ContentScriptContext, createShadowRootUi } from "#imports";
@@ -30,7 +30,7 @@ function InPageApp({
         <React.Suspense>
           <Inspector />
         </React.Suspense>
-        <RadixPortalContainer />
+        <PortalContainer />
       </div>
     </ContentIdContext>
   );

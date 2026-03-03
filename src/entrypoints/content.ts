@@ -1,9 +1,9 @@
 import { type ContentId, contentIdSchema } from "@/shared/@primitives/misc";
-import { getAppConfig } from "@/shared/app-config";
 import { configureLogging, getContentLogger } from "@/shared/logging";
-import { browser, defineContentScript } from "#imports";
+import { browser, defineContentScript, getAppConfig } from "#imports";
 
 import { derivePageInfo } from "./content/derived-page-info";
+import { startManagingDxOverlays } from "./content/dx-overlays";
 import { contentScriptMatches } from "./content/hosts-and-matches";
 import { startInPageApp } from "./content/in-page-app";
 import { startManagingInsertions } from "./content/insertion-management";
@@ -11,7 +11,7 @@ import { startManagingInsertions } from "./content/insertion-management";
 const logger = getContentLogger();
 
 function setupContentId(): ContentId {
-  if (!getAppConfig().persistentContentId) {
+  if (!getAppConfig().persistentContentIdEnabled) {
     return contentIdSchema.parse(undefined);
   }
 
@@ -70,7 +70,11 @@ export default defineContentScript({
       derivedPageInfo,
     });
 
-    startManagingInsertions({ contentId, ...derivedPageInfo });
+    void startManagingInsertions({ contentId, ...derivedPageInfo });
+
+    if (getAppConfig().dxFeaturesEnabled) {
+      void startManagingDxOverlays();
+    }
 
     await startInPageApp(contentId, ctx);
   },

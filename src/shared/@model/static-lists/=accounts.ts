@@ -2,6 +2,7 @@ import { z } from "zod/mini";
 
 import { itemCountSchema, tagIdSchema } from "../../@primitives/misc";
 import { vkIdSchema, vkNicknameSchema } from "../../@primitives/vk";
+import { omitUndefined } from "../../omit-undefined";
 import {
   receivedTagIdSchema,
   type StaticListDefinition,
@@ -43,14 +44,18 @@ export const accountListDefinition: StaticListDefinition<
 > = {
   receivedItemSchema: receivedAccountListItemSchema,
   storedItemSchema: storedAccountListItemSchema,
-  mapReceivedToStored: ([vkId, rawTagIds, vkNickname]) => ({
-    vkId,
-    ...(vkNickname ? { vkNickname } : {}),
-    tagIds:
-      typeof rawTagIds === "string" || typeof rawTagIds === "number"
-        ? [tagIdSchema.parse(String(rawTagIds))]
-        : rawTagIds.map((rawTagId) => tagIdSchema.parse(String(rawTagId))),
-  }),
+  mapReceivedToStored: ([vkId, rawTagIds, vkNickname]) =>
+    omitUndefined({
+      vkId,
+      vkNickname,
+      tagIds:
+        typeof rawTagIds === "string" || typeof rawTagIds === "number"
+          ? [tagIdSchema.parse(String(rawTagIds))]
+          : rawTagIds.map((rawTagId) => tagIdSchema.parse(String(rawTagId))),
+    }),
+
+  mapStoredToReceived: ({ vkId, tagIds, vkNickname }) =>
+    vkNickname ? [vkId, tagIds, vkNickname] : [vkId, tagIds],
 
   indexes: ["vkId", "vkNickname"],
 
@@ -64,6 +69,13 @@ export const accountListDefinition: StaticListDefinition<
     for (const tagId of item.tagIds) {
       mutableSummary.itemCountByTagId[tagId] =
         (mutableSummary.itemCountByTagId[tagId] ?? 0) + 1;
+    }
+  },
+  unmutateSummary: (mutableSummary, item) => {
+    mutableSummary.itemCount -= 1;
+    for (const tagId of item.tagIds) {
+      mutableSummary.itemCountByTagId[tagId] =
+        (mutableSummary.itemCountByTagId[tagId] ?? 1) - 1;
     }
   },
 };

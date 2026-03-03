@@ -20,7 +20,7 @@ export function AnnouncementsTabBody() {
 
   return (
     <div className="px-3 pt-2 pb-4">
-      <Accordion type="multiple">
+      <Accordion>
         {announcementsToShow.map(({ createdAt, header, content }) => (
           <AccordionItem key={createdAt} value={createdAt}>
             <AccordionTrigger>

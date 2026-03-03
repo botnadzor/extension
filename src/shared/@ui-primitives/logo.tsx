@@ -1,3 +1,8 @@
+import * as React from "react";
+
+import { useFrontendBaseUrl } from "../@ui-helpers/data-hooks";
+import { cn } from "../tailwindcss-helpers";
+
 export function Logo(props: Partial<React.SVGProps<SVGSVGElement>>) {
   return (
     <svg width="158" height="26" viewBox="0 0 158 26" fill="none" {...props}>
@@ -13,5 +18,28 @@ export function Logo(props: Partial<React.SVGProps<SVGSVGElement>>) {
         className="fill-foreground"
       />
     </svg>
+  );
+}
+
+function LogoLinkInner({ className }: { className?: string | undefined }) {
+  const frontendBaseUrl = useFrontendBaseUrl();
+
+  return (
+    <a
+      href={frontendBaseUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn("-m-0.5 block rounded-xs p-0.5 u-ring", className)}
+    >
+      <Logo />
+    </a>
+  );
+}
+
+export function LogoLink() {
+  return (
+    <React.Suspense fallback={<Logo />}>
+      <LogoLinkInner />
+    </React.Suspense>
   );
 }

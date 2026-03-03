@@ -8,6 +8,7 @@ import {
   affiliationServiceKey,
   authServiceKey,
   collectingServiceKey,
+  dxConfigServiceKey,
   extensionVersionServiceKey,
   frontendServiceKey,
   inspectorServiceKey,
@@ -25,6 +26,7 @@ import { VkDomainResolver } from "./background/@service-helpers/vk-domain-resolv
 import { AffiliationService } from "./background/@services/affiliation-service";
 import { AuthService } from "./background/@services/auth-service";
 import { CollectingService } from "./background/@services/collecting-service";
+import { DxConfigService } from "./background/@services/dx-config-service";
 import { ExtensionVersionService } from "./background/@services/extension-version-service";
 import { FrontendService } from "./background/@services/frontend-service";
 import { InspectorService } from "./background/@services/inspector-service";
@@ -156,6 +158,8 @@ export default defineBackground(() => {
 
   const userConfigService = new UserConfigService();
 
+  const dxConfigService = new DxConfigService();
+
   const vkDomainResolver = new VkDomainResolver({
     staticListsService,
   });
@@ -185,6 +189,7 @@ export default defineBackground(() => {
   registerService(affiliationServiceKey, affiliationService);
   registerService(authServiceKey, authService);
   registerService(collectingServiceKey, collectingService);
+  registerService(dxConfigServiceKey, dxConfigService);
   registerService(extensionVersionServiceKey, extensionVersionService);
   registerService(frontendServiceKey, frontendService);
   registerService(inspectorServiceKey, inspectorService);

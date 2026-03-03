@@ -12,7 +12,6 @@ export const triggeredNotificationSchema = z.readonly(
       "regDateMissingPermission",
       "regDateUnauthorized",
       "regDateUnavailable",
-      "test",
     ]),
     triggeredAt: isoDateTimeSchema,
   }),

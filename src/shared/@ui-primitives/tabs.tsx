@@ -1,55 +1,58 @@
 "use client";
 
-import * as TabsPrimitive from "@radix-ui/react-tabs";
-import type * as React from "react";
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 
 import { cn } from "../tailwindcss-helpers";
 
-const Tabs = TabsPrimitive.Root;
+function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
+  return (
+    <TabsPrimitive.Root data-slot="tabs" className={className} {...props} />
+  );
+}
 
-export const tabListClassName =
-  "inline-flex flex-wrap items-center justify-center rounded-md bg-muted p-1 text-muted-foreground";
-
-export const tabsTriggerClassName =
-  "inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-xs px-3 py-1.5 text-sm ring-offset-background transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs hover:not-disabled:text-foreground";
-
-function TabsList({
-  ref,
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.List>) {
+function TabsList({ className, ...props }: TabsPrimitive.List.Props) {
   return (
     <TabsPrimitive.List
-      ref={ref}
-      className={cn(tabListClassName, className)}
+      data-slot="tabs-list"
+      className={cn(
+        `
+          inline-flex flex-wrap items-center justify-center rounded-md bg-muted
+          p-1 text-muted-foreground
+        `,
+        className,
+      )}
       {...props}
     />
   );
 }
 
-function TabsTrigger({
-  ref,
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
   return (
-    <TabsPrimitive.Trigger
-      ref={ref}
-      className={cn(tabsTriggerClassName, className)}
+    <TabsPrimitive.Tab
+      data-slot="tabs-trigger"
+      className={cn(
+        `
+          inline-flex flex-1 items-center justify-center rounded-xs px-3 py-1.5
+          text-sm whitespace-nowrap ring-offset-background transition-all
+          hover:not-disabled:text-foreground
+          focus-visible:ring-2 focus-visible:ring-ring
+          focus-visible:ring-offset-2 focus-visible:outline-hidden
+          disabled:pointer-events-none disabled:opacity-50
+          data-active:bg-background data-active:text-foreground
+          data-active:shadow-xs
+        `,
+        className,
+      )}
       {...props}
     />
   );
 }
 
-function TabsContent({
-  ref,
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
   return (
-    <TabsPrimitive.Content
-      ref={ref}
-      className={cn("mt-2 u-no-ring", className)}
+    <TabsPrimitive.Panel
+      data-slot="tabs-content"
+      className={cn("mt-2 text-sm u-no-ring", className)}
       {...props}
     />
   );

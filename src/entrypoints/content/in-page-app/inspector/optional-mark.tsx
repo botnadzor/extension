@@ -1,3 +1,9 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/shared/@ui-primitives/tooltip";
+
 export function OptionalMark({
   mark,
   markTitle,
@@ -11,15 +17,25 @@ export function OptionalMark({
     return;
   }
 
-  return (
+  const markElement = (
     <div
       className="
         rounded-full bg-gray-200 px-2 text-xs whitespace-nowrap text-black
       "
-      title={markTitle}
       style={{ background: markColor }}
     >
       {mark}
     </div>
+  );
+
+  if (!markTitle) {
+    return markElement;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={markElement} />
+      <TooltipContent>{markTitle}</TooltipContent>
+    </Tooltip>
   );
 }

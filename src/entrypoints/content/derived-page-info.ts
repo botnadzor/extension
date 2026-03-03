@@ -18,7 +18,9 @@ function getMatchedHost(location: Location): ContentScriptHost | undefined {
 
   for (const host of contentScriptHosts) {
     if (
-      new RegExp(String.raw`^/web/\d+/https://${host}/`).test(location.pathname)
+      new RegExp(String.raw`^/web/\d+/https?://${host}/`).test(
+        location.pathname,
+      )
     ) {
       return host;
     }

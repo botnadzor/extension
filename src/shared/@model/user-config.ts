@@ -7,14 +7,14 @@ import {
 } from "../@primitives/misc";
 
 const tagOverrideSchema = z.object({
-  color: z.exactOptional(hexColorSchema),
+  colorForHighlight: z.exactOptional(hexColorSchema),
   hidden: optionalTrueSchema,
 });
 
 export const userConfigSchema = z.readonly(
   z.object({
     tagOverrideLookup: z.record(tagIdSchema, tagOverrideSchema),
-    likesDisplay: z.enum(["default", "table"]),
+    fansDisplay: z.enum(["default", "table"]), // lists of post reactions, comment likes and subscribers
     collectingComments: optionalTrueSchema,
   }),
 );
@@ -23,5 +23,5 @@ export type UserConfig = z.infer<typeof userConfigSchema>;
 
 export const defaultUserConfig: UserConfig = {
   tagOverrideLookup: {},
-  likesDisplay: "default",
+  fansDisplay: "default",
 };

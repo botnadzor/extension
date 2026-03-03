@@ -19,6 +19,11 @@ import {
   AccordionTrigger,
 } from "@/shared/@ui-primitives/accordion";
 import { ScrollArea, ScrollBar } from "@/shared/@ui-primitives/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/shared/@ui-primitives/tooltip";
 import { createMessage, formatInt } from "@/shared/formatting";
 import { cn } from "@/shared/tailwindcss-helpers";
 
@@ -56,14 +61,24 @@ type LikeToBot = NonNullable<
 type LikeLink = LikeToBot["links"][number];
 
 function CommentRow({ comment }: { comment: Comment }) {
+  const dotElement = (
+    <div
+      className="size-2 rounded-full"
+      style={comment.color ? { backgroundColor: comment.color } : undefined}
+    />
+  );
+
   return (
     <>
       {/* Colored dot indicator */}
-      <div
-        className="size-2 rounded-full"
-        title={comment.reg_name ?? undefined}
-        style={comment.color ? { backgroundColor: comment.color } : undefined}
-      />
+      {comment.reg_name ? (
+        <Tooltip>
+          <TooltipTrigger render={dotElement} />
+          <TooltipContent>{comment.reg_name}</TooltipContent>
+        </Tooltip>
+      ) : (
+        dotElement
+      )}
 
       {/* Auto-sized count, right-aligned */}
       <span className="text-right font-medium">
@@ -96,16 +111,26 @@ function CommentRow({ comment }: { comment: Comment }) {
 }
 
 function ReviewRow({ comment }: { comment: Comment }) {
+  const dotElement = (
+    <div
+      className="size-2 rounded-full"
+      style={{
+        backgroundColor: comment.color ?? "transparent",
+      }}
+    />
+  );
+
   return (
     <>
       {/* Colored dot indicator */}
-      <div
-        className="size-2 rounded-full"
-        title={comment.reg_name ?? undefined}
-        style={{
-          backgroundColor: comment.color ?? "transparent",
-        }}
-      />
+      {comment.reg_name ? (
+        <Tooltip>
+          <TooltipTrigger render={dotElement} />
+          <TooltipContent>{comment.reg_name}</TooltipContent>
+        </Tooltip>
+      ) : (
+        dotElement
+      )}
 
       {/* Star rating */}
       <div
@@ -140,20 +165,30 @@ function ReviewRow({ comment }: { comment: Comment }) {
 
 function LikeDetailsRow({ link }: { link: LikeLink }) {
   return (
-    <a
-      href={link.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={link.data}
-      className="
-        rounded-full u-ring transition-opacity
-        hover:opacity-60
-      "
-    >
-      {link.src && (
-        <img src={link.src} alt={link.data} className="size-5 rounded-full" />
-      )}
-    </a>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="
+              rounded-full u-ring transition-opacity
+              hover:opacity-60
+            "
+          >
+            {link.src && (
+              <img
+                src={link.src}
+                alt={link.data}
+                className="size-5 rounded-full"
+              />
+            )}
+          </a>
+        }
+      />
+      <TooltipContent>{link.data}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -196,15 +231,20 @@ function LikeRow({ like }: { like: LikeToBot }) {
                 expanded && "hidden",
               )}
             >
-              {like.photos.map((photo, index) => (
-                <img
-                  // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
-                  key={index}
-                  src={photo.src ?? undefined}
-                  alt={photo.title}
-                  title={photo.title}
-                  className="size-5 rounded-full object-cover"
-                />
+              {like.photos.map((photo, photoIndex) => (
+                // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
+                <Tooltip key={photoIndex}>
+                  <TooltipTrigger
+                    render={
+                      <img
+                        src={photo.src ?? undefined}
+                        alt={photo.title}
+                        className="size-5 rounded-full object-cover"
+                      />
+                    }
+                  />
+                  <TooltipContent>{photo.title}</TooltipContent>
+                </Tooltip>
               ))}
             </div>
           )}
@@ -307,10 +347,10 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
       )}
     >
       <div className="p-3 pt-2 text-sm">
-        <Accordion type="multiple" className="-mt-px tabular-nums">
+        <Accordion className="-mt-px tabular-nums">
           {hasComments && (
             <AccordionItem value="comments">
-              <AccordionTrigger>
+              <AccordionTrigger className="h-9">
                 <div className="flex items-center gap-2.5 text-sm">
                   <MessageSquareMoreIcon className="size-4" />
                   <span>
@@ -331,7 +371,7 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
 
           {hasLikes && (
             <AccordionItem value="likes">
-              <AccordionTrigger>
+              <AccordionTrigger className="h-9">
                 <div className="flex items-center gap-2.5 text-sm">
                   <HeartIcon className="size-4" />
                   <span>
@@ -352,7 +392,7 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
 
           {hasReviews && (
             <AccordionItem value="reviews">
-              <AccordionTrigger>
+              <AccordionTrigger className="h-9">
                 <div className="flex items-center gap-2.5 text-sm">
                   <StarIcon className="size-4" />
                   <span>
@@ -375,7 +415,7 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
             authStatus.accessLevel === 4 &&
             hasCommentsAdvanced && (
               <AccordionItem value="comments-advanced">
-                <AccordionTrigger>
+                <AccordionTrigger className="h-9">
                   <div className="flex items-center gap-2.5 text-sm">
                     <MessageSquarePlusIcon className="size-4" />
                     <span>

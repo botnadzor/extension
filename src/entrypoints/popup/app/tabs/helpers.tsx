@@ -22,10 +22,10 @@ export function CollectingCommentsCheckbox() {
   const authStatus = useAuthStatus();
   const frontendBaseUrl = useFrontendBaseUrl();
 
-  function handleCollectingCommentsChange() {
+  function handleCollectingCommentsChange(checked: boolean) {
     void userConfigService.set(
       produce(userConfig, (draft) => {
-        if (draft.collectingComments === undefined) {
+        if (checked) {
           draft.collectingComments = true;
         } else {
           delete draft.collectingComments;
@@ -42,7 +42,7 @@ export function CollectingCommentsCheckbox() {
     <Label>
       <Checkbox
         checked={userConfig.collectingComments ?? false}
-        onClick={handleCollectingCommentsChange}
+        onCheckedChange={handleCollectingCommentsChange}
       />
       Сбор и отправка комментаторов
       <a

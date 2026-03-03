@@ -7,7 +7,6 @@ import {
   useFilteredAnnouncements,
   useGlobalNotificationsState,
 } from "@/shared/@ui-helpers/data-hooks";
-import { Button } from "@/shared/@ui-primitives/button";
 import {
   notificationService,
   staticListsService,
@@ -26,7 +25,7 @@ export async function checkIfDataWarmupToastNeeded(): Promise<boolean> {
     staticListsService.getListMetadata("tags"),
   ]);
 
-  return !accountsMetadata.active || !tagsMetadata.active;
+  return !accountsMetadata.remoteActive || !tagsMetadata.remoteActive;
 }
 
 const useTriggeredNotification = createPollableValueHook(
@@ -134,21 +133,5 @@ export function Toasts() {
     );
   }
 
-  if (!import.meta.env.DEV) {
-    return;
-  }
-
-  return (
-    <Button
-      className={`
-        fixed right-[10px] bottom-[10px] left-[10px] z-999999
-        sm:right-auto
-      `}
-      onClick={() => {
-        void notificationService.trigger(contentId, { type: "test" });
-      }}
-    >
-      Показать тестовое уведомление
-    </Button>
-  );
+  return;
 }

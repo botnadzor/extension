@@ -11,6 +11,7 @@ import { createPollableValueHook } from "../@pollable/react";
 import type { VkDomain } from "../@primitives/vk";
 import {
   authService,
+  dxConfigService,
   extensionVersionService,
   frontendService,
   inspectorService,
@@ -41,6 +42,11 @@ export const useAuthStatus = createPollableValueHook(
   { hookNameForDebugging: "useAuthStatus" },
 );
 
+export const useDxConfig = createPollableValueHook(
+  (lastPollVersion) => dxConfigService.poll(lastPollVersion),
+  { hookNameForDebugging: "useDxConfig" },
+);
+
 export const useExtensionVersionInfo = createPollableValueHook(
   (lastPollVersion) => extensionVersionService.pollInfo(lastPollVersion),
   { hookNameForDebugging: "useExtensionVersionInfo" },
@@ -63,16 +69,19 @@ export const useGlobalNotificationsState = createPollableValueHook(
   { hookNameForDebugging: "useGlobalNotificationsState" },
 );
 
-type UseNextStaticListSummary = <ListId extends StaticListId>(
+type UseRemoteNextStaticListSummary = <ListId extends StaticListId>(
   listId: ListId,
 ) => StaticListSummary<ListId>;
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Mapping generic list return type to specific list summary shape
-export const useNextStaticListSummary = createPollableValueHook(
+export const useRemoteNextStaticListSummary = createPollableValueHook(
   (lastPollVersion, listId: StaticListId) =>
-    staticListsService.pollNextListSummary(lastPollVersion, listId),
-  { hookNameForDebugging: "useNextStaticListSummary", throttleInterval: 100 },
-) as UseNextStaticListSummary;
+    staticListsService.pollRemoteNextListSummary(lastPollVersion, listId),
+  {
+    hookNameForDebugging: "useRemoteNextStaticListSummary",
+    throttleInterval: 100,
+  },
+) as UseRemoteNextStaticListSummary;
 
 type UseStaticListItems = <ListId extends StaticListId>(
   listId: ListId,

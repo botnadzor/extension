@@ -7,7 +7,10 @@ import tailwindcss from "@tailwindcss/vite";
 import reactCompiler from "babel-plugin-react-compiler";
 import { defineConfig } from "wxt";
 
-import { contentScriptMatches } from "./src/entrypoints/content/hosts-and-matches";
+import {
+  contentScriptMatches,
+  webAccessibleResourcesMatches,
+} from "./src/entrypoints/content/hosts-and-matches";
 import { generateBaseExtensionVersionInfo } from "./src/wxt-helpers";
 
 export default defineConfig({
@@ -44,6 +47,17 @@ export default defineConfig({
       }
     },
 
+    "entrypoints:found": (_wxt, entrypointInfos) => {
+      if (process.env["WXT_DX_FEATURES_ENABLED"] !== "true") {
+        const index = entrypointInfos.findIndex(
+          (ep) => ep.name === "sidepanel",
+        );
+        if (index !== -1) {
+          entrypointInfos.splice(index, 1);
+        }
+      }
+    },
+
     "zip:done": (wxt, zipFiles) => {
       const { versionName } = generateBaseExtensionVersionInfo(wxt.config.mode);
 
@@ -74,6 +88,13 @@ export default defineConfig({
 
       version,
       version_name: versionName,
+
+      web_accessible_resources: [
+        {
+          matches: [...webAccessibleResourcesMatches],
+          resources: ["react-fiber-bridge-main-world.js"],
+        },
+      ],
 
       ...(lifecycle === "release" && configEnv.browser === "firefox"
         ? {

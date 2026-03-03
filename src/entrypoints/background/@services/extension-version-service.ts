@@ -7,6 +7,7 @@ import {
 } from "@/shared/@model/extension-version";
 import type { StaticListItem } from "@/shared/@model/static-lists";
 import type { PollResult, PollVersion } from "@/shared/@pollable/core";
+import { omitUndefined } from "@/shared/omit-undefined";
 
 import type { RootConfigService } from "./root-config-service";
 import type { StaticListsService } from "./static-lists-service";
@@ -71,10 +72,7 @@ export class ExtensionVersionService {
       ageInDays,
     );
 
-    const value = {
-      ...baseExtensionVersionInfo,
-      ...(deprecation ? { deprecation } : {}),
-    };
+    const value = omitUndefined({ ...baseExtensionVersionInfo, deprecation });
 
     // Return the same object reference if extension version info has not changed since the last poll
     if (
@@ -127,6 +125,41 @@ export class ExtensionVersionService {
       return semverSatisfies(versionToUse, semverRangeToUse, {
         includePrerelease: true,
       });
+    });
+
+    return { value: filteredItems, version: result.version };
+  }
+
+  async getFilteredInsertions(): Promise<Array<StaticListItem<"insertions">>> {
+    const result = await this.pollFilteredInsertions(undefined);
+    return result.value;
+  }
+
+  async pollFilteredInsertions(
+    lastPollVersion: PollVersion | undefined,
+  ): Promise<PollResult<Array<StaticListItem<"insertions">>>> {
+    const result = await this.staticListsService.pollItems(
+      lastPollVersion,
+      "insertions",
+    );
+
+    const versionToUse =
+      baseExtensionVersionInfo.lifecycle === "prerelease" ||
+      baseExtensionVersionInfo.lifecycle === "release"
+        ? baseExtensionVersionInfo.versionName
+        : undefined;
+
+    if (!versionToUse) {
+      return result;
+    }
+
+    const filteredItems = result.value.filter((insertion) => {
+      return (
+        !insertion.extensionVersionRange ||
+        semverSatisfies(versionToUse, insertion.extensionVersionRange, {
+          includePrerelease: true,
+        })
+      );
     });
 
     return { value: filteredItems, version: result.version };

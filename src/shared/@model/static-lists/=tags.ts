@@ -7,6 +7,7 @@ import {
   tagIdSchema,
   tagTypeSchema,
 } from "../../@primitives/misc";
+import { omitUndefined } from "../../omit-undefined";
 import {
   receivedTagIdSchema,
   type StaticListDefinition,
@@ -14,7 +15,12 @@ import {
 
 const receivedTagListItemSchema = z.readonly(
   z.tuple([
-    z.exactOptional(hexColorSchema),
+    z.union([
+      hexColorSchema,
+      z.null(),
+      z.tuple([hexColorSchema]),
+      z.tuple([hexColorSchema, hexColorSchema]),
+    ]),
     tagTypeSchema,
     receivedTagIdSchema,
     z.string(), // name
@@ -26,6 +32,7 @@ const receivedTagListItemSchema = z.readonly(
 const storedTagListItemSchema = z.readonly(
   z.object({
     color: z.exactOptional(hexColorSchema),
+    colorForHighlight: z.exactOptional(hexColorSchema),
     type: tagTypeSchema,
     id: tagIdSchema,
     name: z.string(),
@@ -59,6 +66,7 @@ export const tagListDefinition: StaticListDefinition<
   typeof storedTagListItemSchema,
   typeof tagListSummarySchema
 > = {
+  dxSidepanelTab: { label: "Теги" },
   receivedItemSchema: receivedTagListItemSchema,
   storedItemSchema: storedTagListItemSchema,
   mapReceivedToStored: ([
@@ -68,14 +76,41 @@ export const tagListDefinition: StaticListDefinition<
     name,
     flagBitmask,
     customPathname,
-  ]) => ({
-    ...(color ? { color } : {}),
-    type,
-    id: tagIdSchema.parse(String(rawId)),
-    name,
-    ...expandFlagBitmask(flagBitmask ?? 0),
-    ...(customPathname ? { customPathname } : {}),
-  }),
+  ]) =>
+    omitUndefined({
+      color: Array.isArray(color) ? color[0] : (color ?? undefined),
+      colorForHighlight: Array.isArray(color) ? color[1] : undefined,
+      type,
+      id: tagIdSchema.parse(String(rawId)),
+      name,
+      ...expandFlagBitmask(flagBitmask ?? 0),
+      customPathname,
+    }),
+
+  mapStoredToReceived: (storedItem) => {
+    const flagBitmask =
+      (storedItem.botnadzorPage ? 1 : 0) |
+      (storedItem.botnadzorCard ? 2 : 0) |
+      (storedItem.visibilityLock ? 4 : 0);
+
+    const baseResult = [
+      // eslint-disable-next-line unicorn/no-null -- need to map to JSON
+      storedItem.color ?? null,
+      storedItem.type,
+      storedItem.id,
+      storedItem.name,
+    ] as const;
+
+    if (storedItem.customPathname) {
+      return [...baseResult, flagBitmask, storedItem.customPathname];
+    }
+
+    if (flagBitmask) {
+      return [...baseResult, flagBitmask];
+    }
+
+    return baseResult;
+  },
 
   indexes: ["id"],
 
@@ -85,5 +120,8 @@ export const tagListDefinition: StaticListDefinition<
   }),
   mutateSummary: (mutableSummary) => {
     mutableSummary.itemCount += 1;
+  },
+  unmutateSummary: (mutableSummary) => {
+    mutableSummary.itemCount -= 1;
   },
 };

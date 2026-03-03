@@ -2,12 +2,14 @@ import type { Logger } from "@logtape/logtape";
 import { Dexie, type Table } from "dexie";
 import { delay } from "es-toolkit";
 import { nanoid } from "nanoid";
-import type { Writable } from "type-fest";
+import type { Writable, WritableDeep } from "type-fest";
 import type { z } from "zod/mini";
 
 import type {
+  StaticListCombiningMode,
   StaticListDefinition,
-  StaticListInstance,
+  StaticListItemOrigin,
+  StaticListRemoteInstance,
 } from "@/shared/@model/static-list-helpers";
 import {
   type StaticListMetadata,
@@ -69,20 +71,26 @@ async function* streamLines(
   }
 }
 
-function generateTableName(
+function generateRemoteTableName(
   listId: StaticListId,
-  instance: StaticListInstance,
+  instance: StaticListRemoteInstance,
 ): string {
-  return `${listId}-${instance}`;
+  return `${listId}_remote_${instance}`;
 }
 
-function pickAnotherInstance(instance: StaticListInstance): StaticListInstance {
+function generateLocalTableName(listId: StaticListId): string {
+  return `${listId}_local`;
+}
+
+function pickAnotherInstance(
+  instance: StaticListRemoteInstance,
+): StaticListRemoteInstance {
   return instance === "a" ? "b" : "a";
 }
 
 function extractSummaryFromMetadata(
   metadata: StaticListMetadata,
-  mode: "active" | "next" = "active",
+  mode: "remoteActive" | "remoteNext" = "remoteActive",
 ): StaticListSummary {
   const listId = metadata.listId;
 
@@ -94,6 +102,69 @@ function extractSummaryFromMetadata(
     summaryResult.data ??
     staticListDefinitionLookup[listId].createEmptySummary()
   );
+}
+
+function extractCombinedSummaryFromMetadata(
+  metadata: StaticListMetadata,
+): StaticListSummary {
+  const listId = metadata.listId;
+
+  const rawSummary = metadata.combinedSummary;
+  if (rawSummary) {
+    const summaryResult =
+      staticListDefinitionLookup[listId].summarySchema.safeParse(rawSummary);
+    if (summaryResult.data) {
+      return summaryResult.data;
+    }
+  }
+
+  return extractSummaryFromMetadata(metadata);
+}
+
+function extractLocalSummaryFromMetadata(
+  metadata: StaticListMetadata,
+): StaticListSummary {
+  const listId = metadata.listId;
+
+  const rawSummary = metadata.localSummary;
+  if (rawSummary) {
+    const summaryResult =
+      staticListDefinitionLookup[listId].summarySchema.safeParse(rawSummary);
+    if (summaryResult.data) {
+      return summaryResult.data;
+    }
+  }
+
+  return staticListDefinitionLookup[listId].createEmptySummary();
+}
+
+function extractUpdatedAtFromMetadata(
+  metadata: StaticListMetadata,
+): IsoDateTime | undefined {
+  const combiningMode = metadata.combiningMode;
+
+  if (combiningMode === "remoteOnly") {
+    return metadata.remoteActive?.updatedAt;
+  }
+
+  if (combiningMode === "localOnly") {
+    return metadata.localUpdatedAt;
+  }
+
+  // remoteWithLocalOverrides: use the most recent timestamp
+  const remoteUpdatedAt = metadata.remoteActive?.updatedAt;
+  const localUpdatedAt = metadata.localUpdatedAt;
+
+  if (!remoteUpdatedAt) {
+    return localUpdatedAt;
+  }
+
+  if (!localUpdatedAt) {
+    return remoteUpdatedAt;
+  }
+
+  // ISO date strings can be compared lexicographically
+  return [remoteUpdatedAt, localUpdatedAt].toSorted().toReversed()[0];
 }
 
 type PopulateFromUrlIfOutdatedResult =
@@ -119,8 +190,11 @@ export class StaticListsService {
   private pollableListSummaryByListId: Readonly<
     Record<StaticListId, Pollable<StaticListSummary | undefined>>
   >;
-  private pollableNextListSummaryByListId: Readonly<
+  private pollableRemoteNextListSummaryByListId: Readonly<
     Record<StaticListId, Pollable<StaticListSummary | undefined>>
+  >;
+  private pollableListUpdatedAtByListId: Readonly<
+    Record<StaticListId, Pollable<IsoDateTime | undefined>>
   >;
 
   private readonly metadataWriteThrottleMs = 500;
@@ -136,16 +210,20 @@ export class StaticListsService {
     this.rootConfigService = rootConfigService;
 
     this.db = new Dexie("static-lists");
-    this.db.version(1).stores({
+    this.db.version(2).stores({
       [metadataTableName]: "listId",
       ...Object.fromEntries(
         staticListDefinitionEntries.flatMap(([listId, listDefinition]) => [
           [
-            generateTableName(listId, "a"),
+            generateRemoteTableName(listId, "a"),
             ["++", ...listDefinition.indexes].join(","),
           ],
           [
-            generateTableName(listId, "b"),
+            generateRemoteTableName(listId, "b"),
+            ["++", ...listDefinition.indexes].join(","),
+          ],
+          [
+            generateLocalTableName(listId),
             ["++", ...listDefinition.indexes].join(","),
           ],
         ]),
@@ -160,8 +238,12 @@ export class StaticListsService {
       Partial<typeof this.pollableListSummaryByListId>
     > = {};
 
-    const pollableNextListSummaryByListId: Writable<
-      Partial<typeof this.pollableNextListSummaryByListId>
+    const pollableRemoteNextListSummaryByListId: Writable<
+      Partial<typeof this.pollableRemoteNextListSummaryByListId>
+    > = {};
+
+    const pollableListUpdatedAtByListId: Writable<
+      Partial<typeof this.pollableListUpdatedAtByListId>
     > = {};
 
     for (const listId of staticListIds) {
@@ -173,8 +255,12 @@ export class StaticListsService {
         StaticListSummary | undefined
       >(undefined);
 
-      pollableNextListSummaryByListId[listId] = new Pollable<
+      pollableRemoteNextListSummaryByListId[listId] = new Pollable<
         StaticListSummary | undefined
+      >(undefined);
+
+      pollableListUpdatedAtByListId[listId] = new Pollable<
+        IsoDateTime | undefined
       >(undefined);
     }
 
@@ -186,9 +272,13 @@ export class StaticListsService {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- converting partial record to a finished one after a loop
       pollableListSummaryByListId as typeof this.pollableListSummaryByListId;
 
-    this.pollableNextListSummaryByListId =
+    this.pollableRemoteNextListSummaryByListId =
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- converting partial record to a finished one after a loop
-      pollableNextListSummaryByListId as typeof this.pollableNextListSummaryByListId;
+      pollableRemoteNextListSummaryByListId as typeof this.pollableRemoteNextListSummaryByListId;
+
+    this.pollableListUpdatedAtByListId =
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- converting partial record to a finished one after a loop
+      pollableListUpdatedAtByListId as typeof this.pollableListUpdatedAtByListId;
 
     void this.startSyncingMetadataWithDb();
   }
@@ -216,15 +306,23 @@ export class StaticListsService {
     for (const listId of staticListIds) {
       const metadata = parsedMetadataRecords.find(
         (currentMetadata) => currentMetadata.listId === listId,
-      ) ?? { listId, activeInstance: "b" };
+      ) ?? {
+        listId,
+        remoteActiveInstance: "b",
+        combiningMode: "remoteWithLocalOverrides",
+      };
 
       this.pollableListMetadataByListId[listId].setValue(metadata);
       this.pollableListSummaryByListId[listId].setValue(
-        extractSummaryFromMetadata(metadata),
+        extractCombinedSummaryFromMetadata(metadata),
       );
 
-      this.pollableNextListSummaryByListId[listId].setValue(
-        extractSummaryFromMetadata(metadata, "next"),
+      this.pollableRemoteNextListSummaryByListId[listId].setValue(
+        extractSummaryFromMetadata(metadata, "remoteNext"),
+      );
+
+      this.pollableListUpdatedAtByListId[listId].setValue(
+        extractUpdatedAtFromMetadata(metadata),
       );
     }
 
@@ -284,16 +382,20 @@ export class StaticListsService {
   }
 
   private setListMetadata(metadata: StaticListMetadata): void {
-    this.activeListTableCache.delete(metadata.listId);
+    this.activeRemoteTableCache.delete(metadata.listId);
     this.pollableListMetadataByListId[metadata.listId].setValue(metadata);
     this.pollableListSummaryByListId[metadata.listId].setValue(
-      extractSummaryFromMetadata(metadata),
+      extractCombinedSummaryFromMetadata(metadata),
     );
-    this.pollableNextListSummaryByListId[metadata.listId].setValue(
-      extractSummaryFromMetadata(metadata, "next"),
+    this.pollableRemoteNextListSummaryByListId[metadata.listId].setValue(
+      extractSummaryFromMetadata(metadata, "remoteNext"),
+    );
+    this.pollableListUpdatedAtByListId[metadata.listId].setValue(
+      extractUpdatedAtFromMetadata(metadata),
     );
   }
 
+  // Combined summary (respects combining mode) — used by most consumers
   public async pollListSummary(
     lastPollVersion: PollVersion | undefined,
     listId: StaticListId,
@@ -319,7 +421,38 @@ export class StaticListsService {
     return result.value;
   }
 
-  public async pollNextListSummary(
+  // Combined list updated timestamp (respects combining mode)
+  public async pollListUpdatedAt(
+    lastPollVersion: PollVersion | undefined,
+    listId: StaticListId,
+  ): Promise<PollResult<IsoDateTime | undefined>> {
+    return this.pollableListUpdatedAtByListId[listId].poll(lastPollVersion);
+  }
+
+  public async getListUpdatedAt(
+    listId: StaticListId,
+  ): Promise<IsoDateTime | undefined> {
+    const result = await this.pollListUpdatedAt(undefined, listId);
+    return result.value;
+  }
+
+  // Remote summary (always from remote, regardless of combining mode)
+  public async getRemoteListSummary(
+    listId: StaticListId,
+  ): Promise<StaticListSummary> {
+    const metadata = await this.getListMetadata(listId);
+    return extractSummaryFromMetadata(metadata);
+  }
+
+  // Local summary
+  public async getLocalListSummary(
+    listId: StaticListId,
+  ): Promise<StaticListSummary> {
+    const metadata = await this.getListMetadata(listId);
+    return extractLocalSummaryFromMetadata(metadata);
+  }
+
+  public async pollRemoteNextListSummary(
     lastPollVersion: PollVersion | undefined,
     listId: StaticListId,
   ): Promise<PollResult<StaticListSummary>> {
@@ -329,17 +462,17 @@ export class StaticListsService {
       | undefined;
 
     do {
-      result = await this.pollableNextListSummaryByListId[listId].poll(
+      result = await this.pollableRemoteNextListSummaryByListId[listId].poll(
         lastPollVersion ?? result?.version,
       );
     } while (!result?.value);
     return result;
   }
 
-  public async getNextListSummary(
+  public async getRemoteNextListSummary(
     listId: StaticListId,
   ): Promise<StaticListSummary> {
-    const result = await this.pollNextListSummary(undefined, listId);
+    const result = await this.pollRemoteNextListSummary(undefined, listId);
     return result.value;
   }
 
@@ -349,7 +482,7 @@ export class StaticListsService {
   ): Promise<StaticListMetadata> {
     let lockMetadata = initialListMetadata;
 
-    if (!lockMetadata.next) {
+    if (!lockMetadata.remoteNext) {
       return lockMetadata;
     }
 
@@ -358,7 +491,7 @@ export class StaticListsService {
 
     do {
       const lockReportedAtTimestamp = new Date(
-        lockMetadata.next.updatedAt,
+        lockMetadata.remoteNext.updatedAt,
       ).getTime();
 
       if (lockReportedAtTimestamp < Date.now() - lockTimeoutInMs) {
@@ -372,7 +505,7 @@ export class StaticListsService {
 
       await delay(lockIntervalInMs);
       lockMetadata = await this.getListMetadata(listId);
-    } while (lockMetadata.next);
+    } while (lockMetadata.remoteNext);
 
     listLogger.debug("Another lock is no longer held");
     return lockMetadata;
@@ -383,7 +516,7 @@ export class StaticListsService {
     upstreamGeneratedAt: IsoDateTime,
     toleranceInMinutes: number | undefined,
   ): boolean {
-    const activeStartedAtLocally = listMetadata.active?.startedAt;
+    const activeStartedAtLocally = listMetadata.remoteActive?.startedAt;
     if (!activeStartedAtLocally) {
       return false;
     }
@@ -447,7 +580,7 @@ export class StaticListsService {
 
         this.setListMetadata({
           ...lockMetadata,
-          next: {
+          remoteNext: {
             lockId,
             startedAt: isoDateTimeSchema.parse(startedAt),
             summary: structuredClone(mutableSummary),
@@ -457,7 +590,7 @@ export class StaticListsService {
         });
 
         lockMetadata = await this.getListMetadata(listId);
-      } while (lockMetadata.next?.lockId !== lockId);
+      } while (lockMetadata.remoteNext?.lockId !== lockId);
 
       const fetchResult = await fetchFromRemoteSystem({
         aliasManager: this.aliasManagerForStaticApi,
@@ -482,17 +615,19 @@ export class StaticListsService {
         return { success: false, error: "No response body from static API" };
       }
 
-      const previouslyActiveStoreName = generateTableName(
+      const previouslyActiveStoreName = generateRemoteTableName(
         listId,
-        initialMetadata.activeInstance,
+        initialMetadata.remoteActiveInstance,
       );
 
       const previouslyActiveTable = this.db.table<unknown>(
         previouslyActiveStoreName,
       );
 
-      const nextInstance = pickAnotherInstance(initialMetadata.activeInstance);
-      const nextStoreName = generateTableName(listId, nextInstance);
+      const nextInstance = pickAnotherInstance(
+        initialMetadata.remoteActiveInstance,
+      );
+      const nextStoreName = generateRemoteTableName(listId, nextInstance);
       const nextTable = this.db.table<unknown>(nextStoreName);
       await nextTable.clear();
 
@@ -517,17 +652,17 @@ export class StaticListsService {
         const batchStartedAt = Date.now();
 
         lockMetadata = await this.getListMetadata(listId);
-        const lockMetadataNext = lockMetadata.next;
+        const lockMetadataRemoteNext = lockMetadata.remoteNext;
 
-        if (lockMetadataNext?.lockId !== lockId) {
+        if (lockMetadataRemoteNext?.lockId !== lockId) {
           listLogger.error(
             "List was unexpectedly locked by another instance ({lockId})",
-            { lockId: lockMetadata.next?.lockId },
+            { lockId: lockMetadata.remoteNext?.lockId },
           );
 
           return {
             success: false,
-            error: `List was unexpectedly locked by another instance (${lockMetadata.next?.lockId ?? "unknown"})`,
+            error: `List was unexpectedly locked by another instance (${lockMetadata.remoteNext?.lockId ?? "unknown"})`,
           };
         }
 
@@ -538,8 +673,8 @@ export class StaticListsService {
         if (shouldSetListMetadata) {
           this.setListMetadata({
             ...lockMetadata,
-            next: {
-              ...lockMetadataNext,
+            remoteNext: {
+              ...lockMetadataRemoteNext,
               summary: structuredClone(mutableSummary),
               updatedAt: isoDateTimeSchema.parse(undefined),
             },
@@ -619,16 +754,25 @@ export class StaticListsService {
         },
       );
 
-      this.setListMetadata({
-        listId,
-        activeInstance: nextInstance,
-        active: {
+      const { remoteNext: unusedRemoteNext, ...metadataWithoutRemoteNext } =
+        lockMetadata;
+      const newMetadata: StaticListMetadata = {
+        ...metadataWithoutRemoteNext,
+        remoteActiveInstance: nextInstance,
+        remoteActive: {
           startedAt: isoDateTimeSchema.parse(startedAt),
           summary: finalSummary,
           updatedAt: isoDateTimeSchema.parse(startedAt),
           upstreamInfo,
         },
-      });
+      };
+
+      // Recompute combined summary after remote data changed
+      const updatedMetadata = await this.recomputeCombinedSummaryForMetadata(
+        listId,
+        newMetadata,
+      );
+      this.setListMetadata(updatedMetadata);
 
       listLogger.debug("Saved metadata");
 
@@ -654,8 +798,8 @@ export class StaticListsService {
 
       try {
         const metadata = await this.getListMetadata(listId);
-        if (metadata.next?.lockId === lockId) {
-          const { next, ...rest } = metadata;
+        if (metadata.remoteNext?.lockId === lockId) {
+          const { remoteNext, ...rest } = metadata;
           this.setListMetadata(rest);
         }
       } catch (anotherError) {
@@ -683,31 +827,599 @@ export class StaticListsService {
     }
   }
 
-  private activeListTableCache = new Map<StaticListId, Table<unknown>>();
+  // ── Remote table access ────────────────────────────────────────────
 
-  private async getActiveListTable(
+  private activeRemoteTableCache = new Map<StaticListId, Table<unknown>>();
+
+  private async getActiveRemoteTable(
     listId: StaticListId,
   ): Promise<Table<unknown>> {
-    const cachedResult = this.activeListTableCache.get(listId);
+    const cachedResult = this.activeRemoteTableCache.get(listId);
     if (cachedResult) {
       return cachedResult;
     }
 
     const metadata = await this.getListMetadata(listId);
     const activeTable = this.db.table<unknown>(
-      generateTableName(listId, metadata.activeInstance),
+      generateRemoteTableName(listId, metadata.remoteActiveInstance),
     );
-    this.activeListTableCache.set(listId, activeTable);
+    this.activeRemoteTableCache.set(listId, activeTable);
     return activeTable;
   }
+
+  // ── Local table access ─────────────────────────────────────────────
+
+  private getLocalTable(listId: StaticListId): Table<unknown> {
+    return this.db.table<unknown>(generateLocalTableName(listId));
+  }
+
+  // ── Combining mode ─────────────────────────────────────────────────
+
+  public async getCombiningMode(
+    listId: StaticListId,
+  ): Promise<StaticListCombiningMode> {
+    const metadata = await this.getListMetadata(listId);
+    return metadata.combiningMode;
+  }
+
+  public async setCombiningMode(
+    listId: StaticListId,
+    mode: StaticListCombiningMode,
+  ): Promise<void> {
+    const metadata = await this.getListMetadata(listId);
+    const updatedMetadata = await this.recomputeCombinedSummaryForMetadata(
+      listId,
+      { ...metadata, combiningMode: mode },
+    );
+    this.setListMetadata(updatedMetadata);
+  }
+
+  // ── Local item management ──────────────────────────────────────────
+
+  public async getLocalItems<ListId extends StaticListId>(
+    listId: ListId,
+  ): Promise<Array<StaticListItem<ListId>>> {
+    const localTable = this.getLocalTable(listId);
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data type is unknown, but we've parsed it with the right schema
+    return (await localTable.toArray()) as Array<StaticListItem<ListId>>;
+  }
+
+  public async setLocalItems<ListId extends StaticListId>(
+    listId: ListId,
+    items: Array<StaticListItem<ListId>>,
+  ): Promise<void> {
+    const localTable = this.getLocalTable(listId);
+    await localTable.clear();
+    if (items.length > 0) {
+      await localTable.bulkAdd(items);
+    }
+    await this.recomputeLocalAndCombinedSummary(listId);
+  }
+
+  public async addLocalItem<ListId extends StaticListId>(
+    listId: ListId,
+    item: StaticListItem<ListId>,
+  ): Promise<void> {
+    const localTable = this.getLocalTable(listId);
+    await localTable.add(item);
+    await this.recomputeLocalAndCombinedSummary(listId);
+  }
+
+  public async putLocalItem<ListId extends StaticListId>(
+    listId: ListId,
+    item: StaticListItem<ListId>,
+  ): Promise<void> {
+    const listDefinition = staticListDefinitionLookup[listId];
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- indexes are always strings (object keys)
+    const firstIndex = listDefinition.indexes[0] as string;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown, accessing by dynamic key
+    const firstIndexValue = (item as Record<string, unknown>)[firstIndex];
+
+    const localTable = this.getLocalTable(listId);
+    await localTable.where({ [firstIndex]: firstIndexValue }).delete();
+    await localTable.add(item);
+    await this.recomputeLocalAndCombinedSummary(listId);
+  }
+
+  public async removeLocalItem<
+    ListId extends StaticListId,
+    Index extends keyof z.infer<
+      (typeof staticListDefinitionLookup)[ListId]["storedItemSchema"]
+    >,
+  >(
+    listId: ListId,
+    index: Index,
+    value: z.infer<
+      (typeof staticListDefinitionLookup)[ListId]["storedItemSchema"]
+    >[Index],
+  ): Promise<{ deletedCount: number }> {
+    const localTable = this.getLocalTable(listId);
+    const deletedCount = await localTable
+      .where({ [String(index)]: value })
+      .delete();
+    await this.recomputeLocalAndCombinedSummary(listId);
+    return { deletedCount };
+  }
+
+  // ── Item origin ────────────────────────────────────────────────────
+
+  public async getItemOrigin<
+    ListId extends StaticListId,
+    Index extends keyof z.infer<
+      (typeof staticListDefinitionLookup)[ListId]["storedItemSchema"]
+    >,
+  >(
+    listId: ListId,
+    index: Index,
+    value: z.infer<
+      (typeof staticListDefinitionLookup)[ListId]["storedItemSchema"]
+    >[Index],
+  ): Promise<StaticListItemOrigin | undefined> {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- indexes are always strings (object keys)
+    const firstIndex = staticListDefinitionLookup[listId].indexes[0] as string;
+    const localTable = this.getLocalTable(listId);
+    const remoteTable = await this.getActiveRemoteTable(listId);
+
+    // Look up by the provided index to find items
+    const localItem = await localTable.get({ [index]: value });
+    const remoteItem = await remoteTable.get({ [index]: value });
+
+    if (localItem && remoteItem) {
+      // Check if the local item matches a remote item by first index (override)
+      const localFirstIndexValue =
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown, accessing by dynamic key
+        (localItem as Record<string, unknown>)[firstIndex];
+      const remoteByFirstIndex = await remoteTable.get({
+        [firstIndex]: localFirstIndexValue,
+      });
+      return remoteByFirstIndex ? "localOverride" : "local";
+    }
+
+    if (localItem) {
+      return "local";
+    }
+
+    if (remoteItem) {
+      return "remote";
+    }
+
+    return undefined;
+  }
+
+  // ── Paginated read access ─────────────────────────────────────────
+
+  public async getItemCount(listId: StaticListId): Promise<number> {
+    const metadata = await this.getListMetadata(listId);
+    const combiningMode = metadata.combiningMode;
+
+    if (combiningMode === "localOnly") {
+      return this.getLocalTable(listId).count();
+    }
+
+    const remoteTable = await this.getActiveRemoteTable(listId);
+
+    if (combiningMode === "remoteOnly") {
+      return remoteTable.count();
+    }
+
+    // remoteWithLocalOverrides: remote count + pure-local additions
+    const remoteCount = await remoteTable.count();
+    const pureLocalCount = await this.countPureLocalItems(listId);
+    return remoteCount + pureLocalCount;
+  }
+
+  public async getItemsPage(
+    listId: StaticListId,
+    params: { offset: number; limit: number },
+  ): Promise<{
+    items: Array<{
+      item: unknown;
+      origin: StaticListItemOrigin;
+      valid: boolean;
+    }>;
+    totalCount: number;
+  }> {
+    const metadata = await this.getListMetadata(listId);
+    const combiningMode = metadata.combiningMode;
+    const listDefinition = staticListDefinitionLookup[listId];
+
+    function validateItem(item: unknown): boolean {
+      return listDefinition.storedItemSchema.safeParse(item).success;
+    }
+
+    if (combiningMode === "localOnly") {
+      const localTable = this.getLocalTable(listId);
+      const totalCount = await localTable.count();
+      const rawItems = await localTable
+        .offset(params.offset)
+        .limit(params.limit)
+        .toArray();
+
+      return {
+        items: rawItems.map((item) => ({
+          item,
+          origin: "local" satisfies StaticListItemOrigin,
+          valid: validateItem(item),
+        })),
+        totalCount,
+      };
+    }
+
+    const remoteTable = await this.getActiveRemoteTable(listId);
+
+    if (combiningMode === "remoteOnly") {
+      const totalCount = await remoteTable.count();
+      const rawItems = await remoteTable
+        .offset(params.offset)
+        .limit(params.limit)
+        .toArray();
+
+      return {
+        items: rawItems.map((item) => ({
+          item,
+          origin: "remote" satisfies StaticListItemOrigin,
+          valid: validateItem(item),
+        })),
+        totalCount,
+      };
+    }
+
+    // remoteWithLocalOverrides
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- indexes are always strings (object keys)
+    const firstIndex = listDefinition.indexes[0] as string;
+
+    // Load all local items (always small set)
+    const localItems = await this.getLocalTable(listId).toArray();
+    const localByKey = new Map<unknown, unknown>();
+    for (const item of localItems) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown, accessing by dynamic key
+      localByKey.set((item as Record<string, unknown>)[firstIndex], item);
+    }
+
+    const remoteCount = await remoteTable.count();
+
+    // Count pure-local items (not overriding any remote)
+    const pureLocalItems: unknown[] = [];
+    for (const [key, item] of localByKey) {
+      const remoteMatch = await remoteTable.get({ [firstIndex]: key });
+      if (!remoteMatch) {
+        pureLocalItems.push(item);
+      }
+    }
+
+    const totalCount = remoteCount + pureLocalItems.length;
+
+    // If offset is within the remote range, read from remote table
+    if (params.offset < remoteCount) {
+      const rawRemoteItems = await remoteTable
+        .offset(params.offset)
+        .limit(params.limit)
+        .toArray();
+
+      type PageItem = {
+        item: unknown;
+        origin: StaticListItemOrigin;
+        valid: boolean;
+      };
+
+      const items: PageItem[] = rawRemoteItems.map((remoteItem) => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown, accessing by dynamic key
+        const key = (remoteItem as Record<string, unknown>)[firstIndex];
+        const localItem = localByKey.get(key);
+        if (localItem) {
+          return {
+            item: localItem,
+            origin: "localOverride" satisfies StaticListItemOrigin,
+            valid: validateItem(localItem),
+          };
+        }
+        return {
+          item: remoteItem,
+          origin: "remote" satisfies StaticListItemOrigin,
+          valid: validateItem(remoteItem),
+        };
+      });
+
+      // If we got fewer items than the limit and there are pure-local items to append
+      const remaining = params.limit - items.length;
+      if (remaining > 0 && pureLocalItems.length > 0) {
+        for (const item of pureLocalItems.slice(0, remaining)) {
+          items.push({
+            item,
+            origin: "local" satisfies StaticListItemOrigin,
+            valid: validateItem(item),
+          });
+        }
+      }
+
+      return { items, totalCount };
+    }
+
+    // Offset is beyond remote items — serve from pure-local items
+    const pureLocalOffset = params.offset - remoteCount;
+    const pureLocalPage = pureLocalItems.slice(
+      pureLocalOffset,
+      pureLocalOffset + params.limit,
+    );
+
+    return {
+      items: pureLocalPage.map((item) => ({
+        item,
+        origin: "local" satisfies StaticListItemOrigin,
+        valid: validateItem(item),
+      })),
+      totalCount,
+    };
+  }
+
+  public async searchItems(
+    listId: StaticListId,
+    params: { index: string; value: unknown },
+  ): Promise<{
+    items: Array<{
+      item: unknown;
+      origin: StaticListItemOrigin;
+      valid: boolean;
+    }>;
+  }> {
+    const metadata = await this.getListMetadata(listId);
+    const combiningMode = metadata.combiningMode;
+    const listDefinition = staticListDefinitionLookup[listId];
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- indexes are always strings (object keys)
+    const firstIndex = listDefinition.indexes[0] as string;
+
+    function validateItem(item: unknown): boolean {
+      return listDefinition.storedItemSchema.safeParse(item).success;
+    }
+
+    const localTable = this.getLocalTable(listId);
+    const remoteTable = await this.getActiveRemoteTable(listId);
+
+    if (combiningMode === "localOnly") {
+      const rawItems = await localTable
+        .where({ [params.index]: params.value })
+        .toArray();
+      return {
+        items: rawItems.map((item) => ({
+          item,
+          origin: "local" satisfies StaticListItemOrigin,
+          valid: validateItem(item),
+        })),
+      };
+    }
+
+    if (combiningMode === "remoteOnly") {
+      const rawItems = await remoteTable
+        .where({ [params.index]: params.value })
+        .toArray();
+      return {
+        items: rawItems.map((item) => ({
+          item,
+          origin: "remote" satisfies StaticListItemOrigin,
+          valid: validateItem(item),
+        })),
+      };
+    }
+
+    // remoteWithLocalOverrides: search both, deduplicate by first index
+    const remoteItems = await remoteTable
+      .where({ [params.index]: params.value })
+      .toArray();
+    const localItems = await localTable
+      .where({ [params.index]: params.value })
+      .toArray();
+
+    const localByKey = new Map<unknown, unknown>();
+    for (const item of localItems) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown, accessing by dynamic key
+      localByKey.set((item as Record<string, unknown>)[firstIndex], item);
+    }
+
+    type PageItem = {
+      item: unknown;
+      origin: StaticListItemOrigin;
+      valid: boolean;
+    };
+
+    const seenKeys = new Set<unknown>();
+    const items: PageItem[] = [];
+
+    for (const remoteItem of remoteItems) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown, accessing by dynamic key
+      const key = (remoteItem as Record<string, unknown>)[firstIndex];
+      seenKeys.add(key);
+
+      const localItem = localByKey.get(key);
+      if (localItem) {
+        items.push({
+          item: localItem,
+          origin: "localOverride",
+          valid: validateItem(localItem),
+        });
+      } else {
+        items.push({
+          item: remoteItem,
+          origin: "remote",
+          valid: validateItem(remoteItem),
+        });
+      }
+    }
+
+    // Add pure-local items not already seen
+    for (const [key, item] of localByKey) {
+      if (!seenKeys.has(key)) {
+        items.push({
+          item,
+          origin: "local",
+          valid: validateItem(item),
+        });
+      }
+    }
+
+    return { items };
+  }
+
+  private async countPureLocalItems(listId: StaticListId): Promise<number> {
+    const listDefinition = staticListDefinitionLookup[listId];
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- indexes are always strings (object keys)
+    const firstIndex = listDefinition.indexes[0] as string;
+
+    const localItems = await this.getLocalTable(listId).toArray();
+    const remoteTable = await this.getActiveRemoteTable(listId);
+
+    let count = 0;
+    for (const localItem of localItems) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown, accessing by dynamic key
+      const key = (localItem as Record<string, unknown>)[firstIndex];
+      const remoteMatch = await remoteTable.get({ [firstIndex]: key });
+      if (!remoteMatch) {
+        count += 1;
+      }
+    }
+    return count;
+  }
+
+  // ── Summary recomputation ──────────────────────────────────────────
+
+  private async recomputeLocalAndCombinedSummary(
+    listId: StaticListId,
+  ): Promise<void> {
+    const listDefinition: StaticListDefinition =
+      staticListDefinitionLookup[listId];
+    const localItems = await this.getLocalTable(listId).toArray();
+
+    const mutableLocalSummary = listDefinition.createEmptySummary();
+    for (const item of localItems) {
+      listDefinition.mutateSummary(mutableLocalSummary, item);
+    }
+
+    const metadata = await this.getListMetadata(listId);
+    const updatedMetadata = await this.recomputeCombinedSummaryForMetadata(
+      listId,
+      {
+        ...metadata,
+        localSummary: structuredClone(mutableLocalSummary),
+        localUpdatedAt: isoDateTimeSchema.parse(Date.now()),
+      },
+    );
+    this.setListMetadata(updatedMetadata);
+  }
+
+  private async recomputeCombinedSummaryForMetadata(
+    listId: StaticListId,
+    metadata: StaticListMetadata,
+  ): Promise<StaticListMetadata> {
+    const combiningMode = metadata.combiningMode;
+    const listDefinition: StaticListDefinition =
+      staticListDefinitionLookup[listId];
+
+    let combinedSummary: NonNullable<StaticListMetadata["combinedSummary"]>;
+
+    if (combiningMode === "remoteOnly") {
+      combinedSummary =
+        metadata.remoteActive?.summary ?? listDefinition.createEmptySummary();
+    } else if (combiningMode === "localOnly") {
+      combinedSummary =
+        metadata.localSummary ?? listDefinition.createEmptySummary();
+    } else {
+      // remoteWithLocalOverrides — start with remote, adjust for local items
+      const remoteSummaryRaw = metadata.remoteActive?.summary;
+      const remoteSummaryResult =
+        listDefinition.summarySchema.safeParse(remoteSummaryRaw);
+      const mutableCombined: WritableDeep<StaticListSummary> = structuredClone(
+        remoteSummaryResult.data ?? listDefinition.createEmptySummary(),
+      );
+
+      const localItems = await this.getLocalTable(listId).toArray();
+      const remoteTable = await this.getActiveRemoteTable(listId);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- indexes are always strings (object keys)
+      const firstIndex = listDefinition.indexes[0] as string;
+
+      for (const localItem of localItems) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown, accessing by dynamic key
+        const localItemKey = (localItem as Record<string, unknown>)[firstIndex];
+        const matchingRemoteItem = await remoteTable.get({
+          [firstIndex]: localItemKey,
+        });
+
+        if (matchingRemoteItem) {
+          // Override: remove the remote item's contribution, add local item's
+          listDefinition.unmutateSummary(mutableCombined, matchingRemoteItem);
+        }
+        // Either way, add the local item's contribution
+        listDefinition.mutateSummary(mutableCombined, localItem);
+      }
+
+      combinedSummary = mutableCombined;
+    }
+
+    return { ...metadata, combinedSummary };
+  }
+
+  // ── Public data access ─────────────────────────────────────────────
 
   async getItems<ListId extends StaticListId>(
     listId: ListId,
   ): Promise<Array<StaticListItem<ListId>>> {
-    const activeTable = await this.getActiveListTable(listId);
+    const metadata = await this.getListMetadata(listId);
+    const combiningMode = metadata.combiningMode;
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data type is unknown, but we've parsed it with the right schema
-    return (await activeTable.toArray()) as Array<StaticListItem<ListId>>;
+    if (combiningMode === "localOnly") {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data type is unknown, but we've parsed it with the right schema
+      return (await this.getLocalTable(listId).toArray()) as Array<
+        StaticListItem<ListId>
+      >;
+    }
+
+    const remoteTable = await this.getActiveRemoteTable(listId);
+
+    if (combiningMode === "remoteOnly") {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data type is unknown, but we've parsed it with the right schema
+      return (await remoteTable.toArray()) as Array<StaticListItem<ListId>>;
+    }
+
+    // remoteWithLocalOverrides
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown
+    const remoteItems = (await remoteTable.toArray()) as Array<
+      StaticListItem<ListId>
+    >;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie stores items as unknown
+    const localItems = (await this.getLocalTable(listId).toArray()) as Array<
+      StaticListItem<ListId>
+    >;
+
+    if (localItems.length === 0) {
+      return remoteItems;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- indexes are always strings (object keys)
+    const firstIndex = staticListDefinitionLookup[listId].indexes[0] as string;
+
+    const localByKey = new Map<unknown, StaticListItem<ListId>>();
+    for (const item of localItems) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- accessing item by dynamic key
+      localByKey.set((item as Record<string, unknown>)[firstIndex], item);
+    }
+
+    const result: Array<StaticListItem<ListId>> = remoteItems.map((item) => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- accessing item by dynamic key
+      const key = (item as Record<string, unknown>)[firstIndex];
+      return localByKey.get(key) ?? item;
+    });
+
+    // Append pure-local items (not overriding any remote)
+    const remoteKeys = new Set(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- accessing item by dynamic key
+      remoteItems.map((item) => (item as Record<string, unknown>)[firstIndex]),
+    );
+    for (const [key, item] of localByKey) {
+      if (!remoteKeys.has(key)) {
+        result.push(item);
+      }
+    }
+
+    return result;
   }
 
   async pollItems<ListId extends StaticListId>(
@@ -732,28 +1444,58 @@ export class StaticListsService {
     value: z.infer<
       (typeof staticListDefinitionLookup)[ListId]["storedItemSchema"]
     >[Index],
+    options?: { origin?: "remote" | "local" },
   ): Promise<StaticListItem<ListId> | undefined> {
     const listLogger = this.getListLogger(listId);
-    const activeTable = await this.getActiveListTable(listId);
-
     const staticListDefinition = staticListDefinitionLookup[listId];
 
-    const rawItem = await activeTable.get({ [index]: value });
-    if (!rawItem) {
-      return undefined;
+    async function findInTable(
+      table: Table<unknown>,
+    ): Promise<StaticListItem<ListId> | undefined> {
+      const rawItem = await table.get({ [index]: value });
+      if (!rawItem) {
+        return undefined;
+      }
+
+      const parsedItem =
+        staticListDefinition.storedItemSchema.safeParse(rawItem);
+
+      if (!parsedItem.success) {
+        listLogger.error("Invalid item {rawItem}: {error}", {
+          rawItem,
+          error: parsedItem.error.message,
+        });
+        return undefined;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data type is unknown, but we've parsed it with the right schema
+      return parsedItem.data as StaticListItem<ListId>;
     }
 
-    const parsedItem = staticListDefinition.storedItemSchema.safeParse(rawItem);
-
-    if (!parsedItem.success) {
-      listLogger.error("Invalid item {rawItem}: {error}", {
-        rawItem,
-        error: parsedItem.error.message,
-      });
-      return undefined;
+    // Explicit origin bypasses combining mode
+    if (options?.origin === "remote") {
+      return findInTable(await this.getActiveRemoteTable(listId));
+    }
+    if (options?.origin === "local") {
+      return findInTable(this.getLocalTable(listId));
     }
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data type is unknown, but we've parsed it with the right schema
-    return parsedItem.data as StaticListItem<ListId>;
+    // Default: follow combining mode
+    const metadata = await this.getListMetadata(listId);
+    const combiningMode = metadata.combiningMode;
+
+    if (combiningMode === "remoteOnly") {
+      return findInTable(await this.getActiveRemoteTable(listId));
+    }
+    if (combiningMode === "localOnly") {
+      return findInTable(this.getLocalTable(listId));
+    }
+
+    // remoteWithLocalOverrides: check local first, fall back to remote
+    const localResult = await findInTable(this.getLocalTable(listId));
+    if (localResult) {
+      return localResult;
+    }
+    return findInTable(await this.getActiveRemoteTable(listId));
   }
 }

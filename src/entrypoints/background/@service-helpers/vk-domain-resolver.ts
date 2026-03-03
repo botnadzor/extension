@@ -2,7 +2,8 @@ import { delay } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 
 import {
-  parseVkDomain,
+  interpretVkDomain,
+  type VkDomain,
   type VkId,
   vkIdSchema,
   type VkNickname,
@@ -104,8 +105,8 @@ export class VkDomainResolver {
     return undefined;
   }
 
-  async resolve(vkDomain: string): Promise<VkId | undefined> {
-    const result = parseVkDomain(vkDomain);
+  async resolve(vkDomain: VkDomain): Promise<VkId | undefined> {
+    const result = interpretVkDomain(vkDomain);
     if (result.kind === "vkId") {
       logger.debug(
         "Resolved vkId for {vkDomain} as {vkId} (vkId was provided)",
@@ -117,8 +118,8 @@ export class VkDomainResolver {
       return result.value;
     }
 
-    if (result.kind === "undetermined") {
-      logger.warn("Unable to determine kind of VK domain: {vkDomain}", {
+    if (result.kind === "invalid") {
+      logger.warn("Unable to parse VK domain: {vkDomain}", {
         vkDomain,
       });
       return undefined;

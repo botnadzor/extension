@@ -1,6 +1,6 @@
 import {
   useFrontendBaseUrl,
-  useNextStaticListSummary,
+  useRemoteNextStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
 } from "@/shared/@ui-helpers/data-hooks";
@@ -84,7 +84,7 @@ function ListItem({
 
 export function StatsTabBody() {
   const accountListSummary = useStaticListSummary("accounts");
-  const nextAccountListSummary = useNextStaticListSummary("accounts");
+  const nextAccountListSummary = useRemoteNextStaticListSummary("accounts");
   const tags = useStaticListItems("tags");
   const frontendBaseUrl = useFrontendBaseUrl();
 

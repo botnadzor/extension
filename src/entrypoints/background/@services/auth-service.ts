@@ -14,6 +14,7 @@ import {
 } from "@/shared/@pollable/core";
 import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 import { getBackgroundLogger } from "@/shared/logging";
+import { omitUndefined } from "@/shared/omit-undefined";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import type {
@@ -149,13 +150,13 @@ export class AuthService {
       ]);
 
       if (!outcome.problem) {
-        newAuthStatus = {
-          state: "valid",
+        newAuthStatus = omitUndefined({
+          state: "valid" as const,
           accessLevel: outcome.accessLevel,
-          ...(outcome.expiresAt ? { expiresAt: outcome.expiresAt } : {}),
+          expiresAt: outcome.expiresAt,
           pointCount: outcome.pointCount,
           permissionLookup: outcome.permissionLookup,
-        };
+        });
       } else if (outcome.type === "bn:ext:invalid-access-code") {
         newAuthStatus = {
           state: "invalid",

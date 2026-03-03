@@ -44,7 +44,7 @@ export const vkNicknameSchema = z
 /** @public */
 export type VkNickname = z.infer<typeof vkNicknameSchema>;
 
-type ParsedVkDomain =
+export type InterpretedVkDomain =
   | {
       kind: "vkId";
       prefix: "id";
@@ -60,10 +60,11 @@ type ParsedVkDomain =
       value: VkNickname;
     }
   | {
-      kind: "undetermined";
+      kind: "invalid";
+      value: string;
     };
 
-export function parseVkDomain(vkDomain: string): ParsedVkDomain {
+export function interpretVkDomain(vkDomain: VkDomain): InterpretedVkDomain {
   const [, vkIdPrefix, rawVkId] =
     /^((?:album|albums|clip|clips|club|group|id|photo|photos|poll|public|video|wall|write)?)(-?\d+)(_(\d+))?(_r(\d+))?$/.exec(
       vkDomain,
@@ -90,10 +91,32 @@ export function parseVkDomain(vkDomain: string): ParsedVkDomain {
       }
 
       default: {
-        return { kind: "undetermined" };
+        return { kind: "invalid", value: vkDomain };
       }
     }
   }
 
-  return { kind: "vkNickname", value: vkNicknameSchema.parse(vkDomain) };
+  const nickname = vkNicknameSchema.parse(vkDomain);
+  const invalidVkIdLikeNickname = /^(?:id|public|club|group)0$|^0_\d+$/;
+
+  return invalidVkIdLikeNickname.test(nickname)
+    ? { kind: "invalid", value: vkDomain }
+    : { kind: "vkNickname", value: nickname };
+}
+
+export type AccountIdentifier = Exclude<
+  InterpretedVkDomain,
+  { kind: "invalid" }
+>;
+
+export function stringifyAccountIdentifier(
+  accountIdentifier: AccountIdentifier,
+): VkDomain {
+  if (accountIdentifier.kind === "vkId") {
+    return vkDomainSchema.parse(
+      `${accountIdentifier.prefix}${Math.abs(accountIdentifier.value)}`,
+    );
+  }
+
+  return vkDomainSchema.parse(accountIdentifier.value);
 }

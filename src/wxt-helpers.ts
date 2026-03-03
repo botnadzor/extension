@@ -8,6 +8,7 @@ import {
 import type { BaseExtensionVersionInfo } from "./shared/@model/extension-version";
 import { semverSchema } from "./shared/@primitives/semver";
 import { isoDateTimeSchema } from "./shared/@primitives/temporal";
+import { omitUndefined } from "./shared/omit-undefined";
 
 const repoDirPath = import.meta.dirname;
 
@@ -62,14 +63,14 @@ function generateBuildInfoFromEnvironment(configEnvMode: string): BuildInfo {
           ? "mergedWithBase"
           : undefined;
 
-    return {
+    return omitUndefined({
       commitHash,
       implementedAt: isoDateTimeSchema.parse(
         Number(commitUnixTimestamp) * 1000,
       ),
       mode,
-      ...(remark ? { remark } : {}),
-    };
+      remark,
+    });
   } catch {
     return {
       implementedAt: isoDateTimeSchema.parse(Date.now()),

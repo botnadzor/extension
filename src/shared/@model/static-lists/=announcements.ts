@@ -20,7 +20,7 @@ const announcementListItemSchema = z.readonly(
 /** @public */
 export type AnnouncementListItem = z.infer<typeof announcementListItemSchema>;
 
-const storedAnnouncementListItemSchema = z.readonly(
+export const storedAnnouncementListItemSchema = z.readonly(
   z.object({
     createdAt: isoDateTimeSchema,
     extensionVersionRange: semverRangeSchema,
@@ -41,6 +41,7 @@ export const announcementListDefinition: StaticListDefinition<
   typeof storedAnnouncementListItemSchema,
   typeof announcementListSummarySchema
 > = {
+  dxSidepanelTab: { label: "Анонсы" },
   receivedItemSchema: announcementListItemSchema,
   storedItemSchema: storedAnnouncementListItemSchema,
   mapReceivedToStored: ([
@@ -61,6 +62,23 @@ export const announcementListDefinition: StaticListDefinition<
     content,
   }),
 
+  mapStoredToReceived: ({
+    createdAt,
+    extensionVersionRange,
+    extensionVersionRangeForToast,
+    header,
+    content,
+  }) => [
+    createdAt,
+    extensionVersionRangeForToast
+      ? [extensionVersionRange, extensionVersionRangeForToast]
+      : extensionVersionRange,
+    header,
+    content,
+  ],
+
+  jsonlRowSortingBy: ["createdAt"],
+
   indexes: ["createdAt"],
 
   summarySchema: announcementListSummarySchema,
@@ -69,5 +87,8 @@ export const announcementListDefinition: StaticListDefinition<
   }),
   mutateSummary: (mutableSummary) => {
     mutableSummary.itemCount += 1;
+  },
+  unmutateSummary: (mutableSummary) => {
+    mutableSummary.itemCount -= 1;
   },
 };

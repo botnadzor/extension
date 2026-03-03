@@ -4,29 +4,48 @@
   "remoteSystemLookup": {
     "dynamicApi": {
       "aliasLookup": {
-        "https://extension.botnadzor.org/dynamic": { "role": "primary" }
+        "https://extension.botnadzor.org/dynamic": {
+          "role": "primary"
+        }
       }
     },
     "frontend": {
       "aliasLookup": {
-        "https://botnadzor.org": { "role": "primary" },
+        "https://botnadzor.org": {
+          "role": "primary"
+        },
         "https://botnadzor-epe1uraet-botnadzors-projects.vercel.app": {}
       }
     },
     "staticApi": {
       "aliasLookup": {
-        "https://api.botnadzor.org/extension/static": { "role": "primary" },
+        "https://api.botnadzor.org/extension/static": {
+          "role": "primary"
+        },
         "https://botnadzor.github.io/extension-data": {},
         "https://raw.githubusercontent.com/botnadzor/extension-data/main": {}
       },
       "listLookup": {
-        "accounts": { "generatedAt": "1970-01-01T00:00:00Z", "itemCount": 0 },
+        "accounts": {
+          "generatedAt": "1970-01-01T00:00:00Z",
+          "itemCount": 0
+        },
         "announcements": {
           "generatedAt": "1970-01-01T00:00:00Z",
           "itemCount": 0
         },
-        "tags": { "generatedAt": "1970-01-01T00:00:00Z", "itemCount": 0 },
-        "walls": { "generatedAt": "1970-01-01T00:00:00Z", "itemCount": 0 }
+        "insertions": {
+          "generatedAt": "1970-01-01T00:00:00Z",
+          "itemCount": 0
+        },
+        "tags": {
+          "generatedAt": "1970-01-01T00:00:00Z",
+          "itemCount": 0
+        },
+        "walls": {
+          "generatedAt": "1970-01-01T00:00:00Z",
+          "itemCount": 0
+        }
       }
     }
   }

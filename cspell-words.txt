@@ -3,7 +3,8 @@ botnadzor
 btn
 callees
 claude
-cnl
+cnt
+contenteditable
 cva
 cyrillic
 dexie
@@ -13,6 +14,8 @@ esbuild
 firefox
 github
 HMR
+jsonrepair
+keyof
 knip
 lnk
 logtape
@@ -22,9 +25,11 @@ messageformat
 modalheader
 njsproj
 nogit
+noopener
 noreferrer
 ntvs
 nums
+oklab
 orpc
 oxc-resolver
 pnpm-dedupe
@@ -35,12 +40,14 @@ rsc
 sel
 shadcn
 showmoretext
+sidepanel
 sln
 stringbool
 suo
 tailwindcss
 testid
 tsc
+unmutate
 userrichcell
 vkcom
 vkit

@@ -7,13 +7,14 @@ import {
   type TagId,
 } from "@/shared/@primitives/misc";
 import {
-  useNextStaticListSummary,
+  useRemoteNextStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
   useUserConfig,
 } from "@/shared/@ui-helpers/data-hooks";
 import { Checkbox } from "@/shared/@ui-primitives/checkbox";
 import { Label } from "@/shared/@ui-primitives/label";
+import { omitUndefined } from "@/shared/omit-undefined";
 import { userConfigService } from "@/shared/proxy-services";
 import { cn } from "@/shared/tailwindcss-helpers";
 
@@ -134,16 +135,11 @@ export function ConfigTabBody() {
   const userConfig = useUserConfig();
   const tags = useStaticListItems("tags");
   const accountListSummary = useStaticListSummary("accounts");
-  const nextAccountListSummary = useNextStaticListSummary("accounts");
+  const nextAccountListSummary = useRemoteNextStaticListSummary("accounts");
 
   const tagsToShow = tags.filter((tag) => tag.type === "accountCategory");
 
-  function handleTagVisibilityClick(
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data-tag-id is set in a loop
-    const tagId = event.currentTarget.dataset["tagId"] as TagId;
-
+  function changeTagVisibility(tagId: TagId, visible: boolean) {
     const {
       [tagId]: override = {},
       ...tagOverrideLookupWithoutCurrentOverride
@@ -153,7 +149,7 @@ export function ConfigTabBody() {
 
     const newOverride = {
       ...overrideWithoutHidden,
-      ...(hidden ? {} : { hidden: true }),
+      ...(visible ? {} : { hidden: true }),
     };
 
     const newOverrideHasKeys = Object.keys(newOverride).length > 0;
@@ -177,12 +173,12 @@ export function ConfigTabBody() {
     const { [tagId]: override, ...tagOverrideLookupWithoutCurrentOverride } =
       userConfig.tagOverrideLookup;
 
-    const { color, ...overrideWithoutColor } = override ?? {};
+    const { colorForHighlight, ...overrideWithoutColor } = override ?? {};
 
-    const newOverride = {
+    const newOverride = omitUndefined({
       ...overrideWithoutColor,
-      ...(colorOverride ? { color: colorOverride } : {}),
-    };
+      colorForHighlight: colorOverride,
+    });
 
     const newOverrideHasKeys = Object.keys(newOverride).length > 0;
 
@@ -199,16 +195,19 @@ export function ConfigTabBody() {
     <div className="space-y-5 px-3 pt-3 text-sm">
       <Label>
         <Checkbox
-          checked={userConfig.likesDisplay === "table"}
-          onClick={() => {
+          checked={userConfig.fansDisplay === "table"}
+          disabled={true}
+          onCheckedChange={(checked) => {
             void userConfigService.set({
               ...userConfig,
-              likesDisplay:
-                userConfig.likesDisplay === "table" ? "default" : "table",
+              fansDisplay: checked ? "table" : "default",
             });
           }}
         />
-        Табличный вид лайков в окне
+        <span className="line-through">Табличный вид лайков в окне</span>
+        <span className="w-24 text-xs text-muted-foreground italic">
+          ← доделывается
+        </span>
       </Label>
 
       <div className="space-y-1">
@@ -220,8 +219,8 @@ export function ConfigTabBody() {
           return (
             <div key={tag.id} className="flex items-center gap-1">
               <ColorOverridePicker
-                colorOverride={override.color}
-                defaultColor={tag.color ?? fallbackHexColor}
+                colorOverride={override.colorForHighlight}
+                defaultColor={tag.colorForHighlight ?? fallbackHexColor}
                 onOverrideChange={handleColorOverrideChange}
                 tagId={tag.id}
               />
@@ -230,8 +229,9 @@ export function ConfigTabBody() {
                 <Checkbox
                   disabled={tag.visibilityLock}
                   checked={visible}
-                  data-tag-id={tag.id}
-                  onClick={handleTagVisibilityClick}
+                  onCheckedChange={(checked) => {
+                    changeTagVisibility(tag.id, checked);
+                  }}
                 />
 
                 <span className="flex-1 truncate">{tag.name}</span>

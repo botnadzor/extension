@@ -2,10 +2,7 @@ import * as React from "react";
 
 import { createPollableValueHook } from "@/shared/@pollable/react";
 import type { ContentId } from "@/shared/@primitives/misc";
-import {
-  useAuthStatus,
-  useFrontendBaseUrl,
-} from "@/shared/@ui-helpers/data-hooks";
+import { useAuthStatus } from "@/shared/@ui-helpers/data-hooks";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/@ui-primitives/dialog";
-import { Logo } from "@/shared/@ui-primitives/logo";
+import { LogoLink } from "@/shared/@ui-primitives/logo";
 import { formatInt } from "@/shared/formatting";
 import { inspectorService } from "@/shared/proxy-services";
 
@@ -51,7 +48,6 @@ function PointsRemaining() {
 
 export function Inspector() {
   const contentId = useContentId();
-  const frontendBaseUrl = useFrontendBaseUrl();
   const inspectorInstanceConfig = useInspectorInstanceConfig(contentId);
 
   function handleOpenChange(open: boolean) {
@@ -80,14 +76,7 @@ export function Inspector() {
         </DialogDescription>
 
         <DialogHeader className="-mb-1 flex flex-0 flex-row items-center gap-2">
-          <a
-            href={frontendBaseUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="-mx-0.5 rounded-xs p-0.5 u-ring"
-          >
-            <Logo />
-          </a>
+          <LogoLink />
           <span className="mt-0.5 size-1.5 rounded-full bg-muted-foreground" />
           <span className="mb-0.5 font-play text-2xl text-muted-foreground">
             Инспектор

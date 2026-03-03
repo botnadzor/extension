@@ -11,14 +11,14 @@ on:
 jobs:
   release:
     name: Create Release Draft
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted #ubuntu-24.04
     permissions:
       actions: read
       contents: write
 
     steps:
       - name: Download release zips
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: release-zips
           path: release-zips

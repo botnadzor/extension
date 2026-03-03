@@ -22,7 +22,7 @@ export function ToastWithDataWarmup({ onClose }: { onClose: () => void }) {
   const tagsMetadata = useStaticListMetadata("tags");
   const accountsMetadata = useStaticListMetadata("accounts");
 
-  const done = accountsMetadata.active && tagsMetadata.active;
+  const done = accountsMetadata.remoteActive && tagsMetadata.remoteActive;
 
   React.useEffect(() => {
     if (done) {
@@ -31,12 +31,12 @@ export function ToastWithDataWarmup({ onClose }: { onClose: () => void }) {
   }, [done, onClose]);
 
   const nextExpectedItemCount =
-    (accountsMetadata.next?.upstreamInfo.itemCount ?? 0) +
-    (tagsMetadata.next?.upstreamInfo.itemCount ?? 0);
+    (accountsMetadata.remoteNext?.upstreamInfo.itemCount ?? 0) +
+    (tagsMetadata.remoteNext?.upstreamInfo.itemCount ?? 0);
 
   const nextItemCount =
-    extractItemCountFromRawSummary(accountsMetadata.next?.summary) +
-    extractItemCountFromRawSummary(tagsMetadata.next?.summary);
+    extractItemCountFromRawSummary(accountsMetadata.remoteNext?.summary) +
+    extractItemCountFromRawSummary(tagsMetadata.remoteNext?.summary);
 
   const progressInPercentage = nextExpectedItemCount
     ? clamp(round((nextItemCount / nextExpectedItemCount) * 100, 1), 0, 99.9)

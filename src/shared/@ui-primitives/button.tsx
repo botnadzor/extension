@@ -1,6 +1,5 @@
-import { Slot } from "@radix-ui/react-slot";
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
-import type * as React from "react";
 
 import { cn } from "../tailwindcss-helpers";
 
@@ -83,20 +82,16 @@ const buttonVariants = cva(
 
 function Button({
   className,
-  variant,
-  size,
-  asChild = false,
+  variant = "default",
+  size = "default",
   type,
   ...props
-}: Omit<React.ComponentProps<"button">, "type"> &
+}: Omit<ButtonPrimitive.Props, "type"> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
     type?: "submit" | undefined;
   }) {
-  const Comp = asChild ? Slot : "button";
-
   return (
-    <Comp
+    <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       type={type ?? "button"}

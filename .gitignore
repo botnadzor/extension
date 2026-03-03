@@ -1,18 +1,17 @@
-## Logs
-*.log
-logs
-pnpm-debug.log*
-
-## WXT
+# Project files
 .wxt
 *.local
-dist
-node_modules
+*.log
+dist/
+logs/
+node_modules/
+pnpm-debug.log*
 stats-*.json
 stats.html
+var/
 web-ext.config.ts
 
-## Editor directories and files
+# Editor directories and files
 .DS_Store
 .idea
 .vscode/**

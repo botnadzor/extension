@@ -73,11 +73,8 @@ export function ToastWithTriggeredNotification({
       extensionName = "short";
       children = (
         <>
-          Данные для подсветки ботов готовы.{" "}
-          <a href={window.location.href} onClick={handleClose}>
-            Обновите страницу
-          </a>{" "}
-          или&nbsp;попробуйте открыть VK-паблик, где часто бывают боты:{" "}
+          Подсветка ботов активирована. Попробуйте открыть VK-паблик, где часто
+          бывают боты:{" "}
           {[
             // cspell:ignore rt_russian vesti
             "ria",
@@ -87,7 +84,11 @@ export function ToastWithTriggeredNotification({
           ].map((page, index) => (
             <React.Fragment key={page}>
               {index > 0 && ", "}
-              <a href={`${vkBaseUrl}/${page}`} onClick={handleClose}>
+              <a
+                className="u-link"
+                href={`${vkBaseUrl}/${page}`}
+                onClick={handleClose}
+              >
                 {page}
               </a>
             </React.Fragment>
@@ -160,26 +161,6 @@ export function ToastWithTriggeredNotification({
         <>
           Произошла ошибка при получении даты регистрации. Попробуйте ещё раз
           позже.
-        </>
-      );
-      break;
-    }
-
-    case "test": {
-      header = "Тестовое уведомление";
-      children = (
-        <>
-          <p>Тестовое уведомление + ссылка:</p>
-          <div className="truncate">
-            <a
-              className="truncate"
-              href={frontendBaseUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {frontendBaseUrl.replace("https://", "")}
-            </a>
-          </div>
         </>
       );
       break;

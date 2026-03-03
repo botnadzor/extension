@@ -89,7 +89,6 @@ export function InspectorContent({
     <>
       <InspectedAccount {...accountInfo} />
       <Tabs
-        activationMode="manual"
         value={tab}
         onValueChange={(value) => {
           void inspectorService.setTab(

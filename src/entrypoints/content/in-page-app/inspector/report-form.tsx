@@ -51,6 +51,8 @@ export function ReportForm({
   const [tagId, setTagId] = React.useState<TagId | undefined>();
   const [text, setText] = React.useState("");
 
+  const selectedTag = tags.find((tag) => tag.id === tagId);
+
   const [reportSubmission, setReportSubmission] = React.useState<
     Awaited<ReturnType<typeof inspectorService.submitReport>> | undefined
   >();
@@ -199,11 +201,16 @@ export function ReportForm({
       ) : (
         <Select
           name="tagSuggestion"
+          items={Object.fromEntries(
+            filteredTags.map((tag) => [tag.id, tag.name]),
+          )}
           disabled={submitting}
           onValueChange={(value) => {
             setReportSubmission(undefined);
             setTagId(
-              value === emptySelectValue ? undefined : tagIdSchema.parse(value),
+              !value || value === emptySelectValue
+                ? undefined
+                : tagIdSchema.parse(value),
             );
           }}
           value={tagId ?? emptySelectValue}
@@ -213,7 +220,15 @@ export function ReportForm({
             ref={selectElementRef}
           >
             <SelectValue>
-              {tagId ? undefined : (
+              {selectedTag ? (
+                <span className="flex items-center gap-2">
+                  <span
+                    className="size-2 rounded-full bg-muted"
+                    style={{ backgroundColor: selectedTag.color }}
+                  />
+                  {selectedTag.name}
+                </span>
+              ) : (
                 <span>
                   Выберите подходящую маркировку для этого аккаунта...
                 </span>

@@ -13,11 +13,11 @@
   "tailwindCSS.classAttributes": ["class", "className", ".*ClassName"],
   "tailwindCSS.experimental.configFile": {
     "src/entrypoints/content/insertion-styling.css": [
-      "src/entrypoints/content/insertions/**"
+      "src/entrypoints/content/insertion-variants/**"
     ],
     "src/shared/isolated-ui-styling.css": [
       "src/**",
-      "!src/entrypoints/content/insertions/**"
+      "!src/entrypoints/content/insertion-variants/**"
     ]
   },
   "tailwindCSS.experimental.classRegex": [

@@ -1,179 +1,102 @@
-import { nanoid } from "nanoid";
+import { isEqual } from "es-toolkit";
 
+import type { InsertionConfig } from "@/shared/@model/insertion-configs";
 import type { ContentId } from "@/shared/@primitives/misc";
 import { getContentLogger } from "@/shared/logging";
+import { dxConfigService, staticListsService } from "@/shared/proxy-services";
 
 import type { DerivedPageInfo } from "./derived-page-info";
-import type {
-  Insertion,
-  InsertionCleanupFunction,
-  InsertionInstance,
-} from "./insertion-basics";
+import { startGlobalRerenderPolling } from "./insertion-management/global-rerender";
+import {
+  type InsertionInstanceMap,
+  mountNewInsertions,
+  unmountAllInsertions,
+  unmountInstance,
+} from "./insertion-management/instance-lifecycle";
 import insertionStyling from "./insertion-styling.css?inline";
-import { insertionLookup } from "./insertions";
 
-const insertionInstanceIdKey = "bnInsertionInstanceId";
+const logger = getContentLogger(["insertion-management"]);
 
-const insertionInstanceMap = new Map<string, InsertionInstance>();
+function filterConfigsForPage(
+  configs: InsertionConfig[],
+  { websiteVariant, archivedSnapshot }: DerivedPageInfo,
+): InsertionConfig[] {
+  return configs.filter((config) => {
+    if (config.disabled) {
+      return false;
+    }
+    if (
+      config.appliesTo !== "desktopAndMobileVkWebsite" &&
+      config.appliesTo !== websiteVariant
+    ) {
+      return false;
+    }
+    if (config.appliesToArchivedSnapshotsOnly && !archivedSnapshot) {
+      return false;
+    }
+    return true;
+  });
+}
 
-export function startManagingInsertions({
+export async function startManagingInsertions({
   archivedSnapshot,
   contentId,
   websiteVariant,
-}: DerivedPageInfo & { contentId: ContentId }): void {
-  const logger = getContentLogger(["insertion-management"]);
-
+}: DerivedPageInfo & { contentId: ContentId }): Promise<void> {
   const style = document.createElement("style");
   style.textContent = insertionStyling;
   document.head.append(style);
 
-  const pickedInsertionLookup: Record<string, Insertion> = {};
+  const derivedPageInfo: DerivedPageInfo = { archivedSnapshot, websiteVariant };
+  const instanceMap: InsertionInstanceMap = new Map();
+  let currentConfigs: InsertionConfig[] = [];
 
-  for (const [insertionKey, insertion] of Object.entries(insertionLookup)) {
-    if (insertion.appliesToArchivedSnapshotsOnly && !archivedSnapshot) {
-      continue;
-    }
+  function updateConfigs(staticListConfigs: InsertionConfig[]) {
+    const filtered = filterConfigsForPage(staticListConfigs, derivedPageInfo);
 
-    if (insertion.appliesTo !== websiteVariant) {
-      continue;
-    }
-
-    pickedInsertionLookup[insertionKey] = insertion;
-  }
-
-  logger.info(
-    "Picked insertions ({pickedInsertionsCount} / {allInsertionsCount}): {pickedInsertionKeys}",
-    {
-      allInsertionsCount: Object.keys(insertionLookup).length,
-      pickedInsertionsCount: Object.keys(pickedInsertionLookup).length,
-      pickedInsertionKeys: Object.keys(pickedInsertionLookup),
-    },
-  );
-
-  function mountInsertions() {
-    logger.debug("Mounting insertions");
-
-    let newInsertionInstanceCount = 0;
-
-    for (const [insertionKey, insertion] of Object.entries(
-      pickedInsertionLookup,
-    )) {
-      const insertionLogger = getContentLogger(["insertion", insertionKey]);
-
-      const elements = document.querySelectorAll(insertion.elementSelector);
-      if (elements.length === 0) {
-        insertionLogger.debug("No elements found");
-        continue;
-      }
-
-      insertionLogger.debug("{elementCount} element(s) found", {
-        elementCount: elements.length,
-      });
-
-      for (const element of elements) {
-        if (!(element instanceof HTMLElement)) {
-          insertionLogger.warn("Element is not an HTMLElement");
-          continue;
-        }
-
-        const existingInsertionInstanceId =
-          element.dataset[insertionInstanceIdKey];
-
-        if (existingInsertionInstanceId) {
-          insertionLogger.debug(
-            "Matched element already has an insertion instance {existingInsertionInstanceId}",
-            { existingInsertionInstanceId },
-          );
-          continue;
-        }
-
-        let insertionInstanceId;
-        do {
-          insertionInstanceId = insertionKey + "|" + nanoid(8);
-        } while (insertionInstanceMap.has(insertionInstanceId));
-
-        const insertionInstanceLogger = getContentLogger([
-          "insertion-instance",
-          insertionInstanceId,
-        ]);
-
-        element.dataset[insertionInstanceIdKey] = insertionInstanceId;
-
-        insertionInstanceMap.set(insertionInstanceId, {
-          insertion,
-          instanceId: insertionInstanceId,
-          element,
-        });
-
-        newInsertionInstanceCount += 1;
-
-        let initResult:
-          | InsertionCleanupFunction
-          | Promise<InsertionCleanupFunction | undefined>
-          | undefined;
-
-        try {
-          initResult = insertion.init({
-            contentId,
-            element,
-            logger: insertionInstanceLogger,
-            archivedSnapshot,
-          });
-        } catch (error) {
-          insertionInstanceLogger.error(
-            "Error initializing insertion: {error}",
-            { error },
-          );
-        }
-
-        if (typeof initResult === "function") {
-          insertionInstanceMap.set(insertionInstanceId, {
-            insertion,
-            instanceId: insertionInstanceId,
-            element,
-            cleanup: initResult,
-          });
-        }
-
-        if (initResult instanceof Promise) {
-          void initResult
-            .then((cleanup) => {
-              if (typeof cleanup === "function") {
-                insertionInstanceMap.set(insertionInstanceId, {
-                  insertion,
-                  instanceId: insertionInstanceId,
-                  element,
-                  cleanup,
-                });
-              }
-            })
-            .catch((error: unknown) => {
-              insertionInstanceLogger.error(
-                "Error initializing insertion: {error}",
-                {
-                  error,
-                },
-              );
-            });
-        }
+    const configMap = new Map(filtered.map((config) => [config.id, config]));
+    for (const [instanceId, instance] of instanceMap) {
+      const matchingConfig = configMap.get(instance.config.id);
+      if (!matchingConfig || !isEqual(matchingConfig, instance.config)) {
+        unmountInstance(instanceMap, instanceId);
       }
     }
 
-    logger.debug(`Insertions mounted: ${newInsertionInstanceCount}`, {
-      newInsertionInstanceCount,
+    currentConfigs = filtered;
+
+    logger.info("Updated insertion configs ({count} for this page): {ids}", {
+      count: currentConfigs.length,
+      ids: currentConfigs.map((c) => c.id),
     });
   }
 
-  mountInsertions();
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- proxy service erases generic type parameter
+  const initialItems = (await staticListsService.getItems(
+    "insertions",
+  )) as InsertionConfig[];
+  const initialDxConfig = await dxConfigService.get();
+
+  updateConfigs(initialDxConfig.insertionsRemoved ? [] : initialItems);
+
+  mountNewInsertions({
+    configs: currentConfigs,
+    contentId,
+    derivedPageInfo,
+    instanceMap,
+  });
 
   let throttleTimeout: number | undefined;
   const mutationObserver = new MutationObserver(() => {
     if (throttleTimeout !== undefined) {
       return;
     }
-
     throttleTimeout = window.setTimeout(() => {
-      mountInsertions();
+      mountNewInsertions({
+        configs: currentConfigs,
+        derivedPageInfo,
+        instanceMap,
+        contentId,
+      });
       throttleTimeout = undefined;
     }, 100);
   });
@@ -183,7 +106,17 @@ export function startManagingInsertions({
     subtree: true,
   });
 
+  const stopPolling = startGlobalRerenderPolling({
+    derivedPageInfo,
+    instanceMap,
+    contentId,
+    getConfigs: () => currentConfigs,
+    onConfigsChanged: updateConfigs,
+  });
+
   window.addEventListener("beforeunload", () => {
     mutationObserver.disconnect();
+    stopPolling();
+    unmountAllInsertions(instanceMap);
   });
 }

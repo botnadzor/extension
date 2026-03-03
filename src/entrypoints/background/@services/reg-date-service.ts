@@ -6,7 +6,11 @@ import {
   type IsoDateTime,
   isoDateTimeSchema,
 } from "@/shared/@primitives/temporal";
-import { isPositiveVkId, type PositiveVkId } from "@/shared/@primitives/vk";
+import {
+  isPositiveVkId,
+  type PositiveVkId,
+  type VkDomain,
+} from "@/shared/@primitives/vk";
 
 import type { DynamicApiEndpointOutcome } from "../@service-helpers/dynamic-api-endpoints";
 import type { VkDomainResolver } from "../@service-helpers/vk-domain-resolver";
@@ -54,7 +58,7 @@ export class RegDateService {
     return cachedValue;
   }
 
-  async obtain(vkDomain: string): Promise<RegDateInfo> {
+  async obtain(vkDomain: VkDomain): Promise<RegDateInfo> {
     const vkId = await this.vkDomainResolver.resolve(vkDomain);
 
     if (!vkId) {
@@ -74,7 +78,7 @@ export class RegDateService {
 
         problem: true,
         type: "bn:ext:invalid-payload",
-        description: "Невозможно узнать дату регистрации у сообществ ВК",
+        description: "Невозможно узнать дату регистрации у сообществ VK",
         fields: ["vkDomain"],
       };
     }

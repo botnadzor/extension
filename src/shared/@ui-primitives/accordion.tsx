@@ -1,27 +1,29 @@
 "use client";
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
+
+import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion";
 import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "../tailwindcss-helpers";
 
 function Accordion({
+  multiple = true,
   className,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Root>) {
+}: AccordionPrimitive.Root.Props) {
   return (
     <AccordionPrimitive.Root
+      data-slot="accordion"
+      multiple={multiple}
       className={cn("space-y-2", className)}
       {...props}
     />
   );
 }
 
-function AccordionItem({
-  className,
-  ...props
-}: AccordionPrimitive.AccordionItemProps) {
+function AccordionItem({ className, ...props }: AccordionPrimitive.Item.Props) {
   return (
     <AccordionPrimitive.Item
+      data-slot="accordion-item"
       className={cn("rounded-md border-none", className)}
       {...props}
     />
@@ -32,10 +34,11 @@ function AccordionTrigger({
   className,
   children,
   ...props
-}: AccordionPrimitive.AccordionTriggerProps) {
+}: AccordionPrimitive.Trigger.Props) {
   return (
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
+        data-slot="accordion-trigger"
         className={cn(
           `
             flex flex-1 items-center justify-between rounded-md bg-muted px-3
@@ -46,7 +49,7 @@ function AccordionTrigger({
             [&:focus-visible>svg]:text-foreground
             [&:hover>svg]:text-foreground
             [&>svg]:text-foreground/50
-            [&[data-state=open]>svg]:rotate-180
+            [&[aria-expanded=true]>svg]:rotate-180
           `,
           className,
         )}
@@ -55,7 +58,7 @@ function AccordionTrigger({
         {children}
         <ChevronDownIcon
           className="
-            size-4 shrink-0 transition-all duration-200
+            mr-px size-4 shrink-0 transition-all duration-200
             in-data-disabled:hidden
           "
         />
@@ -69,23 +72,25 @@ function AccordionContent({
   childClassName,
   children,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Content> & {
+}: AccordionPrimitive.Panel.Props & {
   childClassName?: string;
 }) {
   return (
-    <AccordionPrimitive.Content
+    <AccordionPrimitive.Panel
+      data-slot="accordion-content"
       className={cn(
         `
-          overflow-hidden text-sm transition-all
-          data-[state=closed]:animate-accordion-up
-          data-[state=open]:animate-accordion-down
+          h-(--accordion-panel-height) overflow-hidden text-sm
+          transition-[height] duration-200 ease-out
+          data-ending-style:h-0
+          data-starting-style:h-0
         `,
         className,
       )}
       {...props}
     >
       <div className={cn("px-3 pt-2 pb-4", childClassName)}>{children}</div>
-    </AccordionPrimitive.Content>
+    </AccordionPrimitive.Panel>
   );
 }
 

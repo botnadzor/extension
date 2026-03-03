@@ -1,9 +1,8 @@
 import type { JsonValue } from "type-fest";
 import type { z } from "zod/mini";
 
-import { getAppConfig } from "@/shared/app-config";
-import { getStoreLogger } from "@/shared/logging";
-import { storage, type StorageItemKey } from "#imports";
+import { getBackgroundLogger } from "@/shared/logging";
+import { getAppConfig, storage, type StorageItemKey } from "#imports";
 
 /**
  * Prevent this error with Firefox temp addons:
@@ -31,7 +30,7 @@ export function defineStoreWithSchema<T extends z.ZodMiniType<JsonValue>>(
   const patchedName = patchNameIfNeeded(name);
   const storageItem = storage.defineItem<JsonValue | undefined>(patchedName);
 
-  const logger = getStoreLogger([patchedName]);
+  const logger = getBackgroundLogger(["store", patchedName]);
 
   function parseValue(value: unknown): z.infer<T> {
     const result = schema.safeParse(value);

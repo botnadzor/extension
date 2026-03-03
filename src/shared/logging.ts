@@ -36,6 +36,6 @@ export function getContentLogger(subcategories: string[] = []): Logger {
 export function getPopupLogger(subcategories: string[] = []): Logger {
   return getLogger([loggerCategory, "popup", ...subcategories]);
 }
-export function getStoreLogger(subcategories: string[] = []): Logger {
-  return getLogger([loggerCategory, "store", ...subcategories]);
+export function getSidepanelLogger(subcategories: string[] = []): Logger {
+  return getLogger([loggerCategory, "sidepanel", ...subcategories]);
 }

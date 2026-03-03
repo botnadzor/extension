@@ -2,7 +2,8 @@ import { z } from "zod/mini";
 
 import { isoDateTimeSchema } from "../@primitives/temporal";
 import {
-  staticListInstanceSchema,
+  staticListCombiningModeSchema,
+  staticListRemoteInstanceSchema,
   staticListUpstreamInfoSchema,
 } from "./static-list-helpers";
 import { staticListIds } from "./static-lists";
@@ -10,8 +11,10 @@ import { staticListIds } from "./static-lists";
 export const staticListMetadataSchema = z.readonly(
   z.object({
     listId: z.enum(staticListIds),
-    activeInstance: staticListInstanceSchema,
-    active: z.exactOptional(
+    combiningMode: staticListCombiningModeSchema,
+    combinedSummary: z.exactOptional(z.json()),
+    remoteActiveInstance: staticListRemoteInstanceSchema,
+    remoteActive: z.exactOptional(
       z.readonly(
         z.object({
           startedAt: isoDateTimeSchema,
@@ -21,7 +24,7 @@ export const staticListMetadataSchema = z.readonly(
         }),
       ),
     ),
-    next: z.exactOptional(
+    remoteNext: z.exactOptional(
       z.readonly(
         z.object({
           lockId: z.string(),
@@ -32,6 +35,8 @@ export const staticListMetadataSchema = z.readonly(
         }),
       ),
     ),
+    localSummary: z.exactOptional(z.json()),
+    localUpdatedAt: z.exactOptional(isoDateTimeSchema),
   }),
 );
 export type StaticListMetadata = z.infer<typeof staticListMetadataSchema>;

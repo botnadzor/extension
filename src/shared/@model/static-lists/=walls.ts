@@ -29,12 +29,15 @@ export const wallListDefinition: StaticListDefinition<
   typeof storedWallListItemSchema,
   typeof wallListSummarySchema
 > = {
+  dxSidepanelTab: { label: "Стены" },
   receivedItemSchema: receivedWallListItemSchema,
   storedItemSchema: storedWallListItemSchema,
   mapReceivedToStored: (receivedItem) => ({
     vkId: typeof receivedItem === "number" ? receivedItem : receivedItem[0],
     skip: true,
   }),
+
+  mapStoredToReceived: ({ vkId }) => vkId,
   indexes: ["vkId"],
 
   summarySchema: wallListSummarySchema,
@@ -43,5 +46,8 @@ export const wallListDefinition: StaticListDefinition<
   }),
   mutateSummary: (mutableSummary) => {
     mutableSummary.itemCount += 1;
+  },
+  unmutateSummary: (mutableSummary) => {
+    mutableSummary.itemCount -= 1;
   },
 };

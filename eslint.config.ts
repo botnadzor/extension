@@ -18,6 +18,18 @@ import eslintPluginSimpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import typescriptEslint from "typescript-eslint";
 
+const ruleArgsForNoRestrictedImports = [
+  "warn",
+  {
+    paths: ["zod", "zod/v3", "zod/v4"].map((name) => ({
+      name,
+      message:
+        "Please import from 'zod/mini' instead which helps reduce bundle size.",
+    })),
+    patterns: [],
+  },
+] as const;
+
 const ruleArgsForNoRestrictedSyntax = [
   "warn",
   {
@@ -132,14 +144,7 @@ export default defineConfig(
       "@typescript-eslint/no-deprecated": "off",
       "@typescript-eslint/no-import-type-side-effects": "warn",
       "@typescript-eslint/no-restricted-imports": [
-        "error",
-        {
-          paths: ["zod", "zod/v3", "zod/v4"].map((name) => ({
-            name,
-            message:
-              "Please import from 'zod/mini' instead which helps reduce bundle size.",
-          })),
-        },
+        ...ruleArgsForNoRestrictedImports,
       ],
       "@typescript-eslint/no-shadow": "error",
       "@typescript-eslint/no-unused-expressions": "warn",
@@ -159,7 +164,7 @@ export default defineConfig(
     },
     settings: {
       "better-tailwindcss": {
-        callees: [...getDefaultCallees(), ["cnl", [{ match: "strings" }]]],
+        callees: [...getDefaultCallees(), ["cnt", [{ match: "strings" }]]],
         detectComponentClasses: true,
         entryPoint: `${import.meta.dirname}/src/shared/isolated-ui-styling.css`,
       },
@@ -276,7 +281,7 @@ export default defineConfig(
     },
   },
   {
-    files: ["*.config.{js,ts}", "scripts/**"],
+    files: ["*.config.{js,ts}", "**/*.test.{ts,tsx}", "scripts/**"],
     rules: {
       "no-restricted-syntax": ruleArgsForNoRestrictedSyntax,
 
@@ -296,6 +301,7 @@ export default defineConfig(
   {
     files: [
       "src/app.config.ts",
+      "src/curated-static-lists/*.ts",
       "src/entrypoints/*.ts",
       "src/entrypoints/*.tsx",
     ],
@@ -305,13 +311,44 @@ export default defineConfig(
   },
 
   {
-    files: ["src/entrypoints/content/insertions/**/*.{ts,tsx}"],
+    files: ["src/curated-static-lists/*.ts"],
+    rules: {
+      "unicorn/prefer-string-raw": "off",
+    },
+  },
+
+  {
+    files: [
+      "src/entrypoints/content/insertion-configs/**/*",
+      "src/entrypoints/content/insertion-variants/*",
+    ],
+    rules: {
+      "import/no-default-export": "off",
+    },
+  },
+
+  {
+    files: ["src/entrypoints/content/insertion-variants/**/*.{ts,tsx}"],
     settings: {
       "better-tailwindcss": {
         entryPoint: `${import.meta.dirname}/src/entrypoints/content/insertion-styling.css`,
       },
     },
     rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        ruleArgsForNoRestrictedImports[0],
+        {
+          paths: [...ruleArgsForNoRestrictedImports[1].paths],
+          patterns: [
+            ...ruleArgsForNoRestrictedImports[1].patterns,
+            {
+              group: ["**/proxy-services"],
+              message:
+                "When defining an insertion, use services only from getServiceData payload. Avoid importing proxy services directly.",
+            },
+          ],
+        },
+      ],
       "import/no-default-export": "off",
     },
   },

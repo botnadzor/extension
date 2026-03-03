@@ -1,51 +1,19 @@
-import { delay, random } from "es-toolkit";
-
 import {
   type AccountAffiliation,
   fallbackHexColor,
 } from "@/shared/@model/account-affiliation";
 import type { TagListItem } from "@/shared/@model/static-lists";
-import { hexColorSchema, tagIdSchema } from "@/shared/@primitives/misc";
-import { vkIdSchema, vkNicknameSchema } from "@/shared/@primitives/vk";
-import { getAppConfig } from "@/shared/app-config";
+import {
+  type InterpretedVkDomain,
+  interpretVkDomain,
+  type VkDomain,
+} from "@/shared/@primitives/vk";
 import { getBackgroundLogger } from "@/shared/logging";
 
 import type { StaticListsService } from "./static-lists-service";
 import type { UserConfigService } from "./user-config-service";
 
 const logger = getBackgroundLogger(["affiliation-service"]);
-
-const extraTagsLookup = {
-  nicknamePresent: [
-    {
-      color: hexColorSchema.parse("#ccccff"),
-      type: "accountCategory",
-      id: tagIdSchema.parse("d1000001"),
-      name: "Есть никнейм",
-    },
-  ],
-  idIsOdd: [
-    {
-      color: hexColorSchema.parse("#ccffff"),
-      type: "accountCategory",
-      id: tagIdSchema.parse("d1000002"),
-      name: "ID нечётный",
-    },
-  ],
-} satisfies Record<string, TagListItem[]>;
-
-async function generateExtraTags(
-  vkDomain: string,
-): Promise<TagListItem[] | undefined> {
-  await delay(random(300, 500));
-
-  if (/^id\d+$/.test(vkDomain)) {
-    const id = Number.parseInt(vkDomain.slice(2));
-    return id % 2 ? extraTagsLookup.idIsOdd : undefined;
-  }
-
-  return extraTagsLookup.nicknamePresent;
-}
 
 export class AffiliationService {
   private readonly staticListsService: StaticListsService;
@@ -63,37 +31,39 @@ export class AffiliationService {
   }
 
   async checkAccount(
-    vkDomain: string,
+    vkDomain: VkDomain | InterpretedVkDomain,
   ): Promise<AccountAffiliation | undefined> {
-    const [, vkIdAsString] = /^id(\d+)$/.exec(vkDomain) ?? [];
+    const interpretedVkDomain =
+      typeof vkDomain === "string" ? interpretVkDomain(vkDomain) : vkDomain;
 
-    const account = vkIdAsString
-      ? await this.staticListsService.findItem(
-          "accounts",
-          "vkId",
-          vkIdSchema.parse(Number(vkIdAsString)),
-        )
-      : await this.staticListsService.findItem(
-          "accounts",
-          "vkNickname",
-          vkNicknameSchema.parse(vkDomain),
-        );
+    if (
+      interpretedVkDomain.kind === "invalid" ||
+      (interpretedVkDomain.kind === "vkId" &&
+        interpretedVkDomain.prefix !== "id")
+    ) {
+      return;
+    }
 
-    let tags: TagListItem[] | undefined = [];
+    const account =
+      interpretedVkDomain.kind === "vkId"
+        ? await this.staticListsService.findItem(
+            "accounts",
+            "vkId",
+            interpretedVkDomain.value,
+          )
+        : await this.staticListsService.findItem(
+            "accounts",
+            "vkNickname",
+            interpretedVkDomain.value,
+          );
+
+    const tags: TagListItem[] | undefined = [];
 
     for (const tagId of account?.tagIds ?? []) {
       const tag = await this.staticListsService.findItem("tags", "id", tagId);
 
       if (tag) {
         tags.push(tag);
-      }
-    }
-
-    if (!account && tags.length === 0 && getAppConfig().extraTags) {
-      tags = await generateExtraTags(vkDomain);
-
-      if (!tags) {
-        return undefined;
       }
     }
 
@@ -106,8 +76,13 @@ export class AffiliationService {
     const userConfig = await this.userConfigService.get();
 
     const color =
-      userConfig.tagOverrideLookup[firstTag.id]?.color ??
+      userConfig.tagOverrideLookup[firstTag.id]?.colorForHighlight ??
       tags.find((tag) => tag.color)?.color ??
+      fallbackHexColor;
+
+    const colorForHighlight =
+      userConfig.tagOverrideLookup[firstTag.id]?.colorForHighlight ??
+      tags.find((tag) => tag.colorForHighlight)?.colorForHighlight ??
       fallbackHexColor;
 
     const hidden = userConfig.tagOverrideLookup[firstTag.id]?.hidden;
@@ -117,6 +92,7 @@ export class AffiliationService {
 
     return {
       color,
+      colorForHighlight,
       tags: [firstTag, ...otherTags],
       ...(hidden && { hidden: true }),
       ...(botnadzorPage && { botnadzorPage: true }),

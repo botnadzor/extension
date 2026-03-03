@@ -1,26 +1,186 @@
 @source ".";
+@source not "./in-page-app";
 
 @layer theme, base, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme) prefix(bn) source(none);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(bn) source(none);
 
+/**
+ * Remove most theme variables to enforce literal values. This avoids overuse
+ * of standard TailwindCSS rules which are not aligned with VK styles. Literal
+ * values also improve coherence between TailwindCSS classes and inline styles
+ * in insertion configs.
+ * 
+ * @see https://tailwindcss.com/docs/theme#theme-variable-namespaces
+ */
 @theme inline {
-  --color-background: var(--vkui--color_field_background);
-  --color-foreground: var(--vkui--color_text_primary);
+  /* Variables to unset */
+  --color-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+  --font-weight-*: initial;
+  --tracking-*: initial;
+  --leading-*: initial;
+  --breakpoint-*: initial;
+  --container-*: initial;
+  --spacing-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --blur-*: initial;
+  --perspective-*: initial;
+  --aspect-*: initial;
 
-  --color-muted: var(--vkui--color_background_content);
-  --color-muted-foreground: var(--vkui--color_text_secondary);
+  /* Variables to keep */
+  /* --ease-*: initial; */
+  /* --animate-*: initial; */
 
-  --color-action-icon: var(--vkui--color_text_accent_themed);
-  --color-action-hover: var(--vkui--color_background_accent_themed);
-
-  --color-text-link: var(--vkui--color_text_link);
-
-  --color-followers-other: rgba(95, 180, 188, 0.8);
-  --color-followers-bots: rgba(232, 104, 133, 0.8);
-
-  --color-border-link: rgb(60 130 246);
+  /* Remove spacing multiple */
+  --spacing: initial;
 }
 
-@custom-variant dark ([scheme="vkcom_dark"] &);
+/** Prefixed CSS vars to be used in inline styles (prefix avoids conflicts with VK styling */
+@layer base {
+  body {
+    --bn-color-background: var(--vkui--color_field_background);
+    --bn-color-foreground: var(--vkui--color_text_primary);
+
+    --bn-color-muted: var(--vkui--color_background_content);
+    --bn-color-muted-foreground: var(--vkui--color_text_secondary);
+
+    --bn-color-action-icon: var(--vkui--color_text_accent_themed);
+    --bn-color-action-hover: var(--vkui--color_background_accent_themed);
+
+    --bn-color-link: var(--vkui--color_text_link);
+    --bn-color-outline: var(--vkui--color_stroke_accent);
+
+    --bn-color-tooltip: var(--vkui--color_text_primary);
+    --bn-color-tooltip-foreground: var(--vkui--color_background_content);
+
+    --bn-color-dx-insertion: #2dd4bf;
+    --bn-color-dx-insertion-pending: #a3e635;
+  }
+}
+
+/** These 'CSS vars' define class names like `bn:bg-background` and are not exposed to page markup */
+@theme inline {
+  --color-background: var(--bn-color-background);
+  --color-foreground: var(--bn-color-foreground);
+
+  --color-muted: var(--bn-color-muted);
+  --color-muted-foreground: var(--bn-color-muted-foreground);
+
+  --color-action-icon: var(--bn-color-action-icon);
+  --color-action-hover: var(--bn-color-action-hover);
+
+  --color-tooltip: var(--bn-color-tooltip);
+  --color-tooltip-foreground: var(--bn-color-tooltip-foreground);
+
+  --color-link: var(--bn-color-link);
+  --color-outline: var(--bn-color-outline);
+
+  --animate-vk-like-outline-expansion: 0.1s ease-in-out 10ms forwards
+    bn-outline-expansion;
+
+  @keyframes bn-outline-expansion {
+    from {
+      outline-offset: -2px;
+    }
+    to {
+      outline-offset: 0px;
+    }
+  }
+}
+
+@layer utilities {
+  [data-bn-insertion-instance-id] [hidden] {
+    display: none !important;
+  }
+}
+
+@layer components {
+  /* === Dev overlay: frames === */
+
+  /* No markup data: dim frame (pending) */
+  [data-bn-insertion-framing]
+    [data-bn-insertion-instance-id]:not([data-bn-insertion-markup-data]) {
+    box-shadow:
+      inset 0 0 0 2px
+        color-mix(
+          in srgb,
+          var(--bn-color-dx-insertion-pending) 25%,
+          transparent
+        ),
+      inset 0 0 8px 2px
+        color-mix(
+          in srgb,
+          var(--bn-color-dx-insertion-pending) 12%,
+          transparent
+        ) !important;
+  }
+
+  /* With markup data: full frame */
+  [data-bn-insertion-framing]
+    [data-bn-insertion-instance-id][data-bn-insertion-markup-data] {
+    box-shadow:
+      inset 0 0 0 2px
+        color-mix(in srgb, var(--bn-color-dx-insertion) 50%, transparent),
+      inset 0 0 8px 2px
+        color-mix(in srgb, var(--bn-color-dx-insertion) 25%, transparent) !important;
+  }
+
+  /* === Dev overlay: labels === */
+
+  [data-bn-insertion-labeling] [data-bn-insertion-instance-id] {
+    position: relative;
+  }
+
+  [data-bn-insertion-labeling]
+    [data-bn-insertion-instance-id]:not(
+      [data-bn-insertion-markup-data]
+    )::after {
+    content: attr(data-bn-insertion-instance-id);
+    position: absolute;
+    top: 0;
+    left: 0;
+    font: 10px/1 monospace;
+    padding: 1px 3px;
+    background: color-mix(
+      in srgb,
+      var(--bn-color-dx-insertion-pending) 55%,
+      transparent
+    );
+    color: black;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  [data-bn-insertion-labeling]
+    [data-bn-insertion-instance-id][data-bn-insertion-markup-data]::after {
+    content: attr(data-bn-insertion-instance-id);
+    position: absolute;
+    top: 0;
+    left: 0;
+    font: 10px/1 monospace;
+    padding: 1px 3px;
+    background: color-mix(
+      in srgb,
+      var(--bn-color-dx-insertion) 55%,
+      transparent
+    );
+    color: black;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* space_gray is used on m.vk.com for dark theme */
+@custom-variant dark ([scheme="vkcom_dark"] &,
+                      [scheme="space_gray"] &
+                    );

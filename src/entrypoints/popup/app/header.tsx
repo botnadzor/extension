@@ -7,7 +7,7 @@ import {
   useStaticListMetadata,
   useStaticListsAutoUpdate,
 } from "@/shared/@ui-helpers/data-hooks";
-import { Logo } from "@/shared/@ui-primitives/logo";
+import { LogoLink } from "@/shared/@ui-primitives/logo";
 import { formatDateTime } from "@/shared/formatting";
 
 function Percentage({
@@ -34,24 +34,24 @@ function Percentage({
 function AccountListMetadata() {
   const accountsMetadata = useStaticListMetadata("accounts");
 
-  if (!accountsMetadata.active) {
-    if (!accountsMetadata.next) {
+  if (!accountsMetadata.remoteActive) {
+    if (!accountsMetadata.remoteNext) {
       return <>Список аккаунтов пока не начал загружаться</>;
     }
 
     return (
       <>
         Список аккаунтов обрабатывается:{" "}
-        <Percentage extractFrom={accountsMetadata.next} />
+        <Percentage extractFrom={accountsMetadata.remoteNext} />
       </>
     );
   }
 
-  if (accountsMetadata.next) {
+  if (accountsMetadata.remoteNext) {
     return (
       <>
         Список аккаунтов обновляется:{" "}
-        <Percentage extractFrom={accountsMetadata.next} />
+        <Percentage extractFrom={accountsMetadata.remoteNext} />
       </>
     );
   }
@@ -59,7 +59,7 @@ function AccountListMetadata() {
   return (
     <>
       Список аккаунтов от{" "}
-      {formatDateTime(accountsMetadata.active.upstreamInfo.generatedAt)}
+      {formatDateTime(accountsMetadata.remoteActive.upstreamInfo.generatedAt)}
     </>
   );
 }
@@ -80,7 +80,7 @@ export function Header() {
   return (
     <div className="flex items-center justify-between px-3 py-4">
       <div className="flex-0">
-        <Logo />
+        <LogoLink />
       </div>
       <div className="flex-1 text-right text-sm font-light">
         <React.Suspense>
