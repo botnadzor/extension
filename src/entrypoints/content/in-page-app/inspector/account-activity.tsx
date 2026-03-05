@@ -338,6 +338,25 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
   const hasCommentsAdvanced =
     legacyData.comments_advanced && legacyData.comments_advanced.length > 0;
 
+  const visibleSections = [
+    hasComments && "comments",
+    hasLikes && "likes",
+    hasReviews && "reviews",
+    authStatus.state === "valid" &&
+      authStatus.accessLevel === 4 &&
+      hasCommentsAdvanced &&
+      "commentsAdvanced",
+  ].filter(Boolean);
+
+  if (visibleSections.length === 0) {
+    return (
+      <Placeholder>
+        Активность этого аккаунта пока что не обнаружена. Попробуйте открыть
+        инспектор немного позднее.
+      </Placeholder>
+    );
+  }
+
   return (
     <ScrollArea
       scrollBar={<ScrollBar className="mt-1.5 h-[calc(100%---spacing(2))]" />}
@@ -347,7 +366,12 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
       )}
     >
       <div className="p-3 pt-2 text-sm">
-        <Accordion className="-mt-px tabular-nums">
+        <Accordion
+          className="-mt-px tabular-nums"
+          defaultValue={
+            visibleSections.length === 1 ? visibleSections : undefined
+          }
+        >
           {hasComments && (
             <AccordionItem value="comments">
               <AccordionTrigger className="h-9">
@@ -414,7 +438,7 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
           {authStatus.state === "valid" &&
             authStatus.accessLevel === 4 &&
             hasCommentsAdvanced && (
-              <AccordionItem value="comments-advanced">
+              <AccordionItem value="commentsAdvanced">
                 <AccordionTrigger className="h-9">
                   <div className="flex items-center gap-2.5 text-sm">
                     <MessageSquarePlusIcon className="size-4" />

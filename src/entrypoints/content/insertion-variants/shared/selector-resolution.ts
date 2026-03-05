@@ -108,6 +108,45 @@ function normalizeSingleSelector(
   ) as NormalizedSingleSelector;
 }
 
+/**
+ * Extracts human-visible text from an element.
+ *
+ * Treats `<br>` as a word separator and then collapses all whitespace to
+ * single spaces. This keeps words that are visually separated on different
+ * lines from being concatenated, e.g. `<div>Hello<br>World</div>` becomes
+ * `"Hello World"`, while still returning a simple one-line string suitable
+ * for downstream parsing and pattern matching.
+ *
+ * Treatment of <br> was needed for desktopDialogFollowersPreReact insertion variant.
+ */
+function extractTextContent(element: HTMLElement): string | undefined {
+  const walker = element.ownerDocument.createTreeWalker(
+    element,
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+  );
+
+  let rawText = "";
+  let currentNode = walker.nextNode();
+
+  while (currentNode !== null) {
+    if (currentNode.nodeType === Node.TEXT_NODE) {
+      rawText += currentNode.textContent ?? "";
+    } else if (
+      currentNode.nodeType === Node.ELEMENT_NODE &&
+      currentNode instanceof HTMLElement &&
+      currentNode.tagName === "BR"
+    ) {
+      rawText += " ";
+    }
+
+    currentNode = walker.nextNode();
+  }
+
+  const normalized = rawText.replaceAll(/\s+/g, " ").trim();
+
+  return normalized.length === 0 ? undefined : normalized;
+}
+
 async function resolveSingleStringDataSelector(
   rootElement: HTMLElement,
   selector: NormalizedSingleSelector,
@@ -124,7 +163,7 @@ async function resolveSingleStringDataSelector(
     ? await resolveReactPropValue(element, reactProp)
     : selector.attribute
       ? (element.getAttribute(selector.attribute) ?? undefined)
-      : element.textContent;
+      : extractTextContent(element);
 
   if (rawValue === undefined) {
     return;

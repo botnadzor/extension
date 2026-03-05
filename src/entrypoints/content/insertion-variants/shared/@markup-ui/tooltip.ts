@@ -16,8 +16,9 @@ export function createTooltipUi({
   element.className = cn(
     `
       bn:pointer-events-none bn:absolute bn:left-1/2 bn:z-50 bn:-translate-x-1/2
-      bn:rounded-[4px] bn:bg-tooltip bn:px-[8px] bn:py-[4px] bn:text-[13px]
-      bn:whitespace-nowrap bn:text-tooltip-foreground bn:opacity-0
+      bn:rounded-[4px] bn:bg-tooltip bn:px-[8px] bn:py-[4px]
+      bn:text-[13px]/[1.25] bn:font-[400] bn:whitespace-nowrap
+      bn:text-tooltip-foreground bn:opacity-0
       bn:group-hover/action:opacity-90
       bn:group-focus-visible/action:opacity-90
     `,

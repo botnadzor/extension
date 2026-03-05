@@ -27,8 +27,10 @@ export class PopupService {
     this.pollableActiveTab.setValue(tab);
   }
 
-  open({ tab }: { tab: PopupTab }): Promise<void> {
-    this.setActiveTab(tab);
+  open({ tab }: { tab?: PopupTab }): Promise<void> {
+    if (tab) {
+      this.setActiveTab(tab);
+    }
     return browser.action.openPopup();
   }
 }

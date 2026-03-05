@@ -260,7 +260,6 @@ export default defineConfig(
         "warn",
         {
           styles: {
-            ["date-fns"]: { namespace: true },
             react: { namespace: true },
           },
         },

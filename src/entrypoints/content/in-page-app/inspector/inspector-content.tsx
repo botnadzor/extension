@@ -63,6 +63,7 @@ function InspectorTabsContent({
   return (
     <TabsContent
       value={value}
+      keepMounted={true}
       className="relative -mx-4 mt-px flex-1 u-no-ring"
       tabIndex={-1}
     >

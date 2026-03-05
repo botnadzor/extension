@@ -278,6 +278,7 @@ export default defineInsertionVariant<
 
     const actionBarUi = mountUiWithActionBar({
       contentId,
+      derivedPageInfo,
       instanceLogger,
       placement: config.markup.ui.actionBar,
       rootElement,

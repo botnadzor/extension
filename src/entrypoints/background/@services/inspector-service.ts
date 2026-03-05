@@ -211,7 +211,7 @@ export class InspectorService {
 
     const outcome = await fetchPromise;
 
-    if (Object.hasOwn(this.pendingAccountInspectionLookup, vkId)) {
+    if (Object.hasOwn(this.pendingAccountInspectionLookup, vkDomain)) {
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- vkDomain is present based on Object.hasOwn check
       delete this.pendingAccountInspectionLookup[vkDomain];
     }

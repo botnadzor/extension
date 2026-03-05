@@ -1,6 +1,7 @@
-# Botnadzor extension / Расширение Ботнадзор
+# Botnadzor extension / Расширение Ботнадзор
 
-_Botnadzor browser extension highlights bots on [vk.com](https://vk.com) and VK-related sites. Learn more at [botnadzor.org/extension](https://botnadzor.org/extension) (ru)._
+_Botnadzor browser extension highlights bots on [vk.com](https://vk.com) and VK-related sites.  
+Learn more at [botnadzor.org/extension](https://botnadzor.org/extension) (ru)._
 
 _For the English version of this README, [see it on Google Translate](https://translate.google.com/translate?sl=ru&tl=en&u=https://github.com/botnadzor/extension/blob/main/README.md)._
 
@@ -11,7 +12,7 @@ _For the English version of this README, [see it on Google Translate](https://tr
 [![License: BSD-3-Clause](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/botnadzor/extension/ci.yaml?branch=main&label=CI)](https://github.com/botnadzor/extension/actions/workflows/ci.yaml)
 
-Браузерное расширение Ботнадзор подсвечивает ботов на [vk.com](https://vk.com) и связанных сайтах.  
+Браузерное расширение Ботнадзор подсвечивает ботов на [vk.com](https://vk.com) и связанных сайтах.  
 Подробнее о расширении: [botnadzor.org/extension](https://botnadzor.org/extension).
 
 ## Что делает расширение
@@ -101,9 +102,10 @@ CI запускается для пулл-реквестов и для новы�
 Проверки состоят из двух параллельных задач:
 
 - _build_ (упаковка расширения для обоих браузеров)
-- _lint and test_ (все проверки из `pnpm lint`)
+- _lint and test_ (прогон всех линтеров и юнит-тестов)
 
-Запуск `pnpm lint` локально перед push позволяет заранее поймать большинство проблем, а `pnpm fix` — автоматически исправить некоторые типы из них.
+Ручной запуск `pnpm lint` локально позволяет заранее поймать большинство проблем, а `pnpm fix` — автоматически исправить некоторые типы из них.
+Юнит-тесты запускаются командой `pnpm test:unit`.
 
 ## Обратная связь и вклад
 

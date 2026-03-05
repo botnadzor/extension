@@ -229,9 +229,7 @@ export function ReportForm({
                   {selectedTag.name}
                 </span>
               ) : (
-                <span>
-                  Выберите подходящую маркировку для этого аккаунта...
-                </span>
+                <span>Выберите подходящую маркировку для этого аккаунта</span>
               )}
             </SelectValue>
           </SelectTrigger>
@@ -259,6 +257,7 @@ export function ReportForm({
         disabled={submitting}
         className={cn("w-full flex-1 resize-none", shakeTextClassName)}
         name="text"
+        placeholder="Опишите ситуацию ёмко и исчерпывающе"
         value={text}
         onChange={(e) => {
           setReportSubmission(undefined);

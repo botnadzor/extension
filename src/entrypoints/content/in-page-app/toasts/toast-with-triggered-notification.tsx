@@ -2,19 +2,14 @@ import * as React from "react";
 
 import type { TriggeredNotification } from "@/shared/@model/notifications";
 import { useFrontendBaseUrl } from "@/shared/@ui-helpers/data-hooks";
-import { notificationService, popupService } from "@/shared/proxy-services";
+import { notificationService } from "@/shared/proxy-services";
 import { detectVkBaseUrl } from "@/shared/url-helpers";
 
 import { useContentId } from "../../content-id-context";
+import { ExtensionPopupLink } from "./shared/extension-popup-link";
 import { Toast } from "./toast";
 
 const closeAfterInMilliseconds = 60_000;
-
-// Unable to call action "openPopup" in Firefox. When sending message to background, getting
-// `Uncaught (in promise) Error: openPopup requires a user gesture`
-// Context: https://bugzilla.mozilla.org/show_bug.cgi?id=1799344#c4
-// TODO: Review this in future versions of Firefox when the above issue is fixed
-const popupCanBeOpened = !import.meta.env.FIREFOX;
 
 export function ToastWithTriggeredNotification({
   message,
@@ -33,16 +28,6 @@ export function ToastWithTriggeredNotification({
     void notificationService.trigger(contentId, undefined);
   }
 
-  function handleToggleMenuClick(event: React.MouseEvent) {
-    event.preventDefault();
-
-    void popupService.open({ tab: "access" });
-
-    setTimeout(() => {
-      handleClose();
-    }, 1000);
-  }
-
   React.useEffect(() => {
     const timeout = setTimeout(() => {
       void notificationService.trigger(contentId, undefined);
@@ -55,16 +40,9 @@ export function ToastWithTriggeredNotification({
   const messageSuffixWithMentionOfMenu = (
     <>
       {" "}
-      {popupCanBeOpened ? (
-        <span className="whitespace-nowrap">
-          <a href="#botnadzor-extension-popup" onClick={handleToggleMenuClick}>
-            в меню расширения
-          </a>
-          .
-        </span>
-      ) : (
-        <span className="whitespace-nowrap">в меню расширения.</span>
-      )}
+      <span className="whitespace-nowrap">
+        <ExtensionPopupLink tab="access" onClick={handleClose} />.
+      </span>
     </>
   );
 

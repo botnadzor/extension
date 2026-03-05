@@ -77,6 +77,7 @@ export class DxConfigService {
   set(newValue: DxConfig): void {
     if (!getAppConfig().dxFeaturesEnabled) {
       logger.warn("DX features are disabled, skipping DX config update");
+      return;
     }
 
     this.pollableDxConfig.setValue(newValue);

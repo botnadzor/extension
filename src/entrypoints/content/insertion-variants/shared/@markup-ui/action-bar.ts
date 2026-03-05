@@ -16,6 +16,7 @@ import { omitUndefined } from "@/shared/omit-undefined";
 import { cn, cnt } from "@/shared/tailwindcss-helpers";
 import { generateCardUrl, generateUrl } from "@/shared/url-helpers";
 
+import type { DerivedPageInfo } from "../../../derived-page-info";
 import type { AvailableServiceLookup } from "../../../insertion-variant-typings";
 import { createInsertionUi, type InsertionUi } from "./helpers";
 import { createIconElement, type IconId } from "./icons";
@@ -24,10 +25,12 @@ import { createTooltipUi, type TooltipDirection } from "./tooltip";
 
 export function createActionUi<TagName extends "a" | "button">({
   className,
+  derivedPageInfo,
   tagName,
   tooltipDirection,
 }: {
   className?: string | undefined;
+  derivedPageInfo?: DerivedPageInfo | undefined;
   tagName: TagName;
   tooltipDirection: TooltipDirection;
 }): InsertionUi<
@@ -41,22 +44,38 @@ export function createActionUi<TagName extends "a" | "button">({
 > {
   const element = document.createElement(tagName);
 
+  if (tagName === "button") {
+    element.setAttribute("type", "button"); // default is type="submit"
+  }
+
   element.className = cn(
     `
       bn:group/action
-      bn:relative bn:inline-flex bn:cursor-pointer bn:items-center
-      bn:justify-center bn:rounded-[3px] bn:border-none
-      bn:bg-(--bn-inline-action-background-color) bn:px-[3px] bn:text-link
+      bn:relative bn:box-border bn:inline-flex bn:h-[18px] bn:cursor-pointer
+      bn:items-center bn:justify-center bn:rounded-[3px] bn:border-none
+      bn:bg-(--bn-inline-action-background-color) bn:p-[0px] bn:text-link
       bn:transition-opacity bn:duration-200 bn:ease-in-out
-      bn:focus-visible:animate-vk-like-outline-expansion
-      bn:focus-visible:rounded-none bn:focus-visible:opacity-100!
-      bn:focus-visible:outline-2! bn:focus-visible:outline-outline!
+      bn:focus-visible:opacity-100!
       bn:pointer-fine:opacity-0
       bn:pointer-fine:hover:opacity-100!
       bn:[[data-bn-insertion-instance-id]:has(:focus-visible)_&]:opacity-70
       bn:pointer-fine:[[data-bn-insertion-instance-id]:hover_&]:opacity-70
       bn:pointer-fine:[[data-bn-insertion-instance-id]:hover_&]:duration-0
     `,
+
+    // slightly wider buttons to ease touch interaction + adjust for global
+    derivedPageInfo?.websiteVariant === "mobileVkWebsite"
+      ? "bn:w-[24px]"
+      : "bn:w-[22px]",
+
+    // adjust for global outline styles
+    derivedPageInfo?.websiteVariant === "mobileVkWebsite"
+      ? "bn:outline-offset-1"
+      : `
+        bn:focus-visible:animate-vk-like-outline-expansion
+        bn:focus-visible:rounded-none bn:focus-visible:outline-2!
+        bn:focus-visible:outline-outline!
+      `,
     className,
   );
 
@@ -104,8 +123,10 @@ export function createActionUi<TagName extends "a" | "button">({
 }
 
 function createBnPageAction({
+  derivedPageInfo,
   tooltipDirection,
 }: {
+  derivedPageInfo: DerivedPageInfo;
   tooltipDirection: TooltipDirection;
 }): InsertionUi<{
   accountAffiliation?: AccountAffiliation;
@@ -113,6 +134,7 @@ function createBnPageAction({
   frontendBaseUrl: string;
 }> {
   const actionUi = createActionUi({
+    derivedPageInfo,
     tagName: "a",
     tooltipDirection,
   });
@@ -149,8 +171,10 @@ function createBnPageAction({
 }
 
 function createBnCardAction({
+  derivedPageInfo,
   tooltipDirection,
 }: {
+  derivedPageInfo: DerivedPageInfo;
   tooltipDirection: TooltipDirection;
 }): InsertionUi<{
   accountAffiliation?: AccountAffiliation;
@@ -158,6 +182,7 @@ function createBnCardAction({
   frontendBaseUrl: string;
 }> {
   const actionUi = createActionUi({
+    derivedPageInfo,
     tagName: "a",
     tooltipDirection,
   });
@@ -195,10 +220,12 @@ function createBnCardAction({
 
 function createInspectorButton({
   contentId,
+  derivedPageInfo,
   serviceLookup,
   tooltipDirection,
 }: {
   contentId: ContentId;
+  derivedPageInfo: DerivedPageInfo;
   serviceLookup: AvailableServiceLookup;
   tooltipDirection: TooltipDirection;
 }): InsertionUi<{
@@ -208,13 +235,17 @@ function createInspectorButton({
   inspectorTrigger?: InspectorTrigger;
 }> {
   const actionUi = createActionUi({
+    derivedPageInfo,
     tagName: "button",
     tooltipDirection,
   });
 
   let eventPayload: InspectorInstancePayload | undefined;
 
-  function handleClick() {
+  function handleClick(event: MouseEvent) {
+    // Ensure the click event is not propagated to the parent element
+    event.stopPropagation();
+
     if (eventPayload) {
       void serviceLookup.inspectorService.trigger(contentId, eventPayload);
     }
@@ -266,11 +297,13 @@ function createInspectorButton({
 
 function createRegDateAction({
   contentId,
+  derivedPageInfo,
   onRegDateInfoChange,
   serviceLookup,
   tooltipDirection,
 }: {
   contentId: ContentId;
+  derivedPageInfo: DerivedPageInfo;
   onRegDateInfoChange: (regDateInfo: RegDateInfo | undefined) => void;
   serviceLookup: AvailableServiceLookup;
   tooltipDirection: TooltipDirection;
@@ -279,6 +312,7 @@ function createRegDateAction({
   regDateInfo?: RegDateInfo;
 }> {
   const actionUi = createActionUi({
+    derivedPageInfo,
     tagName: "button",
     tooltipDirection,
   });
@@ -288,7 +322,10 @@ function createRegDateAction({
 
   const fetchingCnTokens = cnt("bn:cursor-default", "bn:text-muted-foreground");
 
-  function handleClick() {
+  function handleClick(event: MouseEvent) {
+    // Ensure the click event is not propagated to the parent element
+    event.stopPropagation();
+
     const accountIdentifier = lastAccountIdentifier;
     const regDateInfo = lastRegDateInfo;
 
@@ -397,6 +434,7 @@ const notRoundedRightCnTokens = cnt("bn:not-focus-visible:rounded-r-none");
 
 export function createUiWithActionBar({
   contentId,
+  derivedPageInfo,
   placement,
   rootElement,
   serviceLookup,
@@ -404,6 +442,7 @@ export function createUiWithActionBar({
   onRegDateInfoChange,
 }: {
   contentId: ContentId;
+  derivedPageInfo: DerivedPageInfo;
   instanceLogger: Logger;
   placement: ElementPlacementSchema;
   rootElement: HTMLElement;
@@ -434,21 +473,25 @@ export function createUiWithActionBar({
   }
 
   const bnPageAction = createBnPageAction({
+    derivedPageInfo,
     tooltipDirection,
   });
 
   const bnCardAction = createBnCardAction({
+    derivedPageInfo,
     tooltipDirection,
   });
 
   const inspectorAction = createInspectorButton({
     contentId,
+    derivedPageInfo,
     serviceLookup,
     tooltipDirection,
   });
 
   const regDateAction = createRegDateAction({
     contentId,
+    derivedPageInfo,
     onRegDateInfoChange,
     serviceLookup,
     tooltipDirection,

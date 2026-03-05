@@ -1161,29 +1161,27 @@ export default [
           {
             selector: "[class*='groupLike']",
             position: "after",
-            style: { marginLeft: "2px", marginTop: "-2px" },
+            style: { marginTop: "-2px" },
           },
           {
             selector: "[data-testid='comment-share']",
             position: "after",
-            style: { marginLeft: "2px" },
           },
           {
             selector: "[data-testid='wall_comment_date']",
             position: "after",
-            style: { marginLeft: "2px" },
           },
         ],
         affiliationBadge: [
           {
             selector: "[data-testid='comment-avatar'] + * a[href^='/']",
             position: "after",
-            style: { paddingLeft: "2px", marginTop: "1px" },
+            style: { paddingLeft: "2px", top: "1px" },
           },
           {
             selector: "[data-testid='comment-avatar']",
             position: "after",
-            style: { paddingLeft: "2px", marginTop: "1px" },
+            style: { paddingLeft: "2px", top: "1px" },
           },
         ],
         affiliationHighlight: {
@@ -1432,10 +1430,10 @@ export default [
           selector: "a.item_date",
           position: "after",
           style: {
-            marginLeft: "8px",
+            marginLeft: "6px",
             marginTop: "-4px",
             marginBottom: "-4px",
-            top: "2px",
+            top: "3px",
           },
         },
         affiliationBadge: [

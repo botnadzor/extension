@@ -5,6 +5,7 @@ import { useFrontendBaseUrl } from "@/shared/@ui-helpers/data-hooks";
 import { GithubIcon, TelegramIcon, VkIcon } from "@/shared/custom-icons";
 import { notificationService } from "@/shared/proxy-services";
 
+import { ExtensionPopupLink } from "./shared/extension-popup-link";
 import { Toast } from "./toast";
 
 export function ToastWithWelcomeMessage() {
@@ -20,8 +21,8 @@ export function ToastWithWelcomeMessage() {
         void notificationService.markWelcomeAnnouncementAsRead();
       }}
     >
-      Спасибо за установку расширения!
-      <ul className="-ml-1.5 pt-2">
+      Спасибо за установку!
+      <ul className="-ml-1.5 py-2">
         {[
           {
             href: "https://github.com/botnadzor/extension",
@@ -58,6 +59,7 @@ export function ToastWithWelcomeMessage() {
           </li>
         ))}
       </ul>
+      Настройки — <ExtensionPopupLink />
     </Toast>
   );
 }
