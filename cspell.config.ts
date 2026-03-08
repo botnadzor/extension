@@ -8,7 +8,6 @@ export default defineConfig({
   ],
   enableFiletypes: ["mdx"],
   ignorePaths: [
-    ".claude/settings.local.json",
     ".git/**",
     ".gitattributes",
     ".vscode/extensions.json",
