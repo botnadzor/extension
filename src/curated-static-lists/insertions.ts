@@ -11,7 +11,7 @@ export default [
   // ---------------------------------------------------------------------------
 
   /**
-   * Desktop followers list avatar tiles
+   * Followers (lists of user cards) on desktop (React-based UI: tabs have outlines and shadows)
    * Examples:
    * - https://vk.com/ria → followers
    */
@@ -98,15 +98,117 @@ export default [
 
   /**
    * Desktop reactions / likes list avatar tiles
+   * Followers (lists of user cards) on desktop (pre-React UI: tabs have border-bottom)
+   *
+   * Examples:
+   * - https://vk.com/durov → click "followers"
+   */
+  {
+    id: "desktopPreReactDialogFollowers",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    selector: "[id^='tb_'] .fans_fan_row",
+    markup: {
+      data: {
+        accountAvatar: {
+          selector: "a.fans_fan_ph img",
+        },
+        accountIdentifier: {
+          selector: "",
+          attribute: "data-id",
+        },
+        accountName: ".fans_fan_lnk",
+      },
+      edits: [
+        {
+          selector: "",
+          style: {
+            position: "relative",
+            overflow: "visible", // ensure action bar tooltips are visible
+          },
+        },
+        {
+          // Prevent account name from going under highlight
+          selector: ".fans_fan_name",
+          style: {
+            position: "relative",
+          },
+        },
+        {
+          // Disable zoom avatar on hover (clashes with action bar)
+          selector: ".fans_fanph_wrap",
+          style: { pointerEvents: "none" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector: "",
+          position: "append",
+          style: {
+            display: "flex",
+            height: "20px",
+            justifyContent: "center",
+            left: "0",
+            position: "absolute",
+            right: "0",
+            top: "82px", // bottom of avatar
+            "--bn-inline-action-background-color": "var(--bn-color-background)",
+          },
+        },
+        affiliationBadge: {
+          selector: "",
+          position: "append",
+          style: {
+            background:
+              "color-mix(in srgb, var(--bn-inline-affiliation-color) 70%, transparent)",
+            color: "var(--bn-color-foreground)",
+            left: "0px",
+            padding: "2px",
+            position: "absolute",
+            right: "0px",
+            textAlign: "center",
+            top: "54px", // 1/2 of avatar height + padding
+            transform: "translateY(-50%)",
+          },
+        },
+        affiliationHighlight: {
+          selector: "",
+          position: "prepend",
+          style: { borderLeft: "none", opacity: "50%" },
+        },
+        regDate: {
+          selector: "",
+          position: "append",
+          style: {
+            background:
+              "color-mix(in srgb, var(--bn-color-background) 70%, transparent)",
+            color: "var(--bn-color-foreground)",
+            display: "block",
+            fontSize: "12.5px", // matching name font size
+            left: "0px",
+            lineHeight: "1.2",
+            padding: "2px",
+            position: "absolute",
+            right: "0px",
+            textAlign: "center",
+            top: "0px",
+          },
+        },
+      },
+    },
+  },
+
+  /**
+   * Desktop reactions / likes list avatar tiles
    * Examples:
    * - https://vk.com/ria?w=likes%2Fwall-15755094_48295538
    * - https://vk.com/ria?w=likes%2Fwall_reply-15755094_49579807
    */
   {
-    id: "desktopDialogReactions",
+    id: "desktopPreReactDialogReactions",
     variant: "account",
     appliesTo: "desktopVkWebsite",
-    selector: ".fans_fan_row",
+    selector: "#wk_likes_content .fans_fan_row",
     markup: {
       data: {
         accountAvatar: {
@@ -194,13 +296,7 @@ export default [
    * Examples:
    * - https://vk.com/id1
    * - https://vk.com/durov
-   *
-   * CRITICAL ISSUE: Legacy extracts vkDomain from location.pathname, not from
-   * a DOM element. The accountIdentifier selector below is an approximation
-   * targeting the profile name link. Profile pages may not have a suitable href
-   * inside .ProfileHeader__wrapper that matches the expected /username pattern.
-   * The insertion system's extractAccountIdentifierFromMarkup only works with
-   * DOM-based selectors.
+   * - https://m.vk.com/id1034309676
    */
   {
     id: "desktopProfileHeader",
@@ -243,7 +339,15 @@ export default [
         affiliationBadge: {
           selector: "[data-bn-insertion-ui-element='actionBar']",
           position: "before",
-          style: { top: "-2px", paddingLeft: "2px" },
+          style: {
+            display: "inline-block",
+            top: "-2px",
+            marginBottom: "-4px",
+            align: "middle",
+            paddingLeft: "4px",
+            paddingRight: "4px",
+            fontWeight: "400",
+          },
         },
         affiliationHighlight: {
           selector: ".ProfileHeader__info > div",
@@ -264,10 +368,7 @@ export default [
    * Examples:
    * - https://m.vk.com/id1
    * - https://m.vk.com/durov
-   *
-   * CRITICAL ISSUE: Legacy extracts vkDomain from location.pathname, not from
-   * a DOM element. The accountIdentifier selector below is an approximation.
-   * See unverifiedDesktopProfileHeader for details.
+   * - https://m.vk.com/id1034309676
    */
   {
     id: "mobileProfileHeader",
@@ -288,9 +389,14 @@ export default [
           selector: ".ProfileInfoName",
           style: { zIndex: "0", position: "relative" },
         },
+        {
+          // Clamp state layer - profile header not clickable otherwise
+          selector:
+            "[class*='vkitOverlay__root']:has(.vkuiTappable__stateLayer)",
+          style: { top: "auto", height: "34px" },
+        },
       ],
       ui: {
-        // TODO buttons not clickable - profile header is a link/button
         actionBar: {
           selector: ".ProfileInfoName",
           position: "append",
@@ -299,7 +405,13 @@ export default [
         affiliationBadge: {
           selector: "[data-bn-insertion-ui-element='actionBar']",
           position: "before",
-          style: { top: "-2px", paddingLeft: "6px", position: "relative" },
+          style: {
+            display: "inline-block",
+            fontWeight: "400",
+            marginBottom: "-4px",
+            paddingLeft: "6px",
+            top: "-2px",
+          },
         },
         affiliationHighlight: {
           selector: ".ProfileInfoName",
@@ -309,7 +421,11 @@ export default [
         regDate: {
           selector: ".ProfileInfoName",
           position: "after",
-          style: { marginTop: "4px", position: "relative" },
+          style: {
+            marginTop: "4px",
+            position: "relative",
+            textAlign: "center",
+          },
         },
       },
     },
@@ -319,16 +435,12 @@ export default [
    * Legacy desktop post header (wall page posts)
    * Examples:
    * - Posts on user/community walls (vk.com/wall-*)
-   *
-   * ISSUE: Legacy dynamically saves/restores overflow on .PostHeaderTitle.
-   * Markup edits set overflow: visible unconditionally, which cannot be
-   * reversed to the original value on cleanup (only to what was there before
-   * the edit was applied).
+   * - https://vk.com/wall1034309676_77
    */
 
   // or without login regular post
   {
-    id: "desktopOldPost",
+    id: "desktopPreReactPost",
     variant: "account",
     appliesTo: "desktopVkWebsite",
     selector: ".PostHeader",
@@ -365,7 +477,7 @@ export default [
         affiliationHighlight: {
           selector: "",
           position: "prepend",
-          style: { inset: "0" },
+          style: { inset: "0", top: "-4px", bottom: "-4px" },
         },
         regDate: [
           {
@@ -388,12 +500,8 @@ export default [
    * Examples:
    * - Posts in VK feed (vk.com/feed)
    * - Posts on user/community walls with modern layout
-   *
-   * ISSUE: Legacy conditionally removes parent element style and hides
-   * authorLink.nextElementSibling (a gradient text hider) only when affiliation
-   * exists. Markup edits are unconditional — the hider will be hidden for all
-   * accounts, not just bots. This may cause post titles to overflow visually
-   * for non-affiliated accounts.
+   * - https://vk.com/wall1034309676_77
+   * - https://m.vk.com/wall1034309676_77
    */
   {
     id: "desktopAndMobilePost",
@@ -421,23 +529,38 @@ export default [
           selector: "",
           style: { position: "relative" },
         },
+        {
+          selector: ":scope > *",
+          style: { position: "relative" },
+        },
+        {
+          // Ensure tooltips are visible
+          selector: '[class*="vkitPostHeader__mainInfo"]',
+          style: { overflow: "visible" },
+        },
+        {
+          // Ensure reg date overflows correctly to line 2
+          selector: "h3",
+          style: { overflow: "visible", flexWrap: "wrap" },
+        },
       ],
       ui: {
-        actionBar: [
-          {
-            selector: "h3",
-            position: "append",
-            style: { marginLeft: "4px" },
-          },
-        ],
-        affiliationBadge: {
-          selector: '[data-testid="post-header-title"]',
+        actionBar: {
+          selector: "[data-testid='post-header-title']",
           position: "after",
+          style: {
+            marginLeft: "4px",
+          },
+        },
+        affiliationBadge: {
+          selector: "[data-testid='post-header-title']",
+          position: "append",
           style: { paddingLeft: "4px" },
         },
         affiliationHighlight: {
           selector: "",
           position: "prepend",
+          style: { top: "-4px", bottom: "-4px" },
         },
         regDate: [
           {
@@ -454,13 +577,10 @@ export default [
    * Mobile page posts ([data-testid="post"])
    * Examples:
    * - Posts on m.vk.com user/community walls
-   *
-   * ISSUE: Legacy conditionally removes parent element style and hides
-   * authorLink.nextElementSibling only when affiliation exists. Markup edits
-   * are unconditional. See unverifiedDesktopFeedPost for details.
+   * - https://m.vk.com/wall1034309676_77 (without login)
    */
   {
-    id: "mobileOldPost",
+    id: "mobilePreReactPost",
     variant: "account",
     appliesTo: "mobileVkWebsite",
     selector: ".wi_head, .pic_header",
@@ -484,19 +604,38 @@ export default [
         },
       ],
       ui: {
-        actionBar: {
-          selector: "[data-testid='mobile-wall-post-author'], .pi_author",
-          position: "after",
-          style: { marginLeft: "4px" },
-        },
-        affiliationBadge: {
-          selector: '[data-testid="mobile-wall-post-author"], .pi_author',
-          position: "after",
-          style: { paddingLeft: "2px" },
-        },
+        actionBar: [
+          {
+            // post
+            selector: "[data-testid='mobile-wall-post-author']",
+            position: "after",
+            style: { marginLeft: "4px" },
+          },
+          {
+            // re post
+            selector: ".pi_author",
+            position: "after",
+            style: { marginLeft: "4px", top: "3px" },
+          },
+        ],
+        affiliationBadge: [
+          {
+            // post
+            selector: '[data-testid="mobile-wall-post-author"]',
+            position: "after",
+            style: { paddingLeft: "4px", top: "1px" },
+          },
+          {
+            // re post
+            selector: ".pi_author",
+            position: "after",
+            style: { paddingLeft: "4px" },
+          },
+        ],
         affiliationHighlight: {
           selector: "",
           position: "prepend",
+          style: { top: "-4px", bottom: "-4px" },
         },
         regDate: {
           selector: '[data-testid="mobile-wall-post-author"]',
@@ -511,9 +650,10 @@ export default [
    * Desktop repost headers
    * Examples:
    * - Repost content on walls/feeds
+   * - https://vk.com/wall1034309676_77 (without login)
    */
   {
-    id: "desktopOldRepost",
+    id: "desktopPreReactRepost",
     variant: "account",
     appliesTo: "desktopVkWebsite",
     selector: ".copy_post_header",
@@ -541,7 +681,7 @@ export default [
         affiliationHighlight: {
           selector: "",
           position: "prepend",
-          style: { inset: "0" },
+          style: { inset: "0", top: "-4px", bottom: "-4px" },
         },
         regDate: {
           selector: ".copy_post_header_info",
@@ -553,156 +693,9 @@ export default [
   },
 
   /**
-   * Mobile repost headers (pic_body_full)
-   * Examples:
-   * - Repost content on m.vk.com
-   */
-  {
-    id: "unverifiedMobileOldRepost",
-    disabled: true,
-    variant: "account",
-    appliesTo: "mobileVkWebsite",
-    selector: ".pic_body_full",
-    markup: {
-      data: {
-        accountAvatar: "a.pi_author img",
-        accountIdentifier: {
-          selector: "a.pi_author",
-          attribute: "href",
-        },
-        accountName: ".pic_desc_a",
-      },
-      edits: [],
-      ui: {
-        actionBar: {
-          selector: ".pic_desc_a",
-          position: "after",
-          style: { marginLeft: "4px" },
-        },
-        affiliationBadge: {
-          selector: ".pic_desc_a",
-          position: "after",
-          style: { paddingLeft: "2px" },
-        },
-        affiliationHighlight: {
-          selector: ".pic_header",
-          position: "prepend",
-          style: { inset: "0" },
-        },
-        regDate: {
-          selector: "a.pi_author",
-          position: "after",
-          style: { marginTop: "2px" },
-        },
-      },
-    },
-  },
-
-  /**
-   * Mobile page profile posts (.PostHeader__infoWrapper)
-   * Examples:
-   * - Post headers on m.vk.com user profile pages
-   */
-  {
-    id: "unverifiedMobilePageProfile",
-    disabled: true,
-    variant: "account",
-    appliesTo: "mobileVkWebsite",
-    selector: ".PostHeader__infoWrapper",
-    markup: {
-      data: {
-        accountAvatar: [".PostHeader__avatar img", ".PostHeader__image img"],
-        accountIdentifier: {
-          selector: '[data-testid="mobile-wall-post-author"]',
-          attribute: "href",
-        },
-        accountName: '[data-testid="mobile-wall-post-author"]',
-      },
-      edits: [],
-      ui: {
-        actionBar: {
-          selector: "a.PostHeaderTime",
-          position: "after",
-          style: { marginLeft: "4px" },
-        },
-        affiliationBadge: {
-          selector: "a.PostHeaderTime",
-          position: "after",
-          style: { paddingLeft: "2px" },
-        },
-        affiliationHighlight: {
-          selector: ".PostHeader__info",
-          position: "prepend",
-          style: { inset: "0" },
-        },
-        regDate: {
-          selector: '[data-testid="mobile-wall-post-author"]',
-          position: "after",
-          style: { marginTop: "2px" },
-        },
-      },
-    },
-  },
-
-  /**
-   * Desktop mention tooltip profile header
-   * Examples:
-   * - Hover tooltips on @username mentions in posts
-   *
-   * ISSUE: Legacy applies inline affiliation CSS custom properties and extra
-   * Tailwind classes directly to .mention_tt_title element for highlighting.
-   * The insertion system uses a separate prepended highlight element instead,
-   * which will produce a different visual result.
-   */
-  {
-    id: "unverifiedDesktopMentionProfileHeader",
-    variant: "account",
-    appliesTo: "desktopVkWebsite",
-    selector: ".mention_tt_wrap",
-    markup: {
-      data: {
-        accountAvatar: ".mention_tt_img img",
-        accountIdentifier: {
-          selector: ".mention_tt_name",
-          attribute: "href",
-        },
-        accountName: ".mention_tt_name",
-      },
-      edits: [],
-      ui: {
-        actionBar: {
-          selector: ".mention_tt_title",
-          position: "append",
-          style: { marginLeft: "4px" },
-        },
-        affiliationBadge: {
-          selector: ".mention_tt_title",
-          position: "append",
-          style: { paddingLeft: "2px" },
-        },
-        affiliationHighlight: {
-          selector: ".mention_tt_title",
-          position: "prepend",
-          style: { inset: "-2px", left: "-2px" },
-        },
-        regDate: {
-          selector: ".mention_tt_name",
-          position: "after",
-          style: { marginLeft: "4px" },
-        },
-      },
-    },
-  },
-
-  /**
    * Desktop search results (people / communities)
    * Examples:
    * - https://vk.com/search?c%5Bsection%5D=people
-   *
-   * ISSUE: Legacy creates a custom row div below the name with badge + actions,
-   * applies inline affiliation CSS variables on the root element, and manages
-   * overflow on RichCell__children. The standard account variant placement
-   * approach is simpler but will produce a different visual layout.
    */
   {
     id: "desktopAndMobilePeopleList",
@@ -753,6 +746,7 @@ export default [
     },
   },
 
+  // - https://m.vk.com/wall-140899168_3954792?reply=3955042
   {
     id: "mobileLikeCell",
     variant: "account",
@@ -798,6 +792,7 @@ export default [
     },
   },
 
+  // - https://m.vk.com/incident22?act=members
   {
     id: "mobileSubCell",
     variant: "account",
@@ -830,7 +825,7 @@ export default [
       ],
       ui: {
         actionBar: {
-          // TODO inside link - all our buttons buttons open profile
+          // TODO: inside link - all our buttons buttons open profile
           selector: ".ii_owner",
           position: "append",
           style: { marginLeft: "4px", top: "2px" },
@@ -855,26 +850,18 @@ export default [
    * Desktop community post author (expanded text)
    * Examples:
    * - Author links in expanded community post text
-   *
-   * ISSUE: Legacy applies affiliation highlight CSS variables and classes
-   * directly on the author link element and manages overflow dynamically.
-   * The insertion system uses a separate highlight element.
-   *
-   * ISSUE: accountAvatar is not available in this context — the expanded text
-   * area does not contain an avatar image. Extraction will fall back to the
-   * default placeholder avatar.
+   * - https://vk.com/wall-60212615_5184695
    */
 
-  // TODO need our element to put insertions into it
   {
-    id: "desktopCommunityPostAuthor",
+    id: "desktopAndMobileCommunityPostAuthor",
     variant: "account",
     appliesTo: "desktopAndMobileVkWebsite",
     selector:
       "[data-testid='post-footer-author'], [class*='vkitShowMoreText__text'] > a[class*='vkitTextClamp__root'], .wi_date[class*='PostHeader__description']",
     markup: {
       data: {
-        // No avatar available in expanded text context
+        // No avatar available
         accountAvatar: "",
         accountIdentifier: {
           selector: "",
@@ -889,7 +876,7 @@ export default [
         },
       ],
       ui: {
-        // TODO inside link - buttons not clickable
+        // TODO: inside link - buttons not clickable
         actionBar: {
           selector: "",
           position: "append",
@@ -994,76 +981,7 @@ export default [
     },
   },
 
-  /**
-   * Desktop popup comment tooltip
-   * Examples:
-   * - Hover tooltips showing comment previews (.tt_w.wall_tt.fw_reply_tt)
-   *
-   * ISSUE: commentIdentifier extraction uses multiple fallback strategies
-   * (href with reply=, onclick with replyClick). Current config uses array
-   * of selectors - needs verification.
-   *
-   * NOTE: Legacy does not apply affiliation highlight to popup tooltips,
-   * only shows action bar. The affiliationHighlight config is included for
-   * completeness but may not be used.
-   */
-  {
-    id: "unverifiedDesktopCommentPopup",
-    disabled: true, // no data about owner in popup; popup disappears, need execution pause
-    variant: "comment",
-    appliesTo: "desktopVkWebsite",
-    selector: ".tt_w.wall_tt.fw_reply_tt",
-    markup: {
-      data: {
-        accountAvatar: [".reply_image img", ".reply_author img"],
-        accountIdentifier: {
-          selector: '.reply_author a.author[href^="/"]',
-          attribute: "href",
-        },
-        accountName: ".reply_author .author",
-        commentIdentifier: [
-          {
-            selector: "a[href*='reply=']",
-            attribute: "href",
-          },
-          {
-            selector: "[onclick*='replyClick']",
-            attribute: "onclick",
-          },
-        ],
-        postCommentCount: {
-          ancestorSelector: ".reply._post",
-          selector: ".PostBottomAction.comment._comment._reply_wrap",
-          attribute: "data-count",
-        },
-      },
-      edits: [],
-      ui: {
-        actionBar: {
-          selector: ".reply_footer",
-          position: "append",
-          style: {},
-        },
-        affiliationBadge: {
-          selector: '.reply_author a.author[href^="/"]',
-          position: "after",
-          style: { paddingLeft: "2px" },
-        },
-        affiliationHighlight: {
-          // Not used in legacy (no affiliation highlight in popups)
-          selector: ".content",
-          position: "prepend",
-          style: { inset: "0" },
-        },
-        regDate: {
-          selector: '.reply_author a.author[href^="/"]',
-          position: "after",
-          style: { marginLeft: "4px" },
-        },
-      },
-    },
-  },
-
+  // - https://m.vk.com/video-85596321_456270337?reply=182214
   {
     id: "mobileWindowComment",
     variant: "comment",
@@ -1118,12 +1036,9 @@ export default [
   },
 
   /**
-   * Modern desktop feed comments
+   * Modern desktop comments
    * Examples:
-   * - New VK feed wall post comments (vk.com/feed)
-   *
-   * ISSUE: Legacy uses dynamic selector for actionBar with multiple fallbacks
-   * including closest() for liked elements. Static selector may not match all cases.
+   * - New VK wall post comments (vk.com/ria)
    */
   {
     id: "desktopComment",
@@ -1201,22 +1116,14 @@ export default [
   },
 
   /**
-   * Legacy desktop wall comments (.reply._post)
+   * Legacy desktop wall groups comments (.reply._post)
    * Examples:
-   * - Wall posts with comments (vk.com/wall-*)
-   *
-   * ISSUE: commentIdentifier extraction uses multiple fallback strategies
-   * (href with reply=, onclick with replyClick, data-post-id, id attribute).
-   * Current config uses array of selectors - needs verification.
-   *
-   * ISSUE: Legacy conditionally removes background from .wall_reply_more_redesign_2024
-   * only when affiliation exists. New markup.edits are unconditional. May cause
-   * visual side effects on comments without affiliations.
+   * - Wall posts with groups comments without login (vk.com/ria)
    */
 
-  // TODO photo comment too - need to build comment id
+  // TODO: photo comment too - need to build comment id
   {
-    id: "desktopOldComment",
+    id: "desktopPreReactComment",
     variant: "comment",
     appliesTo: "desktopVkWebsite",
     selector: ".reply",
@@ -1313,20 +1220,7 @@ export default [
    * Desktop video comments
    * Examples:
    * - Comments on video pages (vk.com/video*)
-   *
-   * CRITICAL ISSUE: Legacy extracts commentIdentifier by combining window.location.href
-   * with element's id attribute (extractVideoCommentLocation function, lines 21-54).
-   * Current insertion system doesn't support this cross-scope pattern.
-   *
-   * The commentIdentifier selector below uses id attribute only, which won't contain
-   * wall/post IDs needed for full comment location. This config will likely fail
-   * comment collection and inspector functionality.
-   *
-   * POTENTIAL FIX: Enhance insertion variant to support custom extraction functions,
-   * or add support for window.location-based patterns.
-   *
-   * ISSUE: Legacy dynamically manages overflow property (saves previous value,
-   * restores on cleanup). Static markup.edits can't replicate this behavior.
+   * - https://vk.com/video-85596321_456270337?reply=182214
    */
   {
     id: "desktopVideoComment",
@@ -1394,7 +1288,7 @@ export default [
   },
 
   /**
-   * Legacy mobile comments (.ReplyItem class structure)
+   * Legacy mobile comments (without login)
    * Examples:
    * - https://m.vk.com/wall-20169232_9024015
    */
@@ -1463,9 +1357,10 @@ export default [
   },
 
   /**
-   * Modern mobile feed comments
+   * Modern mobile feed comments (with login)
    * Examples:
    * - New mobile VK feed wall post comments (m.vk.com)
+   * - https://m.vk.com/wall-20169232_9024015
    */
   {
     id: "mobileCommentNew",
@@ -1529,6 +1424,46 @@ export default [
     },
   },
 
+  {
+    id: "desktopPreReactMentionProfileTooltip",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    selector: ".mention_tt_wrap",
+    markup: {
+      data: {
+        accountAvatar: ".mention_tt_img img",
+        accountIdentifier: {
+          selector: ".mention_tt_name",
+          attribute: "href",
+        },
+        accountName: ".mention_tt_name",
+      },
+      edits: [],
+      ui: {
+        actionBar: {
+          selector: ".mention_tt_title",
+          position: "append",
+          style: { marginLeft: "4px" },
+        },
+        affiliationBadge: {
+          selector: ".mention_tt_title",
+          position: "append",
+          style: { paddingLeft: "2px" },
+        },
+        affiliationHighlight: {
+          selector: ".mention_tt_title",
+          position: "prepend",
+          style: { inset: "-2px", left: "-2px" },
+        },
+        regDate: {
+          selector: ".mention_tt_name",
+          position: "after",
+          style: { marginLeft: "4px" },
+        },
+      },
+    },
+  },
+
   // ---------------------------------------------------------------------------
   // Variant: reply form
   // ---------------------------------------------------------------------------
@@ -1562,7 +1497,7 @@ export default [
    * - https://vk.com/ria?z=photo-15755094_459774936
    */
   {
-    id: "desktopOldReplyForm",
+    id: "desktopPreReactReplyForm",
     variant: "replyForm",
     appliesTo: "desktopVkWebsite",
     selector: ".reply_form",
