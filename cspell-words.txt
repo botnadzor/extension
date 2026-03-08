@@ -37,6 +37,7 @@ pollable
 repost
 rowsmembers
 rsc
+rt_russian
 sel
 shadcn
 showmoretext
@@ -49,6 +50,7 @@ testid
 tsc
 unmutate
 userrichcell
+vesti
 vkcom
 vkit
 vkontakte
@@ -64,7 +66,9 @@ wxt
 лайкнули
 лайкнутые
 лайков
+линтинг
 Подгрузка
+попап
 пулл-реквестов
 скроллите
 юнит
