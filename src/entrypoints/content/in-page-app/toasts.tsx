@@ -20,12 +20,18 @@ import { ToastWithTriggeredNotification } from "./toasts/toast-with-triggered-no
 import { ToastWithWelcomeMessage } from "./toasts/toast-with-welcome-message";
 
 export async function checkIfDataWarmupToastNeeded(): Promise<boolean> {
-  const [accountsMetadata, tagsMetadata] = await Promise.all([
-    staticListsService.getListMetadata("accounts"),
-    staticListsService.getListMetadata("tags"),
-  ]);
+  const [accountsMetadata, insertionsMetadata, tagsMetadata] =
+    await Promise.all([
+      staticListsService.getListMetadata("accounts"),
+      staticListsService.getListMetadata("insertions"),
+      staticListsService.getListMetadata("tags"),
+    ]);
 
-  return !accountsMetadata.remoteActive || !tagsMetadata.remoteActive;
+  return (
+    !accountsMetadata.remoteActive ||
+    !insertionsMetadata.remoteActive ||
+    !tagsMetadata.remoteActive
+  );
 }
 
 const useTriggeredNotification = createPollableValueHook(

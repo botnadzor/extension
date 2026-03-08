@@ -66,10 +66,10 @@ function AccountListMetadata() {
 
 export function Header() {
   useStaticListsAutoUpdate({
-    listIds: ["accounts", "tags"],
-    // When a user triggers the popup, we can tolerate accounts and tags being outdated
-    // for one day. This can save some CPU and network traffic. The delay is not set
-    // in content script where we want to mark bots based on fresh data.
+    listIds: ["accounts", "insertions", "tags"],
+    // When a user triggers the popup, we can tolerate accounts, insertions and tags
+    // being outdated for one day. This can save some CPU and network traffic. The delay
+    // is not set in content script where we want to mark bots based on fresh data.
     toleranceInMinutes: 60 * 24,
   });
 
