@@ -19,10 +19,14 @@ function extractItemCountFromRawSummary(
 }
 
 export function ToastWithDataWarmup({ onClose }: { onClose: () => void }) {
-  const tagsMetadata = useStaticListMetadata("tags");
   const accountsMetadata = useStaticListMetadata("accounts");
+  const insertionsMetadata = useStaticListMetadata("insertions");
+  const tagsMetadata = useStaticListMetadata("tags");
 
-  const done = accountsMetadata.remoteActive && tagsMetadata.remoteActive;
+  const done =
+    accountsMetadata.remoteActive &&
+    insertionsMetadata.remoteActive &&
+    tagsMetadata.remoteActive;
 
   React.useEffect(() => {
     if (done) {
@@ -32,10 +36,12 @@ export function ToastWithDataWarmup({ onClose }: { onClose: () => void }) {
 
   const nextExpectedItemCount =
     (accountsMetadata.remoteNext?.upstreamInfo.itemCount ?? 0) +
+    (insertionsMetadata.remoteNext?.upstreamInfo.itemCount ?? 0) +
     (tagsMetadata.remoteNext?.upstreamInfo.itemCount ?? 0);
 
   const nextItemCount =
     extractItemCountFromRawSummary(accountsMetadata.remoteNext?.summary) +
+    extractItemCountFromRawSummary(insertionsMetadata.remoteNext?.summary) +
     extractItemCountFromRawSummary(tagsMetadata.remoteNext?.summary);
 
   const progressInPercentage = nextExpectedItemCount
