@@ -1,6 +1,7 @@
 # Project files
 .wxt
 *.local
+*.local.json
 *.log
 dist/
 logs/
