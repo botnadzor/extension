@@ -1,30 +1,42 @@
+import type * as React from "react";
+
 import type { PopupTab } from "@/shared/@model/popup";
 
 import { AccessTabBody } from "./tabs/=access";
 import { AnnouncementsTabBody } from "./tabs/=announcements";
 import { ConfigTabBody } from "./tabs/=config";
+import { DebugTabBody, DebugTabWrapper } from "./tabs/=debug";
 import { StatsTabBody } from "./tabs/=stats";
 
 type PopupTabDefinition = {
-  label: string;
   Body: React.ComponentType;
+  tabLabel: React.ReactNode;
+  TabWrapper?: React.ComponentType<{
+    active: boolean;
+    children: React.ReactNode;
+  }>;
 };
 
 export const popupTabDefinitionLookup: Record<PopupTab, PopupTabDefinition> = {
   config: {
-    label: "Настройки",
     Body: ConfigTabBody,
+    tabLabel: "Настройки",
   },
   access: {
-    label: "Доступ",
     Body: AccessTabBody,
+    tabLabel: "Доступ",
   },
   announcements: {
-    label: "Уведомления",
     Body: AnnouncementsTabBody,
+    tabLabel: "Уведомления",
   },
   stats: {
-    label: "Статистика",
     Body: StatsTabBody,
+    tabLabel: "Статистика",
+  },
+  debug: {
+    Body: DebugTabBody,
+    tabLabel: "Отладка",
+    TabWrapper: DebugTabWrapper,
   },
 };

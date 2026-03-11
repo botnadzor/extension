@@ -3,5 +3,6 @@ export const popupTabs = [
   "access",
   "announcements",
   "stats",
+  "debug",
 ] as const;
 export type PopupTab = (typeof popupTabs)[number];
