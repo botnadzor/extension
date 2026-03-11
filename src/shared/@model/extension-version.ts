@@ -5,6 +5,9 @@ import type { BuildInfo } from "./build-info";
 
 type ExtensionLifecycle = "release" | "prerelease" | "snapshot";
 
+// See vite section in wxt.config.ts for the origin of this variable
+export const baseExtensionVersionInfo = __BASE_EXTENSION_VERSION_INFO__;
+
 export type BaseExtensionVersionInfo = {
   buildInfo: BuildInfo;
   lifecycle: ExtensionLifecycle;

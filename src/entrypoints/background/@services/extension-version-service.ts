@@ -2,6 +2,7 @@ import { isEqual } from "es-toolkit";
 import semverSatisfies from "semver/functions/satisfies";
 
 import {
+  baseExtensionVersionInfo,
   deriveExtensionVersionDeprecation,
   type ExtensionVersionInfo,
 } from "@/shared/@model/extension-version";
@@ -28,9 +29,6 @@ import type { StaticListsService } from "./static-lists-service";
  * builds from commits or local development builds) do not filter announcements.
  */
 export type AnnouncementVersionFilter = "default" | "toast";
-
-// See vite section in wxt.config.ts for the origin of this variable
-const baseExtensionVersionInfo = __BASE_EXTENSION_VERSION_INFO__;
 
 export class ExtensionVersionService {
   private readonly rootConfigService: RootConfigService;

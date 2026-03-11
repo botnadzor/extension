@@ -20,33 +20,39 @@ function Tabs({ activeTab }: { activeTab?: PopupTab | undefined }) {
   }
 
   return (
-    <nav className="flex flex-col pr-1">
-      {popupTabs.map((tab) => (
-        <button
-          type="button"
-          key={tab}
-          data-tab={tab}
-          onClick={handleTabClick}
-          className="group py-1.5 pl-3 text-left text-foreground u-no-ring"
-        >
-          <span
-            className={cn(
-              `
-                block border-l-2 border-primary py-1 pl-2 text-sm
-                u-ring-in-group transition-all duration-200
-                group-focus-visible:rounded-xs
-              `,
-              activeTab !== tab &&
-                `
-                  border-primary/30 text-muted-foreground
-                  group-hover:border-primary/70 group-hover:text-foreground
-                `,
-            )}
-          >
-            {popupTabDefinitionLookup[tab].label}
-          </span>
-        </button>
-      ))}
+    <nav className="flex flex-1 flex-col pr-1">
+      {popupTabs.map((tab) => {
+        const { tabLabel: label, TabWrapper = React.Fragment } =
+          popupTabDefinitionLookup[tab];
+
+        return (
+          <TabWrapper key={tab} active={activeTab === tab}>
+            <button
+              type="button"
+              data-tab={tab}
+              onClick={handleTabClick}
+              className="group py-1.5 pl-3 text-left text-foreground u-no-ring"
+            >
+              <span
+                className={cn(
+                  `
+                    block border-l-2 border-primary py-1 pl-2 text-sm
+                    u-ring-in-group transition-all duration-200
+                    group-focus-visible:rounded-xs
+                  `,
+                  activeTab !== tab &&
+                    `
+                      border-primary/30 text-muted-foreground
+                      group-hover:border-primary/70 group-hover:text-foreground
+                    `,
+                )}
+              >
+                {label}
+              </span>
+            </button>
+          </TabWrapper>
+        );
+      })}
     </nav>
   );
 }
@@ -142,7 +148,7 @@ function LinksBelowNav() {
 
 export function Sidebar() {
   return (
-    <div className="flex w-36 min-w-36 flex-0 flex-col justify-between pb-3">
+    <div className="flex w-36 min-w-36 flex-0 flex-col justify-between gap-3 pb-3">
       <React.Suspense fallback={<Tabs />}>
         <StoreAwareTabs />
       </React.Suspense>
