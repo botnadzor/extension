@@ -5,8 +5,6 @@ import { defaultUserConfig } from "@/shared/@model/user-config";
 import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 
 import {
-  createGlobalNotificationsStateForLegacyV1User,
-  hasLegacyV1FootprintInLocalStorage,
   migrateAuthInputFromLegacyTokenState,
   migrateUserConfigFromLegacyState,
 } from "./legacy-v1-migration-helpers";
@@ -92,37 +90,5 @@ describe("migrateUserConfigFromLegacyState", () => {
       tagOverrideLookup: {},
       fansDisplay: "default",
     });
-  });
-});
-
-describe("global notification migration", () => {
-  it("should detect legacy footprint and create welcome-suppressed state", () => {
-    expect(
-      hasLegacyV1FootprintInLocalStorage({
-        popupTab: "config",
-      }),
-    ).toBe(true);
-
-    expect(
-      createGlobalNotificationsStateForLegacyV1User({
-        legacyV1Detected: true,
-        migratedAt: isoDateTimeSchema.parse("2024-03-01T00:00:00Z"),
-      }),
-    ).toEqual({
-      announcementReadAtByCreatedAt: {},
-      welcomeMessageShownAt: isoDateTimeSchema.parse("2024-03-01T00:00:00Z"),
-      welcomeMessageReadAt: isoDateTimeSchema.parse("2024-03-01T00:00:00Z"),
-    });
-  });
-
-  it("should skip welcome suppression when no legacy footprint exists", () => {
-    expect(hasLegacyV1FootprintInLocalStorage({})).toBe(false);
-
-    expect(
-      createGlobalNotificationsStateForLegacyV1User({
-        legacyV1Detected: false,
-        migratedAt: isoDateTimeSchema.parse("2024-03-01T00:00:00Z"),
-      }),
-    ).toBeUndefined();
   });
 });
