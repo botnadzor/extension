@@ -18,8 +18,10 @@ import {
   type IsoDateTime,
   isoDateTimeSchema,
 } from "@/shared/@primitives/temporal";
+import { getBackgroundLogger } from "@/shared/logging";
 
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
+import { migrateGlobalNotificationsStateFromV1 } from "./legacy-v1-migration-helpers";
 
 const globalNotificationsStateSchema = z.readonly(
   z.object({
@@ -33,9 +35,13 @@ const globalNotificationsStateSchema = z.readonly(
 
 type GlobalNotificationsState = z.infer<typeof globalNotificationsStateSchema>;
 
+const logger = getBackgroundLogger(["notification-service"]);
+
+// TODO: Remove `migrateDataFromV1` after the v1 -> v2 upgrade window closes.
 const globalNotificationsStore = defineStoreWithSchema(
   "sync:global-notifications",
   globalNotificationsStateSchema,
+  { migrateDataFromV1: migrateGlobalNotificationsStateFromV1 },
 );
 
 const defaultGlobalNotificationsState: GlobalNotificationsState = {
@@ -60,22 +66,19 @@ const triggeredNotificationsStore = defineStoreWithSchema(
 );
 
 export class NotificationService {
-  private pollableGlobalNotificationsState: Pollable<GlobalNotificationsState>;
+  private pollableGlobalNotificationsState: Pollable<
+    GlobalNotificationsState | undefined
+  >;
   private pollableTriggeredNotificationByContentId: Record<
     ContentId,
     Pollable<TriggeredNotification | undefined>
   > = {};
 
   constructor() {
-    this.pollableGlobalNotificationsState = new Pollable(
-      defaultGlobalNotificationsState,
-    );
-
-    void globalNotificationsStore.getValue().then((value) => {
-      if (value) {
-        this.pollableGlobalNotificationsState.setValue(value);
-      }
-    });
+    this.pollableGlobalNotificationsState = new Pollable<
+      GlobalNotificationsState | undefined
+    >(undefined);
+    void this.startLoadingGlobalNotificationsStateWithStore();
 
     void triggeredNotificationsStore.getValue().then((value) => {
       if (value) {
@@ -94,6 +97,22 @@ export class NotificationService {
         }
       }
     });
+  }
+
+  private async startLoadingGlobalNotificationsStateWithStore() {
+    try {
+      this.pollableGlobalNotificationsState.setValue(
+        (await globalNotificationsStore.getValue()) ??
+          defaultGlobalNotificationsState,
+      );
+    } catch (error) {
+      logger.error("Failed to initialize global notifications state: {error}", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      this.pollableGlobalNotificationsState.setValue(
+        defaultGlobalNotificationsState,
+      );
+    }
   }
 
   async pollTriggeredNotification(
@@ -152,6 +171,13 @@ export class NotificationService {
     update: Producer<GlobalNotificationsState>,
   ): void {
     const oldState = this.pollableGlobalNotificationsState.getValue();
+    if (!oldState) {
+      logger.warn(
+        "Skipping global notifications update before store initialization",
+      );
+      return;
+    }
+
     const newState = produce(oldState, update);
 
     if (isEqual(newState, oldState)) {
@@ -182,9 +208,25 @@ export class NotificationService {
     });
   }
 
+  async getGlobalNotificationsState(): Promise<GlobalNotificationsState> {
+    const result = await this.pollGlobalNotificationsState(undefined);
+    return result.value;
+  }
+
   async pollGlobalNotificationsState(
     lastPollVersion: PollVersion | undefined,
   ): Promise<PollResult<GlobalNotificationsState>> {
-    return this.pollableGlobalNotificationsState.poll(lastPollVersion);
+    let result:
+      | PollResult<GlobalNotificationsState>
+      | PollResult<undefined>
+      | undefined;
+
+    do {
+      result = await this.pollableGlobalNotificationsState.poll(
+        lastPollVersion ?? result?.version,
+      );
+    } while (!result?.value);
+
+    return result;
   }
 }

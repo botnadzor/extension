@@ -30,6 +30,7 @@ import { DxConfigService } from "./background/@services/dx-config-service";
 import { ExtensionVersionService } from "./background/@services/extension-version-service";
 import { FrontendService } from "./background/@services/frontend-service";
 import { InspectorService } from "./background/@services/inspector-service";
+import { cleanupLegacyV1State } from "./background/@services/legacy-v1-migration-helpers";
 import { NotificationService } from "./background/@services/notification-service";
 import { PopupService } from "./background/@services/popup-service";
 import { RegDateService } from "./background/@services/reg-date-service";
@@ -199,6 +200,15 @@ export default defineBackground(() => {
   registerService(rootConfigServiceKey, rootConfigService);
   registerService(staticListsServiceKey, staticListsService);
   registerService(userConfigServiceKey, userConfigService);
+
+  // TODO: Remove this legacy cleanup task after the v1 -> v2 upgrade window closes.
+  void Promise.all([
+    authService.waitUntilAuthInputReady(),
+    userConfigService.get(),
+    notificationService.getGlobalNotificationsState(),
+  ]).then(async () => {
+    await cleanupLegacyV1State();
+  });
 
   void orchestrateAliasManagers({
     aliasManagerForDynamicApi,
