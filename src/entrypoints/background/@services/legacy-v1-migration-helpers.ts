@@ -246,24 +246,6 @@ export function hasLegacyV1FootprintInLocalStorage(
   );
 }
 
-export function createGlobalNotificationsStateForLegacyV1User({
-  legacyV1Detected,
-  migratedAt,
-}: {
-  legacyV1Detected: boolean;
-  migratedAt: IsoDateTime;
-}): GlobalNotificationsMigrationState | undefined {
-  if (!legacyV1Detected) {
-    return undefined;
-  }
-
-  return {
-    announcementReadAtByCreatedAt: {},
-    welcomeMessageShownAt: migratedAt,
-    welcomeMessageReadAt: migratedAt,
-  };
-}
-
 export async function migrateAuthInputFromV1(): Promise<AuthInput | undefined> {
   let rawLegacyState: Record<string, unknown>;
   try {
@@ -325,10 +307,18 @@ export async function migrateGlobalNotificationsStateFromV1(): Promise<
     return undefined;
   }
 
-  return createGlobalNotificationsStateForLegacyV1User({
-    legacyV1Detected: hasLegacyV1FootprintInLocalStorage(rawLegacyState),
-    migratedAt: isoDateTimeSchema.parse(undefined),
-  });
+  if (!hasLegacyV1FootprintInLocalStorage(rawLegacyState)) {
+    return undefined;
+  }
+
+  // Using arbitrary date in the past to enable toasts with announcements from this date.
+  const isoDateTime = isoDateTimeSchema.parse("2026-01-01T00:00:00Z");
+
+  return {
+    announcementReadAtByCreatedAt: {},
+    welcomeMessageShownAt: isoDateTime,
+    welcomeMessageReadAt: isoDateTime,
+  };
 }
 
 async function removeLegacyLocalStorageKeys(): Promise<boolean> {
