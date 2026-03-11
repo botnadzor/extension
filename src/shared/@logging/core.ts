@@ -30,12 +30,13 @@ export function configureLogging(): void {
 export function getBackgroundLogger(subcategories: string[] = []): Logger {
   return getLogger([loggerCategory, "background", ...subcategories]);
 }
-export function getContentLogger(subcategories: string[] = []): Logger {
-  return getLogger([loggerCategory, "content", ...subcategories]);
-}
+
+// getContentLogger cannot be defined globally because it needs to include contentId in the category; pass contentLogger explicitly
+
 export function getPopupLogger(subcategories: string[] = []): Logger {
   return getLogger([loggerCategory, "popup", ...subcategories]);
 }
+
 export function getSidepanelLogger(subcategories: string[] = []): Logger {
   return getLogger([loggerCategory, "sidepanel", ...subcategories]);
 }

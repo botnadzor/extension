@@ -1,5 +1,6 @@
 import { delay } from "es-toolkit";
 
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import {
   fallbackRootConfigSchema,
   type RootConfig,
@@ -12,7 +13,6 @@ import {
   type PollVersion,
 } from "@/shared/@pollable/core";
 import type { SemverRange } from "@/shared/@primitives/semver";
-import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import { fetchFromRemoteSystem } from "../@service-helpers/fetch-from-remote-system";

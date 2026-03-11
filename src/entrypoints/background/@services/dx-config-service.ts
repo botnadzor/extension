@@ -1,5 +1,6 @@
 import { delay } from "es-toolkit";
 
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import {
   defaultDxConfig,
   type DxConfig,
@@ -10,7 +11,6 @@ import {
   type PollResult,
   type PollVersion,
 } from "@/shared/@pollable/core";
-import { getBackgroundLogger } from "@/shared/logging";
 import { getAppConfig } from "#imports";
 
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";

@@ -1,3 +1,5 @@
+import type { Logger } from "@logtape/logtape";
+
 import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
 import type { ReviewInsertionConfig } from "@/shared/@model/insertion-configs/review";
 import type { StringDataSelector } from "@/shared/@model/insertion-configs/shared/primitives";
@@ -49,10 +51,12 @@ type ReviewServiceData = {
 async function extractReviewIdentifierFromMarkup(
   rootElement: HTMLElement,
   reviewIdentifierSelector: StringDataSelector | undefined,
+  instanceLogger: Logger,
 ): Promise<ReviewIdentifier | undefined> {
   return resolveStringDataSelector(
     rootElement,
     reviewIdentifierSelector,
+    instanceLogger,
     (value) => {
       const match = /^review(-?\d+)_(\d+)$/.exec(value) ?? [];
 
@@ -88,16 +92,19 @@ export default defineInsertionVariant<
     const accountIdentifierPromise = extractAccountIdentifierFromMarkup(
       rootElement,
       config.markup.data.accountIdentifier,
+      instanceLogger,
     );
 
     const accountNamePromise = extractAccountNameFromMarkup(
       rootElement,
       config.markup.data.accountName,
+      instanceLogger,
     );
 
     const reviewIdentifierPromise = extractReviewIdentifierFromMarkup(
       rootElement,
       config.markup.data.reviewIdentifier || undefined,
+      instanceLogger,
     );
 
     const [accountIdentifier, accountName, reviewIdentifier] =

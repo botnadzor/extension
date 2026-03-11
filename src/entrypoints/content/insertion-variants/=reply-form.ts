@@ -88,10 +88,11 @@ export default defineInsertionVariant<
 >({
   defaultInnerData: {},
 
-  getMarkupData: async ({ config, rootElement }) => {
+  getMarkupData: async ({ config, instanceLogger, rootElement }) => {
     const accountIdentifierPromise = extractAccountIdentifierFromMarkup(
       rootElement,
       config.markup.data.accountIdentifier,
+      instanceLogger,
     );
 
     const accountIdentifier = await accountIdentifierPromise;

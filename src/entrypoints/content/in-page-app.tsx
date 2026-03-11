@@ -1,6 +1,8 @@
+import type { Logger } from "@logtape/logtape";
 import * as React from "react";
 import ReactDOM from "react-dom/client";
 
+import { LoggerProvider } from "@/shared/@logging/react";
 import type { ContentId } from "@/shared/@primitives/misc";
 import { useStaticListsAutoUpdate } from "@/shared/@ui-helpers/data-hooks";
 import { PortalContainer } from "@/shared/@ui-primitives/portal-container";
@@ -14,30 +16,37 @@ import { Toasts } from "./in-page-app/toasts";
 
 function InPageApp({
   contentId,
+  contentLogger,
   darkTheme,
 }: {
   contentId: ContentId;
+  contentLogger: Logger;
   darkTheme: boolean;
 }) {
   useStaticListsAutoUpdate();
 
   return (
     <ContentIdContext value={contentId}>
-      <div className={cn("font-ubuntu", darkTheme ? "dark-theme" : undefined)}>
-        <React.Suspense>
-          <Toasts />
-        </React.Suspense>
-        <React.Suspense>
-          <Inspector />
-        </React.Suspense>
-        <PortalContainer />
-      </div>
+      <LoggerProvider value={contentLogger}>
+        <div
+          className={cn("font-ubuntu", darkTheme ? "dark-theme" : undefined)}
+        >
+          <React.Suspense>
+            <Toasts />
+          </React.Suspense>
+          <React.Suspense>
+            <Inspector />
+          </React.Suspense>
+          <PortalContainer />
+        </div>
+      </LoggerProvider>
     </ContentIdContext>
   );
 }
 
 export async function startInPageApp(
   contentId: ContentId,
+  contentLogger: Logger,
   ctx: ContentScriptContext,
 ) {
   const ui = await createShadowRootUi(ctx, {
@@ -57,7 +66,13 @@ export async function startInPageApp(
         const darkTheme =
           elementWithScheme?.getAttribute("scheme") === "vkcom_dark";
 
-        root.render(<InPageApp contentId={contentId} darkTheme={darkTheme} />);
+        root.render(
+          <InPageApp
+            contentId={contentId}
+            contentLogger={contentLogger}
+            darkTheme={darkTheme}
+          />,
+        );
       }
 
       renderInPageApp();

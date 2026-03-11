@@ -1,5 +1,5 @@
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import type { PollResult, PollVersion } from "@/shared/@pollable/core";
-import { getBackgroundLogger } from "@/shared/logging";
 
 import type {
   AliasManager,

@@ -49,11 +49,13 @@ export default defineInsertionVariant<
     const accountIdentifierPromise = extractAccountIdentifierFromMarkup(
       rootElement,
       config.markup.data.accountIdentifier,
+      instanceLogger,
     );
 
     const accountNamePromise = extractAccountNameFromMarkup(
       rootElement,
       config.markup.data.accountName,
+      instanceLogger,
     );
 
     const [accountIdentifier, accountName] = await Promise.all([

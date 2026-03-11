@@ -1,7 +1,7 @@
 import type { JsonValue } from "type-fest";
 import type { z } from "zod/mini";
 
-import { getBackgroundLogger } from "@/shared/logging";
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import { getAppConfig, storage, type StorageItemKey } from "#imports";
 
 /**

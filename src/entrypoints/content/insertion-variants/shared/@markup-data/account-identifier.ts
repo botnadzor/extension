@@ -1,3 +1,5 @@
+import type { Logger } from "@logtape/logtape";
+
 import type { StringDataSelector } from "@/shared/@model/insertion-configs/shared/primitives";
 import {
   type AccountIdentifier,
@@ -115,10 +117,12 @@ export function parseAccountIdentifier(
 export async function extractAccountIdentifierFromMarkup(
   rootElement: HTMLElement,
   accountIdentifierSelector: StringDataSelector,
+  instanceLogger: Logger,
 ): Promise<AccountIdentifier | undefined> {
   return resolveStringDataSelector(
     rootElement,
     accountIdentifierSelector,
+    instanceLogger,
     parseAccountIdentifier,
   );
 }

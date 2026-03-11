@@ -1,3 +1,5 @@
+import type { Logger } from "@logtape/logtape";
+
 import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
 import type { CommentInsertionConfig } from "@/shared/@model/insertion-configs/comment";
 import type { StringDataSelector } from "@/shared/@model/insertion-configs/shared/primitives";
@@ -62,10 +64,12 @@ export type CommentInnerData = {
 async function extractCommentIdentifierFromMarkup(
   rootElement: HTMLElement,
   commentIdentifierSelector: StringDataSelector | undefined,
+  instanceLogger: Logger,
 ): Promise<CommentIdentifier | undefined> {
   return resolveStringDataSelector(
     rootElement,
     commentIdentifierSelector,
+    instanceLogger,
     (value) => {
       // Try URL format: /wall-123_456?reply=789 or https://vk.com/photo-123_456?reply=789
       const urlRegexp =
@@ -151,10 +155,12 @@ async function extractCommentIdentifierFromMarkup(
 async function extractPostCommentCountFromMarkup(
   rootElement: HTMLElement,
   postCommentCountSelector: StringDataSelector | undefined,
+  instanceLogger: Logger,
 ): Promise<number | undefined> {
   return resolveStringDataSelector(
     rootElement,
     postCommentCountSelector,
+    instanceLogger,
     (value) => {
       const digitsOnly = value.replaceAll(/\D+/g, "");
       if (!digitsOnly) {
@@ -183,21 +189,25 @@ export default defineInsertionVariant<
     const accountIdentifierPromise = extractAccountIdentifierFromMarkup(
       rootElement,
       config.markup.data.accountIdentifier,
+      instanceLogger,
     );
 
     const accountNamePromise = extractAccountNameFromMarkup(
       rootElement,
       config.markup.data.accountName,
+      instanceLogger,
     );
 
     const commentIdentifierPromise = extractCommentIdentifierFromMarkup(
       rootElement,
       config.markup.data.commentIdentifier || undefined,
+      instanceLogger,
     );
 
     const postCommentCountPromise = extractPostCommentCountFromMarkup(
       rootElement,
       config.markup.data.postCommentCount || undefined,
+      instanceLogger,
     );
 
     const [
