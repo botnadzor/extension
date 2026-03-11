@@ -15,7 +15,7 @@ permissions:
 jobs:
   labeler:
     name: Apply path labels
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v6
