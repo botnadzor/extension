@@ -51,6 +51,8 @@ tsc
 unmutate
 userrichcell
 vesti
+vite
+vitest
 vkcom
 vkit
 vkontakte

@@ -1,0 +1,94 @@
+# Keep labels and path globs sorted alphabetically.
+
+"area: agents":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".agents/**"
+          - ".claude/**"
+          - "**/SKILL.md"
+          - "AGENTS.md"
+          - "CLAUDE.md"
+
+"area: background":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/entrypoints/background.*"
+          - "src/entrypoints/background/**"
+
+"area: content":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/entrypoints/content.*"
+          - "src/entrypoints/content/**"
+          - "src/entrypoints/react-fiber-bridge-main-world.ts"
+
+"area: curated static lists":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/curated-static-lists/**"
+
+"area: dependencies":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "pnpm-lock.yaml"
+
+"area: docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "LICENSE.md"
+          - "README.md"
+
+"area: github":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+
+"area: popup":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/entrypoints/popup.*"
+          - "src/entrypoints/popup/**"
+
+"area: scripts":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "scripts/**"
+
+"area: shared":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/shared/**"
+
+"area: sidepanel":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/entrypoints/sidepanel.*"
+          - "src/entrypoints/sidepanel/**"
+
+"area: tests":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.test.ts"
+          - "**/*.test.tsx"
+          - "vitest.config.ts"
+
+"area: tooling":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "*.config.ts"
+          - ".env"
+          - ".env.*"
+          - ".gitignore"
+          - ".husky/**"
+          - ".prettierignore"
+          - ".tool-versions"
+          - ".vscode/**"
+          - "cspell-words.txt"
+          - "package.json"
+          - "pnpm-workspace.yaml"
+          - "src/app.config.ts"
+          - "src/icon.png"
+          - "src/vite-env.d.ts"
+          - "src/wxt-helpers.ts"
+          - "tsconfig.json"
