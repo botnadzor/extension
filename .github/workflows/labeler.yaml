@@ -1,0 +1,26 @@
+name: Label Pull Requests
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  labeler:
+    name: Apply path labels
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/labeler@v5
+        with:
+          configuration-path: .github/labeler.yaml
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
