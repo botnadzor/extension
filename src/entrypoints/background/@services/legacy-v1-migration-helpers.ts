@@ -1,6 +1,7 @@
 import { isEqual } from "es-toolkit";
 import { z } from "zod/mini";
 
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import type { AuthInput } from "@/shared/@model/auth";
 import {
   defaultUserConfig,
@@ -11,7 +12,6 @@ import {
   type IsoDateTime,
   isoDateTimeSchema,
 } from "@/shared/@primitives/temporal";
-import { getBackgroundLogger } from "@/shared/logging";
 import { omitUndefined } from "@/shared/omit-undefined";
 import { browser } from "#imports";
 

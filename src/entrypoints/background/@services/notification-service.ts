@@ -3,6 +3,7 @@ import { produce, type Producer } from "immer";
 import type { WritableDeep } from "type-fest";
 import { z } from "zod/mini";
 
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import {
   type TriggeredNotification,
   type TriggeredNotificationPayload,
@@ -18,7 +19,6 @@ import {
   type IsoDateTime,
   isoDateTimeSchema,
 } from "@/shared/@primitives/temporal";
-import { getBackgroundLogger } from "@/shared/logging";
 
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
 import { migrateGlobalNotificationsStateFromV1 } from "./legacy-v1-migration-helpers";
