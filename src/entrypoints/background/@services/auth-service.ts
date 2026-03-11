@@ -1,5 +1,6 @@
 import { delay } from "es-toolkit";
 
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import {
   type AuthCheck,
   type AuthInput,
@@ -13,7 +14,6 @@ import {
   type PollVersion,
 } from "@/shared/@pollable/core";
 import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
-import { getBackgroundLogger } from "@/shared/logging";
 import { omitUndefined } from "@/shared/omit-undefined";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";

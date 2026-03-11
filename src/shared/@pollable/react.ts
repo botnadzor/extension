@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import * as React from "react";
 import type { JsonValue } from "type-fest";
 
-import { getContentLogger, getPopupLogger } from "../logging";
+import { useLogger } from "../@logging/react";
 import type { PollResult, PollVersion } from "./core";
 
 type UsePollableValue<
@@ -132,16 +132,13 @@ export function createPollableValueHook<
   }
 
   function usePollableValue(payload: Payload): Value {
+    const parentLogger = useLogger();
+
     const payloadKey =
       payload === undefined ? payloadKeyForUndefined : JSON.stringify(payload);
 
     let recordInRender = payloadKeyRecordMap.get(payloadKey);
     if (!recordInRender) {
-      const parentLogger =
-        import.meta.env.ENTRYPOINT === "content"
-          ? getContentLogger()
-          : getPopupLogger();
-
       recordInRender = {
         logger: parentLogger.getChild([
           "pollable-value-hook",

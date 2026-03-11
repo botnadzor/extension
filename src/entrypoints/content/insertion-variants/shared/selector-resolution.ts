@@ -1,3 +1,5 @@
+import type { Logger } from "@logtape/logtape";
+
 import type {
   ElementListSelector,
   ElementSelector,
@@ -5,11 +7,8 @@ import type {
   StringDataSelector,
   ValuePattern,
 } from "@/shared/@model/insertion-configs/shared/primitives";
-import { getContentLogger } from "@/shared/logging";
 
 import { resolveReactPropValue } from "./react-fiber-bridge";
-
-const logger = getContentLogger(["selector-resolution"]);
 
 export function ensureArray<T>(value: T | readonly T[]): readonly T[] {
   return Array.isArray(value)
@@ -59,14 +58,19 @@ export function resolveListSelector(
 
 const regExpCache = new Map<ValuePattern, RegExp | Error>();
 
-function getRegExp(pattern: ValuePattern): RegExp | undefined {
+function getRegExp(
+  pattern: ValuePattern,
+  instanceLogger: Logger,
+): RegExp | undefined {
   let result = regExpCache.get(pattern);
 
   if (!result) {
     try {
       result = new RegExp(pattern);
     } catch (error) {
-      logger.warn(`Invalid pattern: ${pattern}`, { error });
+      instanceLogger
+        .getChild(["selector-resolution"])
+        .warn(`Invalid pattern: ${pattern}`, { error });
       result = new Error(`Invalid pattern: ${pattern}`, { cause: error });
     }
   }
@@ -77,8 +81,9 @@ function getRegExp(pattern: ValuePattern): RegExp | undefined {
 function applyPattern(
   value: string,
   pattern: ValuePattern,
+  instanceLogger: Logger,
 ): string | undefined {
-  const match = getRegExp(pattern)?.exec(value);
+  const match = getRegExp(pattern, instanceLogger)?.exec(value);
   return match?.[1] ?? match?.[0];
 }
 
@@ -150,6 +155,7 @@ function extractTextContent(element: HTMLElement): string | undefined {
 async function resolveSingleStringDataSelector(
   rootElement: HTMLElement,
   selector: NormalizedSingleSelector,
+  instanceLogger: Logger,
 ): Promise<string | undefined> {
   const element = resolveSelector(rootElement, selector);
 
@@ -160,7 +166,7 @@ async function resolveSingleStringDataSelector(
   const reactProp = "reactProp" in selector ? selector.reactProp : undefined;
 
   const rawValue = reactProp
-    ? await resolveReactPropValue(element, reactProp)
+    ? await resolveReactPropValue({ element, instanceLogger, reactProp })
     : selector.attribute
       ? (element.getAttribute(selector.attribute) ?? undefined)
       : extractTextContent(element);
@@ -170,7 +176,7 @@ async function resolveSingleStringDataSelector(
   }
 
   const patternMatchedRawValue = selector.valuePattern
-    ? applyPattern(rawValue, selector.valuePattern)
+    ? applyPattern(rawValue, selector.valuePattern, instanceLogger)
     : rawValue;
   if (patternMatchedRawValue === undefined) {
     return;
@@ -188,6 +194,7 @@ async function resolveSingleStringDataSelector(
       const result = await resolveSingleStringDataSelector(
         rootElement,
         substituted,
+        instanceLogger,
       );
 
       if (result !== undefined) {
@@ -204,6 +211,7 @@ async function resolveSingleStringDataSelector(
 export async function resolveStringDataSelector<T>(
   rootElement: HTMLElement,
   stringDataSelector: StringDataSelector | undefined,
+  instanceLogger: Logger,
   parse: (value: string) => T,
 ): Promise<T | undefined> {
   if (stringDataSelector === undefined) {
@@ -218,6 +226,7 @@ export async function resolveStringDataSelector<T>(
     const resolvedValue = await resolveSingleStringDataSelector(
       rootElement,
       selector,
+      instanceLogger,
     );
 
     if (resolvedValue === undefined) {

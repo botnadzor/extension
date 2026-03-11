@@ -1,5 +1,6 @@
 import { produce } from "immer";
 
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import {
   Pollable,
   type PollResult,
@@ -9,7 +10,6 @@ import {
   type IsoDateTime,
   isoDateTimeSchema,
 } from "@/shared/@primitives/temporal";
-import { getBackgroundLogger } from "@/shared/logging";
 
 type RemoteSystem = "dynamicApi" | "frontend" | "staticApi";
 

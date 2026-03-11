@@ -1,6 +1,6 @@
 import type { JsonValue } from "type-fest";
 
-import { getBackgroundLogger } from "@/shared/logging";
+import { getBackgroundLogger } from "@/shared/@logging/core";
 
 import type { AliasToUse, UnavailableAliasReason } from "./alias-manager";
 

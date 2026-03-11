@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import type { Writable, WritableDeep } from "type-fest";
 import type { z } from "zod/mini";
 
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import type {
   StaticListCombiningMode,
   StaticListDefinition,
@@ -32,7 +33,6 @@ import {
   type IsoDateTime,
   isoDateTimeSchema,
 } from "@/shared/@primitives/temporal";
-import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import { fetchFromRemoteSystem } from "../@service-helpers/fetch-from-remote-system";
@@ -537,7 +537,7 @@ export class StaticListsService {
     toleranceInMinutes: number | undefined,
   ): Promise<PopulateFromUrlIfOutdatedResult> {
     const listLogger = this.getListLogger(listId);
-    listLogger.info("Populating from if outdated");
+    listLogger.info("Populating if outdated");
     const startedAt = Date.now();
 
     const lockId = nanoid(8);

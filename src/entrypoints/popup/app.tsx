@@ -2,8 +2,9 @@ import * as React from "react";
 import * as ReactDOM from "react-dom/client";
 import { browser } from "wxt/browser";
 
+import { configureLogging, getPopupLogger } from "@/shared/@logging/core";
+import { LoggerProvider } from "@/shared/@logging/react";
 import { TooltipProvider } from "@/shared/@ui-primitives/tooltip";
-import { configureLogging, getPopupLogger } from "@/shared/logging";
 
 import { ActiveTab } from "./app/active-tab";
 import { Header } from "./app/header";
@@ -37,15 +38,17 @@ function startPopupApp() {
 
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <TooltipProvider>
-        <div className="absolute inset-0 flex flex-col">
-          <Header />
-          <div className="flex flex-1 overflow-hidden">
-            <Sidebar />
-            <ActiveTab />
+      <LoggerProvider value={logger}>
+        <TooltipProvider>
+          <div className="absolute inset-0 flex flex-col">
+            <Header />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar />
+              <ActiveTab />
+            </div>
           </div>
-        </div>
-      </TooltipProvider>
+        </TooltipProvider>
+      </LoggerProvider>
     </React.StrictMode>,
   );
 }

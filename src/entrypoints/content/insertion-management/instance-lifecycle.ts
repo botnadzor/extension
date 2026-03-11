@@ -6,7 +6,6 @@ import type { JsonObject } from "type-fest";
 
 import type { InsertionConfig } from "@/shared/@model/insertion-configs";
 import type { ContentId } from "@/shared/@primitives/misc";
-import { getContentLogger } from "@/shared/logging";
 import {
   affiliationService,
   collectingService,
@@ -84,12 +83,13 @@ async function obtainMarkupAndServiceData(
 export function mountInstance(
   instance: InsertionInstanceWithServiceData,
   contentId: ContentId,
+  contentLogger: Logger,
   instanceMap: InsertionInstanceMap,
   derivedPageInfo: DerivedPageInfo,
 ): MountedInsertionInstance {
   const definition = insertionVariantLookup[instance.config.variant];
 
-  const instanceLogger = getContentLogger([
+  const instanceLogger = contentLogger.getChild([
     "insertion-instance",
     instance.config.id,
   ]);
@@ -261,16 +261,18 @@ export function unmountAllInsertions(instanceMap: InsertionInstanceMap): void {
 
 export function mountNewInsertions({
   configs,
+  contentLogger,
   instanceMap,
   contentId,
   derivedPageInfo,
 }: {
   configs: InsertionConfig[];
   contentId: ContentId;
+  contentLogger: Logger;
   derivedPageInfo: DerivedPageInfo;
   instanceMap: InsertionInstanceMap;
 }): void {
-  const logger = getContentLogger(["insertion-management", "mount"]);
+  const logger = contentLogger.getChild(["insertion-management", "mount"]);
 
   let newInstanceCount = 0;
 
@@ -293,7 +295,7 @@ export function mountNewInsertions({
         instanceId = `${config.id}|${nanoid(8)}`;
       } while (instanceMap.has(instanceId));
 
-      const instanceLogger = getContentLogger([
+      const instanceLogger = contentLogger.getChild([
         "insertion-instance",
         instanceId,
       ]);
@@ -354,6 +356,7 @@ export function mountNewInsertions({
           const mountedInstance = mountInstance(
             { ...instance, markupData, serviceData },
             contentId,
+            contentLogger,
             instanceMap,
             derivedPageInfo,
           );
@@ -378,13 +381,15 @@ export function mountNewInsertions({
 export function refreshExistingInsertions({
   instanceMap,
   contentId,
+  contentLogger,
   derivedPageInfo,
 }: {
   contentId: ContentId;
+  contentLogger: Logger;
   derivedPageInfo: DerivedPageInfo;
   instanceMap: InsertionInstanceMap;
 }): void {
-  const logger = getContentLogger(["insertion-management", "refresh"]);
+  const logger = contentLogger.getChild(["insertion-management", "refresh"]);
 
   for (const [instanceId, instance] of instanceMap) {
     if (!document.contains(instance.rootElement)) {
@@ -394,7 +399,7 @@ export function refreshExistingInsertions({
 
     const definition = insertionVariantLookup[instance.config.variant];
 
-    const instanceLogger = getContentLogger([
+    const instanceLogger = contentLogger.getChild([
       "insertion-instance",
       instance.config.id,
     ]);
@@ -466,6 +471,7 @@ export function refreshExistingInsertions({
             serviceData: newServiceData,
           },
           contentId,
+          contentLogger,
           instanceMap,
           derivedPageInfo,
         );

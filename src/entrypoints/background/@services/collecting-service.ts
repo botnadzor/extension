@@ -3,6 +3,7 @@ import { delay, uniqBy } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 import { z } from "zod/mini";
 
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import type { PollVersion } from "@/shared/@pollable/core";
 import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 import {
@@ -15,7 +16,6 @@ import {
   type VkNickname,
   vkNicknameSchema,
 } from "@/shared/@primitives/vk";
-import { getBackgroundLogger } from "@/shared/logging";
 
 import type { AuthService } from "./auth-service";
 import type { StaticListsService } from "./static-lists-service";
