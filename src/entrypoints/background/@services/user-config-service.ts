@@ -13,12 +13,15 @@ import {
 } from "@/shared/@pollable/core";
 
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
+import { migrateUserConfigFromV1 } from "./legacy-v1-migration-helpers";
 
 const logger = getBackgroundLogger(["user-config-service"]);
 
+// TODO: Remove `migrateDataFromV1` after the v1 -> v2 upgrade window closes.
 const userConfigStore = defineStoreWithSchema(
   "sync:user-config",
   userConfigSchema,
+  { migrateDataFromV1: migrateUserConfigFromV1 },
 );
 
 export class UserConfigService {
