@@ -1,9 +1,9 @@
 import { registerService } from "@webext-core/proxy-service";
 import { isEqual } from "es-toolkit";
 
+import { configureLogging, getBackgroundLogger } from "@/shared/@logging/core";
 import { rootConfigSeed } from "@/shared/@model/root-config";
 import type { PollVersion } from "@/shared/@pollable/core";
-import { configureLogging, getBackgroundLogger } from "@/shared/logging";
 import {
   affiliationServiceKey,
   authServiceKey,

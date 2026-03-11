@@ -1,8 +1,8 @@
+import type { Logger } from "@logtape/logtape";
 import { isEqual } from "es-toolkit";
 
 import type { InsertionConfig } from "@/shared/@model/insertion-configs";
 import type { ContentId } from "@/shared/@primitives/misc";
-import { getContentLogger } from "@/shared/logging";
 import { dxConfigService, staticListsService } from "@/shared/proxy-services";
 
 import type { DerivedPageInfo } from "./derived-page-info";
@@ -14,8 +14,6 @@ import {
   unmountInstance,
 } from "./insertion-management/instance-lifecycle";
 import insertionStyling from "./insertion-styling.css?inline";
-
-const logger = getContentLogger(["insertion-management"]);
 
 function filterConfigsForPage(
   configs: InsertionConfig[],
@@ -41,8 +39,12 @@ function filterConfigsForPage(
 export async function startManagingInsertions({
   archivedSnapshot,
   contentId,
+  contentLogger,
   websiteVariant,
-}: DerivedPageInfo & { contentId: ContentId }): Promise<void> {
+}: DerivedPageInfo & {
+  contentId: ContentId;
+  contentLogger: Logger;
+}): Promise<void> {
   const style = document.createElement("style");
   style.textContent = insertionStyling;
   document.head.append(style);
@@ -64,10 +66,13 @@ export async function startManagingInsertions({
 
     currentConfigs = filtered;
 
-    logger.info("Updated insertion configs ({count} for this page): {ids}", {
-      count: currentConfigs.length,
-      ids: currentConfigs.map((c) => c.id),
-    });
+    contentLogger.info(
+      "Updated insertion configs ({count} for this page): {ids}",
+      {
+        count: currentConfigs.length,
+        ids: currentConfigs.map((c) => c.id),
+      },
+    );
   }
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- proxy service erases generic type parameter
@@ -81,6 +86,7 @@ export async function startManagingInsertions({
   mountNewInsertions({
     configs: currentConfigs,
     contentId,
+    contentLogger,
     derivedPageInfo,
     instanceMap,
   });
@@ -93,9 +99,10 @@ export async function startManagingInsertions({
     throttleTimeout = window.setTimeout(() => {
       mountNewInsertions({
         configs: currentConfigs,
+        contentId,
+        contentLogger,
         derivedPageInfo,
         instanceMap,
-        contentId,
       });
       throttleTimeout = undefined;
     }, 100);
@@ -109,6 +116,7 @@ export async function startManagingInsertions({
   const stopPolling = startGlobalRerenderPolling({
     derivedPageInfo,
     instanceMap,
+    contentLogger,
     contentId,
     getConfigs: () => currentConfigs,
     onConfigsChanged: updateConfigs,

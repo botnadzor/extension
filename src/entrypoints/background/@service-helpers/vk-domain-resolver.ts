@@ -1,6 +1,7 @@
 import { delay } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import {
   interpretVkDomain,
   type VkDomain,
@@ -8,7 +9,6 @@ import {
   vkIdSchema,
   type VkNickname,
 } from "@/shared/@primitives/vk";
-import { getBackgroundLogger } from "@/shared/logging";
 
 import type { StaticListsService } from "../@services/static-lists-service";
 

@@ -1,9 +1,10 @@
+import type { Logger } from "@logtape/logtape";
+
 import type { DxConfig } from "@/shared/@model/dx-config";
 import type { InsertionConfig } from "@/shared/@model/insertion-configs";
 import type { StaticListItem } from "@/shared/@model/static-lists";
 import type { PollVersion } from "@/shared/@pollable/core";
 import type { ContentId } from "@/shared/@primitives/misc";
-import { getContentLogger } from "@/shared/logging";
 import {
   dxConfigService,
   extensionVersionService,
@@ -19,8 +20,6 @@ import {
   refreshExistingInsertions,
 } from "./instance-lifecycle";
 
-const logger = getContentLogger(["insertion-management", "global-rerender"]);
-
 let lastInsertionConfigs: InsertionConfig[] | undefined;
 
 let lastDxInsertionsRemoved: boolean | undefined;
@@ -28,6 +27,7 @@ let lastDxInsertionForceRerenderedAt: string | undefined;
 
 export function startGlobalRerenderPolling({
   contentId,
+  contentLogger,
   derivedPageInfo,
   getConfigs,
   instanceMap,
@@ -35,11 +35,17 @@ export function startGlobalRerenderPolling({
 }: {
   derivedPageInfo: DerivedPageInfo;
   contentId: ContentId;
+  contentLogger: Logger;
   getConfigs: () => InsertionConfig[];
   instanceMap: InsertionInstanceMap;
   onConfigsChanged: (configs: InsertionConfig[]) => void;
 }): () => void {
   let disposed = false;
+
+  const logger = contentLogger.getChild([
+    "insertion-management",
+    "global-rerender",
+  ]);
 
   type ThingToPoll<T = unknown> = {
     id: string;
@@ -55,9 +61,15 @@ export function startGlobalRerenderPolling({
       configs: getConfigs(),
       instanceMap,
       contentId,
+      contentLogger,
       derivedPageInfo,
     });
-    refreshExistingInsertions({ contentId, derivedPageInfo, instanceMap });
+    refreshExistingInsertions({
+      contentId,
+      contentLogger,
+      derivedPageInfo,
+      instanceMap,
+    });
   }
 
   lastInsertionConfigs = getConfigs();

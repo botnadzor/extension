@@ -1,3 +1,4 @@
+import { getBackgroundLogger } from "@/shared/@logging/core";
 import {
   type AccountAffiliation,
   fallbackHexColor,
@@ -8,7 +9,6 @@ import {
   interpretVkDomain,
   type VkDomain,
 } from "@/shared/@primitives/vk";
-import { getBackgroundLogger } from "@/shared/logging";
 
 import type { StaticListsService } from "./static-lists-service";
 import type { UserConfigService } from "./user-config-service";
@@ -57,9 +57,13 @@ export class AffiliationService {
             interpretedVkDomain.value,
           );
 
+    if (!account) {
+      return undefined;
+    }
+
     const tags: TagListItem[] | undefined = [];
 
-    for (const tagId of account?.tagIds ?? []) {
+    for (const tagId of account.tagIds) {
       const tag = await this.staticListsService.findItem("tags", "id", tagId);
 
       if (tag) {
@@ -69,7 +73,9 @@ export class AffiliationService {
 
     const [firstTag, ...otherTags] = tags;
     if (!firstTag) {
-      logger.error("No tags found for account {vkDomain}", { vkDomain });
+      logger.error("No tags found for account {interpretedVkDomain}", {
+        interpretedVkDomain,
+      });
       return undefined;
     }
 

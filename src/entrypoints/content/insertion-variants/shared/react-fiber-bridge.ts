@@ -5,13 +5,11 @@
  * that does the actual fiber read and communicates results back via
  * data attributes on the element.
  */
+import type { Logger } from "@logtape/logtape";
 import { nanoid } from "nanoid";
 
 import type { ReactProp } from "@/shared/@model/insertion-configs/shared/primitives";
-import { getContentLogger } from "@/shared/logging";
 import { injectScript } from "#imports";
-
-const logger = getContentLogger(["insertion-management", "react-fiber-bridge"]);
 
 let bridgeScriptPromise: Promise<HTMLScriptElement> | undefined;
 
@@ -32,10 +30,15 @@ function ensureBridge(): Promise<HTMLScriptElement> {
  *
  * @returns The prop value as a string, or undefined if not found.
  */
-export async function resolveReactPropValue(
-  element: HTMLElement,
-  reactProp: ReactProp,
-): Promise<string | undefined> {
+export async function resolveReactPropValue({
+  element,
+  instanceLogger,
+  reactProp,
+}: {
+  element: HTMLElement;
+  instanceLogger: Logger;
+  reactProp: ReactProp;
+}): Promise<string | undefined> {
   const script = await ensureBridge();
   const requestId = nanoid();
 
@@ -51,7 +54,9 @@ export async function resolveReactPropValue(
   delete element.dataset["bnReactPropResult"];
 
   if (!result) {
-    logger.debug("No result from fiber bridge for {reactProp}", { reactProp });
+    instanceLogger.debug("No result from fiber bridge for {reactProp}", {
+      reactProp,
+    });
   }
 
   return result;
