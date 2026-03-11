@@ -23,20 +23,20 @@ jobs:
     steps:
       - name: Check out repository (fast)
         if: github.event_name != 'pull_request'
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
       - name: Check out repository (deep)
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3.0.0
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           cache: pnpm
           node-version-file: .tool-versions
@@ -101,7 +101,7 @@ jobs:
           fi
 
       - name: Upload extension as artifact for Chrome
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ steps.config.outputs.chrome_name }}
           path: ${{ steps.config.outputs.chrome_file }}
@@ -109,7 +109,7 @@ jobs:
           retention-days: ${{ steps.config.outputs.retention_days }}
 
       - name: Upload extension as artifact for Firefox
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ steps.config.outputs.firefox_name }}
           path: ${{ steps.config.outputs.firefox_file }}
@@ -118,7 +118,7 @@ jobs:
 
       - name: Upload extension sources as artifact for Chrome
         if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ steps.config.outputs.chrome_sources_name }}
           path: ${{ steps.config.outputs.chrome_sources_file }}
@@ -127,7 +127,7 @@ jobs:
 
       - name: Upload extension sources as artifact for Firefox
         if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ steps.config.outputs.firefox_sources_name }}
           path: ${{ steps.config.outputs.firefox_sources_file }}
@@ -136,7 +136,7 @@ jobs:
 
       - name: Upload original zips for release
         if: startsWith(github.ref, 'refs/tags/v') && github.ref_name >= 'v0' && github.ref_name < 'va'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: release-zips
           path: dist/*.zip
@@ -153,12 +153,12 @@ jobs:
     name: Lint and Test
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3.0.0
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           cache: pnpm
           node-version-file: .tool-versions
@@ -167,7 +167,7 @@ jobs:
         run: pnpm install
 
       - name: Load CSpell cache
-        uses: actions/cache@v5
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: cspell-${{ github.run_id }}
           path: node_modules/.cache/cspell
@@ -228,7 +228,7 @@ jobs:
 
       - name: Load Prettier cache
         if: ${{ success() || failure() }}
-        uses: actions/cache@v5
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: prettier-${{ github.run_id }}
           path: node_modules/.cache/prettier
