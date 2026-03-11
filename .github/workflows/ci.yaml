@@ -7,10 +7,6 @@ on:
       - main
     tags: ["*"]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
 env:
   ARTIFACT_RETENTION_DAYS_PR: 2
   ARTIFACT_RETENTION_DAYS_MAIN: 30
