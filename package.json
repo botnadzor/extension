@@ -63,7 +63,7 @@
     "immer": "11.1.4",
     "intl-messageformat": "11.1.2",
     "jsonrepair": "3.13.3",
-    "lru-cache": "11.2.6",
+    "lru-cache": "11.2.7",
     "lucide-react": "0.577.0",
     "lucide-static": "0.577.0",
     "marked-react": "3.0.2",
@@ -92,7 +92,7 @@
     "@types/react-dom": "19.2.3",
     "@types/semver": "7.7.1",
     "@wxt-dev/auto-icons": "1.1.1",
-    "@wxt-dev/module-react": "1.2.1",
+    "@wxt-dev/module-react": "1.2.2",
     "babel-plugin-react-compiler": "1.0.0",
     "cspell": "9.7.0",
     "eslint": "9.39.4",
@@ -120,7 +120,7 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.57.0",
     "vitest": "4.0.18",
-    "wxt": "0.20.18",
+    "wxt": "0.20.19",
     "yaml": "2.8.2"
   },
   "packageManager": "pnpm@10.32.1"

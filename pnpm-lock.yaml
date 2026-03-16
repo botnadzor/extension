@@ -42,8 +42,8 @@ importers:
         specifier: 3.13.3
         version: 3.13.3
       lru-cache:
-        specifier: 11.2.6
-        version: 11.2.6
+        specifier: 11.2.7
+        version: 11.2.7
       lucide-react:
         specifier: 0.577.0
         version: 0.577.0(react@19.2.4)
@@ -122,10 +122,10 @@ importers:
         version: 7.7.1
       '@wxt-dev/auto-icons':
         specifier: 1.1.1
-        version: 1.1.1(wxt@0.20.18(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))
+        version: 1.1.1(wxt@0.20.19(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))
       '@wxt-dev/module-react':
-        specifier: 1.2.1
-        version: 1.2.1(vite@7.3.1(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))(wxt@0.20.18(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))
+        specifier: 1.2.2
+        version: 1.2.2(vite@7.3.1(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))(wxt@0.20.19(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))
       babel-plugin-react-compiler:
         specifier: 1.0.0
         version: 1.0.0
@@ -208,8 +208,8 @@ importers:
         specifier: 4.0.18
         version: 4.0.18(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
       wxt:
-        specifier: 0.20.18
-        version: 0.20.18(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
+        specifier: 0.20.19
+        version: 0.20.19(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
       yaml:
         specifier: 2.8.2
         version: 2.8.2
@@ -1715,8 +1715,8 @@ packages:
   '@wxt-dev/browser@0.1.37':
     resolution: {integrity: sha512-I32XWCNRy2W6UgbaVXz8BHGBGtm8urGRRBrcNLagUBXTrBi7wCE6zWePUvvK+nUl7qUCZ7iQ1ufdP0c1DEWisw==}
 
-  '@wxt-dev/module-react@1.2.1':
-    resolution: {integrity: sha512-NkXhXP1KqbTmKuQ7LwESFUnQDxQRiHw98ZQ6cXKuulRvyxtyCfc6gOqbKMHPP9bp497UVHaozr3ZQj1lvcPPTQ==}
+  '@wxt-dev/module-react@1.2.2':
+    resolution: {integrity: sha512-+lRLi1r9dAXpLySWSIWHLJ1h/nFzR20iQnx3RNrKyA6oJg4+ClOluVXozHjfPg9Okfy/umtffiOopGayASrg6w==}
     peerDependencies:
       vite: ^5.4.19 || ^6.3.4 || ^7.0.0 || ^8.0.0-0
       wxt: '>=0.19.16'
@@ -1999,10 +1999,6 @@ packages:
   cli-cursor@5.0.0:
     resolution: {integrity: sha512-aCj4O5wKyszjMmDT4tZj93kxyydN/K5zPWSCe6/0AV/AA1pqe5ZBIw0a2ZfPQV7lL5/yb5HsUreJ6UFAF1tEQw==}
     engines: {node: '>=18'}
-
-  cli-spinners@3.4.0:
-    resolution: {integrity: sha512-bXfOC4QcT1tKXGorxL3wbJm6XJPDqEnij2gQ2m7ESQuE+/z9YFIWnl/5RpTiKWbMq3EVKR4fRLJGn6DVfu0mpw==}
-    engines: {node: '>=18.20'}
 
   cli-truncate@5.2.0:
     resolution: {integrity: sha512-xRwvIOMGrfOAnM1JYtqQImuaNtDEv9v6oIYAs4LIHwTiKee8uwvIi363igssOC0O5U04i4AlENs79LQLu9tEMw==}
@@ -2995,10 +2991,6 @@ packages:
     resolution: {integrity: sha512-K55T22lfpQ63N4KEN57jZUAaAYqYHEe8veb/TycJRk9DdSCLLcovXz/mL6mOnhQaZsQGwPhuFopdQIlqGSEjiQ==}
     engines: {node: '>=18'}
 
-  is-interactive@2.0.0:
-    resolution: {integrity: sha512-qP1vozQRI+BMOPcjFzrjXuQvdak2pHNUMZoeG2eRbiSqyvbEf/wQtEOTOX1guk6E3t36RkaqiSt8A/6YElNxLQ==}
-    engines: {node: '>=12'}
-
   is-map@2.0.3:
     resolution: {integrity: sha512-1Qed0/Hr2m+YqxnM09CjA2d/i6YZNfF6R2oRAOj36eUdS6qIV/huPJNSEpKbupewFs+ZsJlxsjjPbc0/afW6Lw==}
     engines: {node: '>= 0.4'}
@@ -3069,10 +3061,6 @@ packages:
   is-typed-array@1.1.15:
     resolution: {integrity: sha512-p3EcsicXjit7SaskXHs1hA91QxgTw46Fv6EFKKGS5DRFLD8yKnohjF3hxoju94b/OcMZoQukzpPpBE9uLVKzgQ==}
     engines: {node: '>= 0.4'}
-
-  is-unicode-supported@2.1.0:
-    resolution: {integrity: sha512-mE00Gnza5EEB3Ds0HfMyllZzbBrmLOX3vfWoj9A9PEnTfratQ/BcaJOuMhnkhjXvb2+FkY3VuHqtAGpTPmglFQ==}
-    engines: {node: '>=18'}
 
   is-weakmap@2.0.2:
     resolution: {integrity: sha512-K5pXYOm9wqY1RgjpL3YTkF39tni1XajUIkawTLUo9EZEVUFga5gSQJF8nNS7ZwJQ02y+1YCNYcMh+HIf1ZqE+w==}
@@ -3366,10 +3354,6 @@ packages:
   lodash.once@4.1.1:
     resolution: {integrity: sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==}
 
-  log-symbols@7.0.1:
-    resolution: {integrity: sha512-ja1E3yCr9i/0hmBVaM0bfwDjnGy8I/s6PP4DFp+yP+a+mrHO4Rm7DtmnqROTUkHIkqffC84YY7AeqX6oFk0WFg==}
-    engines: {node: '>=18'}
-
   log-update@6.1.0:
     resolution: {integrity: sha512-9ie8ItPR6tjY5uYJh8K/Zrv/RMZ5VOlOWvtZdEHYSTFKZfIBPQa9tOAEeAWhd+AnIneLJ22w5fjOYtoutpWq5w==}
     engines: {node: '>=18'}
@@ -3378,8 +3362,8 @@ packages:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
 
-  lru-cache@11.2.6:
-    resolution: {integrity: sha512-ESL2CrkS/2wTPfuend7Zhkzo2u0daGJ/A2VucJOgQ/C48S/zB8MMeMHSGKYpXhIjbPxfuezITkaBH1wqv00DDQ==}
+  lru-cache@11.2.7:
+    resolution: {integrity: sha512-aY/R+aEsRelme17KGQa/1ZSIpLpNYYrhcrepKTZgE+W3WM16YMCaPwOHLHsmopZHELU0Ojin1lPVxKR0MihncA==}
     engines: {node: 20 || >=22}
 
   lru-cache@5.1.1:
@@ -3474,6 +3458,9 @@ packages:
     resolution: {integrity: sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg==}
     engines: {node: ^18 || >=20}
     hasBin: true
+
+  nanospinner@1.2.2:
+    resolution: {integrity: sha512-Zt/AmG6qRU3e+WnzGGLuMCEAO/dAu45stNbHY223tUxldaDAeE+FxSPsd9Q+j+paejmm0ZbrNVs5Sraqy3dRxA==}
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
@@ -3579,10 +3566,6 @@ packages:
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
-
-  ora@9.3.0:
-    resolution: {integrity: sha512-lBX72MWFduWEf7v7uWf5DHp9Jn5BI8bNPGuFgtXMmr2uDz2Gz2749y3am3agSDdkhHPHYmmxEGSKH85ZLGzgXw==}
-    engines: {node: '>=20'}
 
   os-shim@0.1.3:
     resolution: {integrity: sha512-jd0cvB8qQ5uVt0lvCIexBaROw1KyKm5sbulg2fWOHjETisuCzWyt+eTZKEMs8v6HwzoGs8xik26jg7eCM6pS+A==}
@@ -4053,10 +4036,6 @@ packages:
 
   std-env@3.10.0:
     resolution: {integrity: sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==}
-
-  stdin-discarder@0.3.1:
-    resolution: {integrity: sha512-reExS1kSGoElkextOcPkel4NE99S0BWxjUHQeDFnR8S993JxpPX7KU4MNmO19NXhlJp+8dmdCbKQVNgLJh2teA==}
-    engines: {node: '>=18'}
 
   stop-iteration-iterator@1.1.0:
     resolution: {integrity: sha512-eLoXW/DHyl62zxY4SCaIgnRhuMr6ri4juEYARS8E6sCEqzKpOiE521Ucofdx+KnDZl5xmvGYaaKCk5FEOxJCoQ==}
@@ -4548,11 +4527,11 @@ packages:
     resolution: {integrity: sha512-g/eziiSUNBSsdDJtCLB8bdYEUMj4jR7AGeUo96p/3dTafgjHhpF4RiCFPiRILwjQoDXx5MqkBr4fwWtR3Ky4Wg==}
     engines: {node: '>=20'}
 
-  wxt@0.20.18:
-    resolution: {integrity: sha512-BYnIAFkdJcC8BXzbh4PzmRhOQ5xKELEk45qntzqojW5X1+VGm0GsjaEKSCQnTP72/3jZMDH1pmlEdkY/fPXehg==}
+  wxt@0.20.19:
+    resolution: {integrity: sha512-LNQXDyStuenNSLLbSs3aXDscKB6g6NYUXppBu7uAmIUZNKLy04Hyg3EE9p9w683t0B+j2CBYciDmqglfwisNuA==}
     hasBin: true
     peerDependencies:
-      eslint: ^8.57.0 || ^9.0.0
+      eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
     peerDependenciesMeta:
       eslint:
         optional: true
@@ -4592,10 +4571,6 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
-
-  yoctocolors@2.1.2:
-    resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
-    engines: {node: '>=18'}
 
   zip-dir@2.0.0:
     resolution: {integrity: sha512-uhlsJZWz26FLYXOD6WVuq+fIcZ3aBPGo/cFdiLlv3KNwpa52IF3ISV8fLhQLiqVu5No3VhlqlgthN6gehil1Dg==}
@@ -6046,23 +6021,23 @@ snapshots:
       '@webext-core/messaging': 2.3.0
       webextension-polyfill: 0.12.0
 
-  '@wxt-dev/auto-icons@1.1.1(wxt@0.20.18(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))':
+  '@wxt-dev/auto-icons@1.1.1(wxt@0.20.19(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       defu: 6.1.4
       fs-extra: 11.3.4
       sharp: 0.34.5
-      wxt: 0.20.18(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
+      wxt: 0.20.19(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
 
   '@wxt-dev/browser@0.1.37':
     dependencies:
       '@types/filesystem': 0.0.36
       '@types/har-format': 1.2.16
 
-  '@wxt-dev/module-react@1.2.1(vite@7.3.1(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))(wxt@0.20.18(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))':
+  '@wxt-dev/module-react@1.2.2(vite@7.3.1(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))(wxt@0.20.19(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@vitejs/plugin-react': 5.1.4(vite@7.3.1(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))
       vite: 7.3.1(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
-      wxt: 0.20.18(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
+      wxt: 0.20.19(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -6363,8 +6338,6 @@ snapshots:
   cli-cursor@5.0.0:
     dependencies:
       restore-cursor: 5.1.0
-
-  cli-spinners@3.4.0: {}
 
   cli-truncate@5.2.0:
     dependencies:
@@ -7570,8 +7543,6 @@ snapshots:
       global-directory: 4.0.1
       is-path-inside: 4.0.0
 
-  is-interactive@2.0.0: {}
-
   is-map@2.0.3: {}
 
   is-negative-zero@2.0.3: {}
@@ -7628,8 +7599,6 @@ snapshots:
   is-typed-array@1.1.15:
     dependencies:
       which-typed-array: 1.1.20
-
-  is-unicode-supported@2.1.0: {}
 
   is-weakmap@2.0.2: {}
 
@@ -7912,11 +7881,6 @@ snapshots:
 
   lodash.once@4.1.1: {}
 
-  log-symbols@7.0.1:
-    dependencies:
-      is-unicode-supported: 2.1.0
-      yoctocolors: 2.1.2
-
   log-update@6.1.0:
     dependencies:
       ansi-escapes: 7.3.0
@@ -7929,7 +7893,7 @@ snapshots:
     dependencies:
       js-tokens: 4.0.0
 
-  lru-cache@11.2.6: {}
+  lru-cache@11.2.7: {}
 
   lru-cache@5.1.1:
     dependencies:
@@ -8010,6 +7974,10 @@ snapshots:
   nanoid@3.3.11: {}
 
   nanoid@5.1.6: {}
+
+  nanospinner@1.2.2:
+    dependencies:
+      picocolors: 1.1.1
 
   natural-compare@1.4.0: {}
 
@@ -8143,17 +8111,6 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
       word-wrap: 1.2.5
-
-  ora@9.3.0:
-    dependencies:
-      chalk: 5.6.2
-      cli-cursor: 5.0.0
-      cli-spinners: 3.4.0
-      is-interactive: 2.0.0
-      is-unicode-supported: 2.1.0
-      log-symbols: 7.0.1
-      stdin-discarder: 0.3.1
-      string-width: 8.2.0
 
   os-shim@0.1.3: {}
 
@@ -8710,8 +8667,6 @@ snapshots:
   stackback@0.0.2: {}
 
   std-env@3.10.0: {}
-
-  stdin-discarder@0.3.1: {}
 
   stop-iteration-iterator@1.1.0:
     dependencies:
@@ -9270,7 +9225,7 @@ snapshots:
       is-wsl: 3.1.1
       powershell-utils: 0.1.0
 
-  wxt@0.20.18(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2):
+  wxt@0.20.19(@types/node@25.3.5)(eslint@9.39.4(jiti@2.6.1))(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(yaml@2.8.2):
     dependencies:
       '@1natsu/wait-element': 4.1.2
       '@aklinker1/rollup-plugin-visualizer': 5.12.0(rollup@4.59.0)
@@ -9289,9 +9244,7 @@ snapshots:
       dotenv: 17.3.1
       dotenv-expand: 12.0.3
       esbuild: 0.27.3
-      fast-glob: 3.3.3
       filesize: 11.0.13
-      fs-extra: 11.3.4
       get-port-please: 3.2.0
       giget: 3.1.2
       hookable: 6.0.1
@@ -9303,16 +9256,17 @@ snapshots:
       magicast: 0.5.2
       minimatch: 10.2.4
       nano-spawn: 2.0.0
+      nanospinner: 1.2.2
       normalize-path: 3.0.0
       nypm: 0.6.5
       ohash: 2.0.11
       open: 11.0.0
-      ora: 9.3.0
       perfect-debounce: 2.1.0
       picocolors: 1.1.1
       prompts: 2.4.2
       publish-browser-extension: 4.0.4
       scule: 1.3.0
+      tinyglobby: 0.2.15
       unimport: 5.7.0
       vite: 7.3.1(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
       vite-node: 5.3.0(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
@@ -9363,8 +9317,6 @@ snapshots:
       yargs-parser: 21.1.1
 
   yocto-queue@0.1.0: {}
-
-  yoctocolors@2.1.2: {}
 
   zip-dir@2.0.0:
     dependencies:
