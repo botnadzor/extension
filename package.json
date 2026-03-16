@@ -67,7 +67,7 @@
     "lucide-react": "0.577.0",
     "lucide-static": "0.577.0",
     "marked-react": "4.0.0",
-    "nanoid": "5.1.6",
+    "nanoid": "5.1.7",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "semver": "7.7.4",
