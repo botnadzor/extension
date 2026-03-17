@@ -14,59 +14,107 @@ import { createActionUi } from "./shared/@markup-ui/action-bar";
 import { createInsertionUi } from "./shared/@markup-ui/helpers";
 import { applyMarkupEdits } from "./shared/markup-edits";
 
-function getCaretCharOffset(element: HTMLElement): number {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) {
-    return 0;
+function waitForImgInsertion(
+  target: Node,
+  timeoutMs: number,
+  callback: () => void,
+): () => void {
+  let done = false;
+  // eslint-disable-next-line prefer-const -- must be `let` to allow reference in settle()
+  let observer: MutationObserver;
+  // eslint-disable-next-line prefer-const -- must be `let` to allow reference in settle()
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  function settle() {
+    if (done) {
+      return;
+    }
+    done = true;
+    clearTimeout(timeoutId);
+    observer.disconnect();
+    callback();
   }
 
-  const range = selection.getRangeAt(0);
-  const preCaretRange = range.cloneRange();
-  preCaretRange.selectNodeContents(element);
-  preCaretRange.setEnd(range.startContainer, range.startOffset);
+  observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (
+          node instanceof HTMLImageElement ||
+          (node instanceof HTMLElement && node.querySelector("img"))
+        ) {
+          settle();
 
-  return preCaretRange.toString().length;
+          return;
+        }
+      }
+    }
+  });
+
+  observer.observe(target, { childList: true, subtree: true });
+  timeoutId = setTimeout(settle, timeoutMs);
+
+  return () => {
+    if (done) {
+      return;
+    }
+    done = true;
+    clearTimeout(timeoutId);
+    observer.disconnect();
+  };
 }
 
-function setCaretCharOffset(element: HTMLElement, offset: number): void {
-  const selection = window.getSelection();
-  if (!selection) {
+// VK's paste handler may convert spaces to &nbsp; (\u00A0).
+// Normalize both so substring search matches regardless.
+function normalizeSpaces(s: string): string {
+  return s.replaceAll("\u00A0", " ");
+}
+
+function removeSubstringFromContentEditable(
+  element: HTMLElement,
+  substring: string,
+): void {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let accumulated = "";
+  const textNodes: Text[] = [];
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node instanceof Text) {
+      textNodes.push(node);
+      accumulated += node.data;
+    }
+  }
+
+  const startIndex = normalizeSpaces(accumulated).indexOf(
+    normalizeSpaces(substring),
+  );
+  if (startIndex === -1) {
     return;
   }
 
-  const range = document.createRange();
-  let remaining = offset;
+  // Walk text nodes again to find and remove the substring span.
+  let offset = 0;
+  let remaining = substring.length;
+  for (const node of textNodes) {
+    const nodeLength = node.data.length;
+    const nodeEnd = offset + nodeLength;
 
-  function walk(node: Node): boolean {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const textLength = node.textContent?.length ?? 0;
-      if (remaining <= textLength) {
-        range.setStart(node, remaining);
-        range.collapse(true);
+    if (remaining > 0 && nodeEnd > startIndex) {
+      const removeStart = Math.max(0, startIndex - offset);
+      const removeEnd = Math.min(nodeLength, removeStart + remaining);
+      remaining -= removeEnd - removeStart;
+      node.data = node.data.slice(0, removeStart) + node.data.slice(removeEnd);
 
-        return true;
-      }
-      remaining -= textLength;
-
-      return false;
-    }
-
-    for (const child of node.childNodes) {
-      if (walk(child)) {
-        return true;
+      if (node.data === "") {
+        node.remove();
       }
     }
 
-    return false;
+    offset = nodeEnd;
   }
 
-  if (!walk(element)) {
-    range.selectNodeContents(element);
-    range.collapse(false);
-  }
-
-  selection.removeAllRanges();
-  selection.addRange(range);
+  // Notify VK's React state about the DOM change.
+  element.dispatchEvent(new InputEvent("input", { bubbles: true }));
 }
 
 export type ReplyInnerData = Record<string, never>;
@@ -155,13 +203,36 @@ export default defineInsertionVariant<
 
     let lastAccountIdentifier: AccountIdentifier | undefined;
     let lastFrontendBaseUrl: string | undefined;
+    let attaching = false;
+    let abortAttaching: (() => void) | undefined;
 
+    /*
+     * Card attachment strategy
+     * ------------------------
+     *
+     * VK detects URLs pasted into the contenteditable and auto-attaches an OG
+     * image card. We exploit this by programmatically pasting the card URL,
+     * observing rootElement for <img> insertion (VK adds a preview image
+     * once its API response arrives), then using execCommand('undo') to remove
+     * the URL text from the input. VK verifies the URL is still in the CE
+     * after its API response, so we must keep it until the attachment appears.
+     * The undo goes through the browser's native editing pipeline, so VK's
+     * React state stays in sync (unlike direct DOM manipulation). The
+     * attachment is decoupled from the text content and persists after the
+     * undo. During the wait, the CE text is hidden via transparent color +
+     * height lock to prevent visual flash / layout shift, and the button
+     * shows a loading spinner.
+     */
     function handleButtonClick() {
       if (!lastAccountIdentifier || !lastFrontendBaseUrl) {
         return;
       }
 
-      const cardLink = generateCardUrl({
+      if (attaching) {
+        return;
+      }
+
+      const cardUrl = generateCardUrl({
         frontendBaseUrl: lastFrontendBaseUrl,
         vkDomain: stringifyAccountIdentifier(lastAccountIdentifier),
       });
@@ -173,24 +244,86 @@ export default defineInsertionVariant<
         return;
       }
 
-      const savedNodes = [...contentEditable.childNodes].map((node) =>
-        node.cloneNode(true),
-      );
-      const savedOffset = getCaretCharOffset(contentEditable);
+      attaching = true;
 
-      const pastedContent = ` ${cardLink} `;
+      // Show loading state on the button
+      button.render({
+        ariaLabel: "Карточка добавляется...",
+        icon: "loaderCircle",
+        iconClassName: cn("bn:animate-spin bn:cursor-default"),
+        tooltip: false,
+      });
+
+      // Hide the URL text visually while keeping the CE functional for VK's
+      // paste handler. Lock height to prevent layout shift from the long URL.
+      // Disable pointer events to prevent user interaction during the cycle.
+      const savedColor = contentEditable.style.color;
+      const savedHeight = contentEditable.style.height;
+      const savedMaxHeight = contentEditable.style.maxHeight;
+      const savedOverflow = contentEditable.style.overflow;
+      const savedPointerEvents = contentEditable.style.pointerEvents;
+      const currentHeight = contentEditable.getBoundingClientRect().height;
+      contentEditable.style.color = "transparent";
+      contentEditable.style.height = `${currentHeight}px`;
+      contentEditable.style.maxHeight = `${currentHeight}px`;
+      contentEditable.style.overflow = "hidden";
+      contentEditable.style.pointerEvents = "none";
+
+      // Paste the card link to trigger VK's URL attachment mechanism.
+      const pastedContent = ` ${cardUrl} `;
       const dataTransfer = new DataTransfer();
       dataTransfer.setData("text/plain", pastedContent);
       contentEditable.focus();
       contentEditable.dispatchEvent(
-        new ClipboardEvent("paste", { clipboardData: dataTransfer }),
+        new ClipboardEvent("paste", {
+          clipboardData: dataTransfer,
+          bubbles: true,
+          cancelable: true,
+        }),
       );
 
-      setTimeout(() => {
-        contentEditable.replaceChildren(...savedNodes);
+      function restoreContentEditableStyles() {
+        if (!contentEditable) {
+          return;
+        }
+        contentEditable.style.color = savedColor;
+        contentEditable.style.height = savedHeight;
+        contentEditable.style.maxHeight = savedMaxHeight;
+        contentEditable.style.overflow = savedOverflow;
+        contentEditable.style.pointerEvents = savedPointerEvents;
+      }
+
+      // Wait for VK to create the attachment (indicated by a new <img> in
+      // rootElement), then undo the pasted URL text. VK verifies the URL is
+      // still in the CE after its API response, so we must keep it until the
+      // attachment appears. Max wait: 10s.
+      const cancelImgWait = waitForImgInsertion(rootElement, 10_000, () => {
         contentEditable.focus();
-        setCaretCharOffset(contentEditable, savedOffset);
-      }, 100);
+        document.execCommand("undo");
+        restoreContentEditableStyles();
+
+        // Restore button state (not hiding the button in case if we need to re-try)
+        attaching = false;
+        abortAttaching = undefined;
+        button.render({
+          ariaLabel: "Вы отвечаете боту, добавить его карточку?",
+          icon: "userPlus",
+          tooltip: true,
+        });
+      });
+
+      abortAttaching = () => {
+        cancelImgWait();
+
+        // Remove the pasted URL from the CE text. We can't use
+        // execCommand('undo') here because VK may have pushed additional
+        // edits onto the undo stack (e.g. name swap on reply target change).
+        removeSubstringFromContentEditable(contentEditable, pastedContent);
+
+        restoreContentEditableStyles();
+        attaching = false;
+        abortAttaching = undefined;
+      };
     }
 
     button.element.addEventListener("click", handleButtonClick);
@@ -203,6 +336,10 @@ export default defineInsertionVariant<
         if (!bnCardAttachmentButtonContainer.element) {
           return;
         }
+
+        // If a card attachment is in progress, abort it — the reply target
+        // changed, so the undo stack no longer matches our pasted URL.
+        abortAttaching?.();
 
         lastAccountIdentifier = accountIdentifier;
         lastFrontendBaseUrl = frontendBaseUrl;
