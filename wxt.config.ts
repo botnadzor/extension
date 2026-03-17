@@ -3,8 +3,9 @@ import "./src/shared/@model/root-config";
 
 import fs from "node:fs";
 
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
-import reactCompiler from "babel-plugin-react-compiler";
+import { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "wxt";
 
 import {
@@ -110,14 +111,6 @@ export default defineConfig({
 
   outDir: "dist",
 
-  react: {
-    vite: {
-      babel: {
-        plugins: [reactCompiler],
-      },
-    },
-  },
-
   srcDir: "src",
 
   vite: (configEnv) => ({
@@ -127,6 +120,8 @@ export default defineConfig({
       ),
     },
     plugins: [
+      // @ts-expect-error - TODO: investigate type mismatch
+      babel({ presets: [reactCompilerPreset()] }),
       tailwindcss(),
       {
         // https://github.com/tailwindlabs/tailwindcss/discussions/16119#discussioncomment-12758373
