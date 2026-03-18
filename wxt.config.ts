@@ -120,7 +120,6 @@ export default defineConfig({
       ),
     },
     plugins: [
-      // @ts-expect-error - TODO: investigate type mismatch
       babel({ presets: [reactCompilerPreset()] }),
       tailwindcss(),
       {
