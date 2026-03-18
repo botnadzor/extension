@@ -265,7 +265,10 @@ export default defineConfig(
         },
       ],
       "unicorn/no-nested-ternary": "off", // Conflicts with Prettier
-      "unicorn/no-useless-undefined": ["warn", { checkArguments: false }],
+      "unicorn/no-useless-undefined": [
+        "warn",
+        { checkArguments: false, checkArrowFunctionBody: false },
+      ],
       "unicorn/prefer-global-this": "off",
       "unicorn/prefer-set-has": "off",
       "unicorn/prefer-top-level-await": "off", // https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2149

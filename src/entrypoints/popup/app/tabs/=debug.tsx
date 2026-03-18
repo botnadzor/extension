@@ -50,8 +50,7 @@ const useLogRecordCount = createPollableValueHook(
   (lastPollVersion, lowestLogLevel: LowestLogLevel) =>
     loggingService.pollRecordCount(lastPollVersion, lowestLogLevel),
   {
-    // eslint-disable-next-line unicorn/no-useless-undefined -- Preventing new debug logs when looking at debug logs
-    formatNewValueDebugLog: () => undefined,
+    formatNewValueDebugLog: () => undefined, // Prevent new debug logs when looking at debug logs
     hookNameForDebugging: "useLogRecordCount",
   },
 );
@@ -60,8 +59,7 @@ const useLogRecords = createPollableValueHook(
   (lastPollVersion, lowestLogLevel: LowestLogLevel) =>
     loggingService.pollRecords(lastPollVersion, lowestLogLevel),
   {
-    // eslint-disable-next-line unicorn/no-useless-undefined -- Preventing new debug logs when looking at debug logs
-    formatNewValueDebugLog: () => undefined,
+    formatNewValueDebugLog: () => undefined, // Prevent new debug logs when looking at debug logs
     hookNameForDebugging: "useLogRecords",
     throttleInterval: 500,
   },
