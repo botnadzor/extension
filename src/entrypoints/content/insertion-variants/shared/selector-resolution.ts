@@ -1,7 +1,9 @@
 import type { Logger } from "@logtape/logtape";
 
 import type {
+  ElementCountSelector,
   ElementListSelector,
+  ElementPresenceSelector,
   ElementSelector,
   ImageUrlSelector,
   StringDataSelector,
@@ -54,6 +56,42 @@ export function resolveListSelector(
   return [...rootElement.querySelectorAll(selector)]
     .map((element) => (element instanceof HTMLElement ? element : undefined))
     .filter((element) => element !== undefined);
+}
+
+export function resolveElementCountSelector(
+  rootElement: HTMLElement,
+  elementCountSelector: ElementCountSelector,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- added for consistency with other resolvers
+  instanceLogger: Logger,
+): number {
+  for (const selector of ensureArray(elementCountSelector)) {
+    const list = resolveListSelector(
+      rootElement,
+      typeof selector === "string" ? { selector } : selector,
+    );
+
+    if (!list?.length) {
+      continue;
+    }
+
+    return list.length;
+  }
+
+  return 0;
+}
+
+export function resolveElementPresenceSelector(
+  rootElement: HTMLElement,
+  elementPresenceSelector: ElementPresenceSelector,
+  instanceLogger: Logger,
+): boolean {
+  return (
+    resolveElementCountSelector(
+      rootElement,
+      elementPresenceSelector,
+      instanceLogger,
+    ) > 0
+  );
 }
 
 const regExpCache = new Map<ValuePattern, RegExp | Error>();
