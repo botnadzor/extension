@@ -1479,6 +1479,8 @@ export default [
           selector: "",
           reactProp: "GProvider:replyCommentId",
         },
+        attachedItemCount: "[data-testid='comment-input-attachments']>*",
+        newAttachmentButtonPresence: "[data-testid='show-attach-dropdown']",
       },
       edits: [],
       ui: {
@@ -1512,6 +1514,10 @@ export default [
             attribute: "href",
           },
         },
+        // cspell:ignore medadd_c_linkcon
+        attachedItemCount: ".page_preview_photo_wrap,.medadd_c_linkcon",
+        newAttachmentButtonPresence:
+          ".page_add_media:not([style*='display: none'])",
       },
       edits: [],
       ui: {

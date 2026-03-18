@@ -1,7 +1,9 @@
 import { z } from "zod/mini";
 
 import {
+  elementCountSelectorSchema,
   elementPlacementSchema,
+  elementPresenceSelectorSchema,
   markupEditSchema,
   stringDataSelectorSchema,
 } from "./shared/primitives";
@@ -15,6 +17,8 @@ export const replyFormInsertionConfigSchema = createInsertionConfigSchema(
         data: z.readonly(
           z.object({
             accountIdentifier: stringDataSelectorSchema,
+            attachedItemCount: elementCountSelectorSchema,
+            newAttachmentButtonPresence: elementPresenceSelectorSchema,
           }),
         ),
         edits: z.readonly(z.array(markupEditSchema)),

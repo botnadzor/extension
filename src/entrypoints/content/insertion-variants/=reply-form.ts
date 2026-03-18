@@ -13,55 +13,13 @@ import { extractAccountIdentifierFromMarkup } from "./shared/@markup-data/accoun
 import { createActionUi } from "./shared/@markup-ui/action-bar";
 import { createInsertionUi } from "./shared/@markup-ui/helpers";
 import { applyMarkupEdits } from "./shared/markup-edits";
+import {
+  resolveElementCountSelector,
+  resolveElementPresenceSelector,
+} from "./shared/selector-resolution";
 
-function waitForImgInsertion(
-  target: Node,
-  timeoutMs: number,
-  callback: () => void,
-): () => void {
-  let done = false;
-  // eslint-disable-next-line prefer-const -- must be `let` to allow reference in settle()
-  let observer: MutationObserver;
-  // eslint-disable-next-line prefer-const -- must be `let` to allow reference in settle()
-  let timeoutId: ReturnType<typeof setTimeout>;
-
-  function settle() {
-    if (done) {
-      return;
-    }
-    done = true;
-    clearTimeout(timeoutId);
-    observer.disconnect();
-    callback();
-  }
-
-  observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        if (
-          node instanceof HTMLImageElement ||
-          (node instanceof HTMLElement && node.querySelector("img"))
-        ) {
-          settle();
-
-          return;
-        }
-      }
-    }
-  });
-
-  observer.observe(target, { childList: true, subtree: true });
-  timeoutId = setTimeout(settle, timeoutMs);
-
-  return () => {
-    if (done) {
-      return;
-    }
-    done = true;
-    clearTimeout(timeoutId);
-    observer.disconnect();
-  };
-}
+const attachTimeoutMs = 8000;
+const markupRevalidationDebounceMs = 100;
 
 // VK's paste handler may convert spaces to &nbsp; (\u00A0).
 // Normalize both so substring search matches regardless.
@@ -121,11 +79,22 @@ export type ReplyInnerData = Record<string, never>;
 
 type ReplyMarkupData = {
   accountIdentifier?: AccountIdentifier;
+  attachedItemCount: number;
+  newAttachmentButtonPresence: boolean;
 };
 
 type ReplyServiceData = {
   accountAffiliation?: AccountAffiliation;
   frontendBaseUrl?: string;
+};
+
+type AttachSession = {
+  contentEditable: HTMLElement;
+  initialAttachedItemCount: number;
+  pastedContent: string;
+  restoreContentEditableStyles: () => void;
+  targetAccountIdentifierKey?: string;
+  timeoutId: ReturnType<typeof setTimeout>;
 };
 
 export default defineInsertionVariant<
@@ -145,7 +114,23 @@ export default defineInsertionVariant<
 
     const accountIdentifier = await accountIdentifierPromise;
 
-    return omitUndefined({ accountIdentifier });
+    const attachedItemCount = resolveElementCountSelector(
+      rootElement,
+      config.markup.data.attachedItemCount,
+      instanceLogger,
+    );
+
+    const newAttachmentButtonPresence = resolveElementPresenceSelector(
+      rootElement,
+      config.markup.data.newAttachmentButtonPresence,
+      instanceLogger,
+    );
+
+    return omitUndefined({
+      accountIdentifier,
+      attachedItemCount,
+      newAttachmentButtonPresence,
+    });
   },
 
   getServiceData: async ({
@@ -170,8 +155,14 @@ export default defineInsertionVariant<
       config.markup.edits,
     );
 
+    let revalidateMarkupDataTimeoutId:
+      | ReturnType<typeof setTimeout>
+      | undefined;
     const observer = new MutationObserver(() => {
-      revalidateMarkupData();
+      clearTimeout(revalidateMarkupDataTimeoutId);
+      revalidateMarkupDataTimeoutId = setTimeout(() => {
+        revalidateMarkupData();
+      }, markupRevalidationDebounceMs);
     });
 
     observer.observe(rootElement, {
@@ -180,15 +171,15 @@ export default defineInsertionVariant<
       subtree: true,
     });
 
-    const bnCardAttachmentButtonContainer = createInsertionUi({
+    // createActionUi() does not support placement, so needs a wrapper element
+    const bnCardAttachmentButtonWrapper = createInsertionUi({
       dxLabel: "bnCardAttachmentButton",
       placement: config.markup.ui.bnCardAttachmentButton,
       rootElement,
       tagName: "div",
     });
 
-    // TODO: Use one element instead of two (update createActionUi API)
-    const button = createActionUi({
+    const bnCardAttachmentButton = createActionUi({
       className: cn(`
         bn:size-[20px] bn:border-none bn:bg-transparent bn:px-[0px]
         bn:text-[#994168] bn:opacity-80!
@@ -199,36 +190,99 @@ export default defineInsertionVariant<
       tooltipDirection: "down",
     });
 
-    bnCardAttachmentButtonContainer.element?.append(button.element);
+    bnCardAttachmentButtonWrapper.element?.append(
+      bnCardAttachmentButton.element,
+    );
 
     let lastAccountIdentifier: AccountIdentifier | undefined;
+    let lastAccountAffiliation: AccountAffiliation | undefined;
+    let lastAttachedItemCount = 0;
     let lastFrontendBaseUrl: string | undefined;
-    let attaching = false;
-    let abortAttaching: (() => void) | undefined;
+    let lastNewAttachmentButtonPresence = false;
+    let attachSession: AttachSession | undefined;
+
+    function getAccountIdentifierKey(
+      accountIdentifier: AccountIdentifier | undefined,
+    ): string | undefined {
+      return accountIdentifier
+        ? stringifyAccountIdentifier(accountIdentifier)
+        : undefined;
+    }
+
+    function renderBnCardAttachmentButton() {
+      if (attachSession) {
+        bnCardAttachmentButton.render({
+          ariaLabel: "Карточка добавляется...",
+          icon: "loaderCircle",
+          iconClassName: cn("bn:animate-spin bn:cursor-default"),
+          tooltip: false,
+        });
+      } else {
+        bnCardAttachmentButton.render({
+          ariaLabel: "Вы отвечаете боту, добавить его карточку?",
+          icon: "userPlus",
+          tooltip: true,
+        });
+      }
+
+      if (bnCardAttachmentButtonWrapper.element) {
+        bnCardAttachmentButtonWrapper.element.hidden = !(
+          lastAccountAffiliation?.botnadzorCard &&
+          lastNewAttachmentButtonPresence
+        );
+      }
+    }
+
+    function finishAttaching(mode: "abort" | "success" | "timeout") {
+      const currentAttachSession = attachSession;
+      if (!currentAttachSession) {
+        return;
+      }
+
+      attachSession = undefined;
+      clearTimeout(currentAttachSession.timeoutId);
+
+      if (mode === "success") {
+        currentAttachSession.contentEditable.focus();
+        document.execCommand("undo");
+      } else {
+        // Avoid undo for abort/timeout because unrelated VK edits may have
+        // already changed the native undo stack.
+        removeSubstringFromContentEditable(
+          currentAttachSession.contentEditable,
+          currentAttachSession.pastedContent,
+        );
+      }
+
+      currentAttachSession.restoreContentEditableStyles();
+    }
 
     /*
      * Card attachment strategy
      * ------------------------
      *
-     * VK detects URLs pasted into the contenteditable and auto-attaches an OG
-     * image card. We exploit this by programmatically pasting the card URL,
-     * observing rootElement for <img> insertion (VK adds a preview image
-     * once its API response arrives), then using execCommand('undo') to remove
-     * the URL text from the input. VK verifies the URL is still in the CE
-     * after its API response, so we must keep it until the attachment appears.
-     * The undo goes through the browser's native editing pipeline, so VK's
-     * React state stays in sync (unlike direct DOM manipulation). The
-     * attachment is decoupled from the text content and persists after the
-     * undo. During the wait, the CE text is hidden via transparent color +
-     * height lock to prevent visual flash / layout shift, and the button
-     * shows a loading spinner.
+     * VK detects URLs pasted into the contenteditable and auto-attaches an image
+     * with card. We exploit this by programmatically pasting the card URL and
+     * then waiting for the regular markup revalidation cycle to report either a
+     * new attachment image or the disappearance of VK's native attach button.
+     * Once either signal appears, we use execCommand('undo') to remove the URL
+     * text from the input. VK verifies the URL is still in the CE after its API
+     * response, so we must keep it until the attachment appears. The undo goes
+     * through the browser's native editing pipeline, so VK's React state stays
+     * in sync (unlike direct DOM manipulation). During the wait, the CE text is
+     * hidden via transparent color + height lock to prevent visual flash /
+     * layout shift, and the button shows a loading spinner.
      */
     function handleButtonClick() {
-      if (!lastAccountIdentifier || !lastFrontendBaseUrl) {
+      if (
+        !lastAccountIdentifier ||
+        !lastFrontendBaseUrl ||
+        !lastNewAttachmentButtonPresence
+      ) {
         return;
       }
 
-      if (attaching) {
+      if (attachSession) {
         return;
       }
 
@@ -243,38 +297,30 @@ export default defineInsertionVariant<
       if (!contentEditable) {
         return;
       }
-
-      attaching = true;
-
-      // Show loading state on the button
-      button.render({
-        ariaLabel: "Карточка добавляется...",
-        icon: "loaderCircle",
-        iconClassName: cn("bn:animate-spin bn:cursor-default"),
-        tooltip: false,
-      });
+      const contentEditableElement = contentEditable;
 
       // Hide the URL text visually while keeping the CE functional for VK's
       // paste handler. Lock height to prevent layout shift from the long URL.
       // Disable pointer events to prevent user interaction during the cycle.
-      const savedColor = contentEditable.style.color;
-      const savedHeight = contentEditable.style.height;
-      const savedMaxHeight = contentEditable.style.maxHeight;
-      const savedOverflow = contentEditable.style.overflow;
-      const savedPointerEvents = contentEditable.style.pointerEvents;
-      const currentHeight = contentEditable.getBoundingClientRect().height;
-      contentEditable.style.color = "transparent";
-      contentEditable.style.height = `${currentHeight}px`;
-      contentEditable.style.maxHeight = `${currentHeight}px`;
-      contentEditable.style.overflow = "hidden";
-      contentEditable.style.pointerEvents = "none";
+      const savedColor = contentEditableElement.style.color;
+      const savedHeight = contentEditableElement.style.height;
+      const savedMaxHeight = contentEditableElement.style.maxHeight;
+      const savedOverflow = contentEditableElement.style.overflow;
+      const savedPointerEvents = contentEditableElement.style.pointerEvents;
+      const currentHeight =
+        contentEditableElement.getBoundingClientRect().height;
+      contentEditableElement.style.color = "transparent";
+      contentEditableElement.style.height = `${currentHeight}px`;
+      contentEditableElement.style.maxHeight = `${currentHeight}px`;
+      contentEditableElement.style.overflow = "hidden";
+      contentEditableElement.style.pointerEvents = "none";
 
       // Paste the card link to trigger VK's URL attachment mechanism.
       const pastedContent = ` ${cardUrl} `;
       const dataTransfer = new DataTransfer();
       dataTransfer.setData("text/plain", pastedContent);
-      contentEditable.focus();
-      contentEditable.dispatchEvent(
+      contentEditableElement.focus();
+      contentEditableElement.dispatchEvent(
         new ClipboardEvent("paste", {
           clipboardData: dataTransfer,
           bubbles: true,
@@ -283,79 +329,75 @@ export default defineInsertionVariant<
       );
 
       function restoreContentEditableStyles() {
-        if (!contentEditable) {
-          return;
-        }
-        contentEditable.style.color = savedColor;
-        contentEditable.style.height = savedHeight;
-        contentEditable.style.maxHeight = savedMaxHeight;
-        contentEditable.style.overflow = savedOverflow;
-        contentEditable.style.pointerEvents = savedPointerEvents;
+        contentEditableElement.style.color = savedColor;
+        contentEditableElement.style.height = savedHeight;
+        contentEditableElement.style.maxHeight = savedMaxHeight;
+        contentEditableElement.style.overflow = savedOverflow;
+        contentEditableElement.style.pointerEvents = savedPointerEvents;
       }
 
-      // Wait for VK to create the attachment (indicated by a new <img> in
-      // rootElement), then undo the pasted URL text. VK verifies the URL is
-      // still in the CE after its API response, so we must keep it until the
-      // attachment appears. Max wait: 10s.
-      const cancelImgWait = waitForImgInsertion(rootElement, 10_000, () => {
-        contentEditable.focus();
-        document.execCommand("undo");
-        restoreContentEditableStyles();
-
-        // Restore button state (not hiding the button in case if we need to re-try)
-        attaching = false;
-        abortAttaching = undefined;
-        button.render({
-          ariaLabel: "Вы отвечаете боту, добавить его карточку?",
-          icon: "userPlus",
-          tooltip: true,
-        });
-      });
-
-      abortAttaching = () => {
-        cancelImgWait();
-
-        // Remove the pasted URL from the CE text. We can't use
-        // execCommand('undo') here because VK may have pushed additional
-        // edits onto the undo stack (e.g. name swap on reply target change).
-        removeSubstringFromContentEditable(contentEditable, pastedContent);
-
-        restoreContentEditableStyles();
-        attaching = false;
-        abortAttaching = undefined;
+      const targetAccountIdentifierKey = getAccountIdentifierKey(
+        lastAccountIdentifier,
+      );
+      attachSession = {
+        contentEditable: contentEditableElement,
+        initialAttachedItemCount: lastAttachedItemCount,
+        pastedContent,
+        restoreContentEditableStyles,
+        ...(targetAccountIdentifierKey ? { targetAccountIdentifierKey } : {}),
+        timeoutId: setTimeout(() => {
+          finishAttaching("timeout");
+          renderBnCardAttachmentButton();
+        }, attachTimeoutMs),
       };
+
+      renderBnCardAttachmentButton();
     }
 
-    button.element.addEventListener("click", handleButtonClick);
+    bnCardAttachmentButton.element.addEventListener("click", handleButtonClick);
 
     return {
       render: ({
-        markupData: { accountIdentifier },
+        markupData: {
+          accountIdentifier,
+          attachedItemCount,
+          newAttachmentButtonPresence,
+        },
         serviceData: { accountAffiliation, frontendBaseUrl },
       }) => {
-        if (!bnCardAttachmentButtonContainer.element) {
+        if (!bnCardAttachmentButtonWrapper.element) {
           return;
         }
 
-        // If a card attachment is in progress, abort it — the reply target
-        // changed, so the undo stack no longer matches our pasted URL.
-        abortAttaching?.();
+        if (
+          attachSession &&
+          attachSession.targetAccountIdentifierKey !==
+            getAccountIdentifierKey(accountIdentifier)
+        ) {
+          finishAttaching("abort");
+        }
 
         lastAccountIdentifier = accountIdentifier;
+        lastAccountAffiliation = accountAffiliation;
+        lastAttachedItemCount = attachedItemCount;
         lastFrontendBaseUrl = frontendBaseUrl;
+        lastNewAttachmentButtonPresence = newAttachmentButtonPresence;
 
-        button.render({
-          ariaLabel: "Вы отвечаете боту, добавить его карточку?",
-          icon: "userPlus",
-          tooltip: true,
-        });
+        if (
+          attachSession &&
+          (attachedItemCount > attachSession.initialAttachedItemCount ||
+            !newAttachmentButtonPresence)
+        ) {
+          finishAttaching("success");
+        }
 
-        bnCardAttachmentButtonContainer.element.hidden =
-          accountAffiliation?.botnadzorCard ? false : true;
+        renderBnCardAttachmentButton();
       },
 
       unmount: () => {
-        bnCardAttachmentButtonContainer.element?.remove();
+        finishAttaching("abort");
+        clearTimeout(revalidateMarkupDataTimeoutId);
+        bnCardAttachmentButtonWrapper.element?.remove();
         observer.disconnect();
         cleanupMarkupEdits();
       },

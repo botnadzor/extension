@@ -57,6 +57,27 @@ function allowMultiple<Schema extends z.ZodMiniType>(schema: Schema) {
   return z.union([schema, z.readonly(z.array(schema))]);
 }
 
+const singleElementCountSelectorSchema = z.union([
+  elementListSelectorSchema,
+  z.readonly(
+    z.object({
+      selector: elementListSelectorSchema,
+    }),
+  ),
+]);
+export const elementCountSelectorSchema = allowMultiple(
+  singleElementCountSelectorSchema,
+);
+export type ElementCountSelector = z.infer<typeof elementCountSelectorSchema>;
+
+const singleElementPresenceSelectorSchema = singleElementCountSelectorSchema;
+export const elementPresenceSelectorSchema = allowMultiple(
+  singleElementPresenceSelectorSchema,
+);
+export type ElementPresenceSelector = z.infer<
+  typeof elementPresenceSelectorSchema
+>;
+
 const singleImageUrlSelectorSchema = z.union([
   elementSelectorSchema,
   z.readonly(
@@ -172,6 +193,7 @@ type AssertInputAssignable = InferredInput extends StringDataSelectorInput
     ? true
     : "StringDataSelectorInput is wider than schema input"
   : "Schema input is wider than StringDataSelectorInput";
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- compile-time only
 type AssertSync = [AssertOutputAssignable & true, AssertInputAssignable & true];
 
