@@ -84,7 +84,7 @@
     "@orpc/zod": "1.13.7",
     "@rolldown/plugin-babel": "0.2.1",
     "@stylistic/eslint-plugin": "5.10.0",
-    "@tailwindcss/vite": "0.0.0-insiders.f302fce",
+    "@tailwindcss/vite": "4.2.1",
     "@tsconfig/node-ts": "23.6.4",
     "@tsconfig/node24": "24.0.4",
     "@tsconfig/strictest": "2.0.8",
