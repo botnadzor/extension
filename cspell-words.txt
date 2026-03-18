@@ -7,6 +7,7 @@ cnt
 contenteditable
 cva
 cyrillic
+DBG
 dexie
 elif
 env
@@ -59,6 +60,7 @@ vkontakte
 vkui
 vkvideo
 webext-core
+WRN
 wxt
 Ботнадзор
 Ботнадзора

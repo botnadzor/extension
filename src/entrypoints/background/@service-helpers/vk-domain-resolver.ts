@@ -1,7 +1,7 @@
 import { delay } from "es-toolkit";
 import { LRUCache } from "lru-cache";
 
-import { getBackgroundLogger } from "@/shared/@logging/core";
+import { getBackgroundLogger } from "@/shared/@logging/categories";
 import {
   interpretVkDomain,
   type VkDomain,

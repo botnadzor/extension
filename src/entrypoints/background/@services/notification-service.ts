@@ -3,7 +3,7 @@ import { produce, type Producer } from "immer";
 import type { WritableDeep } from "type-fest";
 import { z } from "zod/mini";
 
-import { getBackgroundLogger } from "@/shared/@logging/core";
+import { getBackgroundLogger } from "@/shared/@logging/categories";
 import {
   type TriggeredNotification,
   type TriggeredNotificationPayload,

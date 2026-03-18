@@ -7,6 +7,7 @@ import type { DxConfigService } from "../entrypoints/background/@services/dx-con
 import type { ExtensionVersionService } from "../entrypoints/background/@services/extension-version-service";
 import type { FrontendService } from "../entrypoints/background/@services/frontend-service";
 import type { InspectorService } from "../entrypoints/background/@services/inspector-service";
+import type { LoggingService } from "../entrypoints/background/@services/logging-service";
 import type { NotificationService } from "../entrypoints/background/@services/notification-service";
 import type { PopupService } from "../entrypoints/background/@services/popup-service";
 import type { RegDateService } from "../entrypoints/background/@services/reg-date-service";
@@ -33,6 +34,9 @@ export const frontendServiceKey: ProxyServiceKey<FrontendService> =
 
 export const inspectorServiceKey: ProxyServiceKey<InspectorService> =
   "inspector-service";
+
+export const loggingServiceKey: ProxyServiceKey<LoggingService> =
+  "logging-service";
 
 export const notificationServiceKey: ProxyServiceKey<NotificationService> =
   "notification-service";

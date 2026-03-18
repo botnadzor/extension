@@ -1,18 +1,31 @@
+import { dispose } from "@logtape/logtape";
 import * as React from "react";
 import * as ReactDOM from "react-dom/client";
 import { browser } from "wxt/browser";
 
-import { configureLogging, getSidepanelLogger } from "@/shared/@logging/core";
-import { LoggerProvider } from "@/shared/@logging/react";
+import { getSidepanelLogger } from "@/shared/@logging/categories";
+import { setupGlobalCatchAllLogging } from "@/shared/@logging/global-catch-all";
+import { EntrypointLoggerProvider } from "@/shared/@logging/react";
+import { setupLogging } from "@/shared/@logging/setup";
 import { LogoLink } from "@/shared/@ui-primitives/logo";
 import { TooltipProvider } from "@/shared/@ui-primitives/tooltip";
+import { loggingService } from "@/shared/proxy-services";
 
 import { SidepanelMain } from "./app/main";
 
 const logger = getSidepanelLogger();
 
 function startSidepanelApp() {
-  configureLogging();
+  setupLogging(loggingService);
+  setupGlobalCatchAllLogging({ logger });
+
+  window.addEventListener(
+    "pagehide",
+    () => {
+      void dispose();
+    },
+    { once: true },
+  );
 
   logger.debug("Starting sidepanel entrypoint {runtimeId}", {
     runtimeId: browser.runtime.id,
@@ -37,7 +50,7 @@ function startSidepanelApp() {
 
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <LoggerProvider value={logger}>
+      <EntrypointLoggerProvider value={logger}>
         <TooltipProvider>
           <div className="absolute inset-0 flex flex-col text-sm">
             <header className="flex flex-0 flex-row items-center gap-2 p-4 pb-2">
@@ -50,7 +63,7 @@ function startSidepanelApp() {
             <SidepanelMain />
           </div>
         </TooltipProvider>
-      </LoggerProvider>
+      </EntrypointLoggerProvider>
     </React.StrictMode>,
   );
 }

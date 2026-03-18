@@ -1,4 +1,4 @@
-import { getBackgroundLogger } from "@/shared/@logging/core";
+import { getBackgroundLogger } from "@/shared/@logging/categories";
 import type { PollResult, PollVersion } from "@/shared/@pollable/core";
 
 import type {

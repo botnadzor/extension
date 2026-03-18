@@ -1,6 +1,6 @@
 import { produce } from "immer";
 
-import { getBackgroundLogger } from "@/shared/@logging/core";
+import { getBackgroundLogger } from "@/shared/@logging/categories";
 import {
   Pollable,
   type PollResult,

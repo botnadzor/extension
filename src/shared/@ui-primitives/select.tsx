@@ -83,7 +83,11 @@ function SelectScrollUpButton({
     <SelectPrimitive.ScrollUpArrow
       data-slot="select-scroll-up-button"
       className={cn(
-        "flex cursor-default items-center justify-center py-1",
+        `
+          top-0 z-999999 flex w-full cursor-default items-center justify-center
+          bg-popover py-1
+          [&_svg:not([class*='size-'])]:size-4
+        `,
         className,
       )}
       {...props}

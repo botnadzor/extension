@@ -1,7 +1,7 @@
 import { isEqual } from "es-toolkit";
 import { z } from "zod/mini";
 
-import { getBackgroundLogger } from "@/shared/@logging/core";
+import { getBackgroundLogger } from "@/shared/@logging/categories";
 import type { AuthInput } from "@/shared/@model/auth";
 import {
   defaultUserConfig,

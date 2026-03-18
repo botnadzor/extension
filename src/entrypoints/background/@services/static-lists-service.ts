@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import type { Writable, WritableDeep } from "type-fest";
 import type { z } from "zod/mini";
 
-import { getBackgroundLogger } from "@/shared/@logging/core";
+import { getBackgroundLogger } from "@/shared/@logging/categories";
 import type {
   StaticListCombiningMode,
   StaticListDefinition,

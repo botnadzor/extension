@@ -1,6 +1,6 @@
 import { delay } from "es-toolkit";
 
-import { getBackgroundLogger } from "@/shared/@logging/core";
+import { getBackgroundLogger } from "@/shared/@logging/categories";
 import {
   type AuthCheck,
   type AuthInput,
@@ -45,6 +45,25 @@ const defaultAuthInput: AuthInput = {
   accessCode: "",
   accessCodeEnteredAt: isoDateTimeSchema.parse(new Date(0)),
 };
+
+function isProblemOutcome(
+  value: unknown,
+): value is { problem: true; type: string; description: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "problem" in value &&
+    value.problem === true &&
+    "type" in value &&
+    typeof value.type === "string" &&
+    "description" in value &&
+    typeof value.description === "string"
+  );
+}
+
+function hasBody(value: unknown): value is { body: unknown } {
+  return typeof value === "object" && value !== null && "body" in value;
+}
 
 export class AuthService {
   private aliasManagerForDynamicApi: AliasManager;
@@ -239,7 +258,33 @@ export class AuthService {
       } satisfies ContractProblem;
     }
 
-    // @ts-expect-error -- orpcClient returns a union of all methods, but the data belongs to a single method
+    if (!hasBody(data)) {
+      logger.error(
+        "Failed to fetch from dynamic API: missing body in ORPC response for {method}",
+        { data, method },
+      );
+
+      return {
+        problem: true,
+        type: "bn:ext:local:contract-error",
+        description: "Missing response body",
+      } satisfies ContractProblem;
+    }
+
+    const body: unknown = data.body;
+
+    if (isProblemOutcome(body)) {
+      logger.warn(
+        "Dynamic API returned problem for {method}: {type} {description}",
+        {
+          description: body.description,
+          method,
+          outcome: body,
+          type: body.type,
+        },
+      );
+    }
+
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- orpcClient returns a union of all methods, but the data belongs to a single method
     return data.body as DynamicApiEndpointOutput<Method>;
   }

@@ -22,35 +22,40 @@ function Tabs({ activeTab }: { activeTab?: PopupTab | undefined }) {
   return (
     <nav className="flex flex-1 flex-col pr-1">
       {popupTabs.map((tab) => {
-        const { tabLabel: label, TabWrapper = React.Fragment } =
-          popupTabDefinitionLookup[tab];
+        const { tabLabel: label, TabWrapper } = popupTabDefinitionLookup[tab];
 
-        return (
-          <TabWrapper key={tab} active={activeTab === tab}>
-            <button
-              type="button"
-              data-tab={tab}
-              onClick={handleTabClick}
-              className="group py-1.5 pl-3 text-left text-foreground u-no-ring"
-            >
-              <span
-                className={cn(
+        const children = (
+          <button
+            type="button"
+            data-tab={tab}
+            onClick={handleTabClick}
+            className="group py-1.5 pl-3 text-left text-foreground u-no-ring"
+          >
+            <span
+              className={cn(
+                `
+                  block border-l-2 border-primary py-1 pl-2 text-sm
+                  u-ring-in-group transition-all duration-200
+                  group-focus-visible:rounded-xs
+                `,
+                activeTab !== tab &&
                   `
-                    block border-l-2 border-primary py-1 pl-2 text-sm
-                    u-ring-in-group transition-all duration-200
-                    group-focus-visible:rounded-xs
+                    border-primary/30 text-muted-foreground
+                    group-hover:border-primary/70 group-hover:text-foreground
                   `,
-                  activeTab !== tab &&
-                    `
-                      border-primary/30 text-muted-foreground
-                      group-hover:border-primary/70 group-hover:text-foreground
-                    `,
-                )}
-              >
-                {label}
-              </span>
-            </button>
+              )}
+            >
+              {label}
+            </span>
+          </button>
+        );
+
+        return TabWrapper ? (
+          <TabWrapper key={tab} active={activeTab === tab}>
+            {children}
           </TabWrapper>
+        ) : (
+          <React.Fragment key={tab}>{children}</React.Fragment>
         );
       })}
     </nav>

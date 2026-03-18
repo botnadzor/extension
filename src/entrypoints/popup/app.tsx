@@ -1,10 +1,14 @@
+import { dispose } from "@logtape/logtape";
 import * as React from "react";
 import * as ReactDOM from "react-dom/client";
 import { browser } from "wxt/browser";
 
-import { configureLogging, getPopupLogger } from "@/shared/@logging/core";
-import { LoggerProvider } from "@/shared/@logging/react";
+import { getPopupLogger } from "@/shared/@logging/categories";
+import { setupGlobalCatchAllLogging } from "@/shared/@logging/global-catch-all";
+import { EntrypointLoggerProvider } from "@/shared/@logging/react";
+import { setupLogging } from "@/shared/@logging/setup";
 import { TooltipProvider } from "@/shared/@ui-primitives/tooltip";
+import { loggingService } from "@/shared/proxy-services";
 
 import { ActiveTab } from "./app/active-tab";
 import { Header } from "./app/header";
@@ -13,7 +17,16 @@ import { Sidebar } from "./app/sidebar";
 const logger = getPopupLogger();
 
 function startPopupApp() {
-  configureLogging();
+  setupLogging(loggingService);
+  setupGlobalCatchAllLogging({ logger });
+
+  window.addEventListener(
+    "pagehide",
+    () => {
+      void dispose();
+    },
+    { once: true },
+  );
 
   logger.debug("Starting popup entrypoint {runtimeId}", {
     runtimeId: browser.runtime.id,
@@ -38,7 +51,7 @@ function startPopupApp() {
 
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <LoggerProvider value={logger}>
+      <EntrypointLoggerProvider value={logger}>
         <TooltipProvider>
           <div className="absolute inset-0 flex flex-col">
             <Header />
@@ -48,7 +61,7 @@ function startPopupApp() {
             </div>
           </div>
         </TooltipProvider>
-      </LoggerProvider>
+      </EntrypointLoggerProvider>
     </React.StrictMode>,
   );
 }
