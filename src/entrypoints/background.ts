@@ -1,7 +1,10 @@
+import { dispose } from "@logtape/logtape";
 import { registerService } from "@webext-core/proxy-service";
 import { isEqual } from "es-toolkit";
 
-import { configureLogging, getBackgroundLogger } from "@/shared/@logging/core";
+import { getBackgroundLogger } from "@/shared/@logging/categories";
+import { setupGlobalCatchAllLogging } from "@/shared/@logging/global-catch-all";
+import { setupLogging } from "@/shared/@logging/setup";
 import { rootConfigSeed } from "@/shared/@model/root-config";
 import type { PollVersion } from "@/shared/@pollable/core";
 import {
@@ -12,6 +15,7 @@ import {
   extensionVersionServiceKey,
   frontendServiceKey,
   inspectorServiceKey,
+  loggingServiceKey,
   notificationServiceKey,
   popupServiceKey,
   regDateServiceKey,
@@ -31,6 +35,7 @@ import { ExtensionVersionService } from "./background/@services/extension-versio
 import { FrontendService } from "./background/@services/frontend-service";
 import { InspectorService } from "./background/@services/inspector-service";
 import { cleanupLegacyV1State } from "./background/@services/legacy-v1-migration-helpers";
+import { LoggingService } from "./background/@services/logging-service";
 import { NotificationService } from "./background/@services/notification-service";
 import { PopupService } from "./background/@services/popup-service";
 import { RegDateService } from "./background/@services/reg-date-service";
@@ -52,12 +57,14 @@ async function orchestrateAliasManagers({
   rootConfigService: RootConfigService;
 }) {
   self.addEventListener("offline", () => {
+    logger.info("Network status changed to offline");
     aliasManagerForDynamicApi.resetStatuses();
     aliasManagerForFrontend.resetStatuses();
     aliasManagerForStaticApi.resetStatuses();
   });
 
   self.addEventListener("online", () => {
+    logger.info("Network status changed to online");
     aliasManagerForDynamicApi.resetStatuses();
     aliasManagerForFrontend.resetStatuses();
     aliasManagerForStaticApi.resetStatuses();
@@ -110,7 +117,9 @@ async function populateInitialStaticListsIfNeeded({
 }
 
 export default defineBackground(() => {
-  configureLogging();
+  const loggingService = new LoggingService();
+  setupLogging(loggingService);
+  setupGlobalCatchAllLogging({ logger });
 
   logger.debug("Starting background entrypoint {runtimeId}", {
     runtimeId: browser.runtime.id,
@@ -194,6 +203,7 @@ export default defineBackground(() => {
   registerService(extensionVersionServiceKey, extensionVersionService);
   registerService(frontendServiceKey, frontendService);
   registerService(inspectorServiceKey, inspectorService);
+  registerService(loggingServiceKey, loggingService);
   registerService(notificationServiceKey, notificationService);
   registerService(popupServiceKey, popupService);
   registerService(regDateServiceKey, regDateService);
@@ -224,5 +234,6 @@ export default defineBackground(() => {
 
   browser.runtime.onSuspend.addListener(() => {
     void collectingService.persistRegisteredCommentsIfNeeded();
+    void dispose();
   });
 });

@@ -1,6 +1,6 @@
 import { delay } from "es-toolkit";
 
-import { getBackgroundLogger } from "@/shared/@logging/core";
+import { getBackgroundLogger } from "@/shared/@logging/categories";
 import {
   fallbackRootConfigSchema,
   type RootConfig,

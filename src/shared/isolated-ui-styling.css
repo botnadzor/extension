@@ -153,6 +153,23 @@ body {
     }
   }
 
+  --animate-blink: blink 1.2s ease-in-out 1;
+  @keyframes blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    16.67%,
+    50%,
+    83.33% {
+      opacity: 0.2;
+    }
+    33.33%,
+    66.67% {
+      opacity: 1;
+    }
+  }
+
   --animate-bounce: bounce 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
   @keyframes bounce {
     0%,

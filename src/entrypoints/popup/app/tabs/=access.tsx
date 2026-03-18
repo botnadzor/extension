@@ -100,7 +100,7 @@ function UnauthorizedForm({
             className={cn(
               `
                 flex h-9 w-full rounded-md border border-input bg-transparent
-                py-2 pr-9 pl-2 text-sm u-ring
+                py-2 pr-9 pl-2 text-sm shadow-xs u-ring
                 placeholder:text-muted-foreground/50
                 disabled:text-muted-foreground/50
               `,

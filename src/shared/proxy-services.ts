@@ -8,6 +8,7 @@ import {
   extensionVersionServiceKey,
   frontendServiceKey,
   inspectorServiceKey,
+  loggingServiceKey,
   notificationServiceKey,
   popupServiceKey,
   regDateServiceKey,
@@ -24,6 +25,7 @@ export const extensionVersionService = createProxyService(
 );
 export const frontendService = createProxyService(frontendServiceKey);
 export const inspectorService = createProxyService(inspectorServiceKey);
+export const loggingService = createProxyService(loggingServiceKey);
 export const notificationService = createProxyService(notificationServiceKey);
 export const popupService = createProxyService(popupServiceKey);
 export const regDateService = createProxyService(regDateServiceKey);

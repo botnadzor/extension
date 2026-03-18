@@ -2,7 +2,7 @@ import type { Logger } from "@logtape/logtape";
 import * as React from "react";
 import ReactDOM from "react-dom/client";
 
-import { LoggerProvider } from "@/shared/@logging/react";
+import { EntrypointLoggerProvider } from "@/shared/@logging/react";
 import type { ContentId } from "@/shared/@primitives/misc";
 import { useStaticListsAutoUpdate } from "@/shared/@ui-helpers/data-hooks";
 import { PortalContainer } from "@/shared/@ui-primitives/portal-container";
@@ -27,7 +27,7 @@ function InPageApp({
 
   return (
     <ContentIdContext value={contentId}>
-      <LoggerProvider value={contentLogger}>
+      <EntrypointLoggerProvider value={contentLogger}>
         <div
           className={cn("font-ubuntu", darkTheme ? "dark-theme" : undefined)}
         >
@@ -39,7 +39,7 @@ function InPageApp({
           </React.Suspense>
           <PortalContainer />
         </div>
-      </LoggerProvider>
+      </EntrypointLoggerProvider>
     </ContentIdContext>
   );
 }

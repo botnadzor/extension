@@ -1,7 +1,10 @@
-import { getLogger, type Logger } from "@logtape/logtape";
+import { dispose, type Logger } from "@logtape/logtape";
 
-import { configureLogging } from "@/shared/@logging/core";
+import { getContentLogger } from "@/shared/@logging/categories";
+import { setupGlobalCatchAllLogging } from "@/shared/@logging/global-catch-all";
+import { setupLogging } from "@/shared/@logging/setup";
 import { type ContentId, contentIdSchema } from "@/shared/@primitives/misc";
+import { loggingService } from "@/shared/proxy-services";
 import { browser, defineContentScript, getAppConfig } from "#imports";
 
 import { derivePageInfo } from "./content/derived-page-info";
@@ -13,11 +16,11 @@ import { startManagingInsertions } from "./content/insertion-management";
 function setupContentId(): { contentId: ContentId; contentLogger: Logger } {
   if (!getAppConfig().persistentContentIdEnabled) {
     const contentId = contentIdSchema.parse(undefined);
-    return { contentId, contentLogger: getLogger(["content", contentId]) };
+    return { contentId, contentLogger: getContentLogger(contentId) };
   }
 
   const contentId = contentIdSchema.parse(window.name);
-  const contentLogger = getLogger(["content", contentId]);
+  const contentLogger = getContentLogger(contentId);
 
   if (!window.name) {
     // If parent page does not define window.name (and thus does not rely on it),
@@ -51,14 +54,14 @@ export default defineContentScript({
   cssInjectionMode: "manual",
 
   async main(ctx) {
-    configureLogging();
-
-    getLogger(["content", "-" /* Content id is not available yet */]).debug(
+    setupLogging(loggingService);
+    getContentLogger(undefined /* Content id is not available yet */).debug(
       "Starting content entrypoint {runtimeId}",
       { runtimeId: browser.runtime.id },
     );
 
     const { contentId, contentLogger } = setupContentId();
+    setupGlobalCatchAllLogging({ logger: contentLogger });
 
     contentLogger.debug(
       "Loading content script with content id {contentId} for {url}",
@@ -87,5 +90,9 @@ export default defineContentScript({
     }
 
     await startInPageApp(contentId, contentLogger, ctx);
+
+    ctx.addEventListener(window, "beforeunload", () => {
+      void dispose();
+    });
   },
 });

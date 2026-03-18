@@ -4,42 +4,57 @@ import { cn } from "../tailwindcss-helpers";
 
 const bounceClassName = cn("animate-bounce");
 const bounceDuration = 800;
+const blinkClassName = cn("animate-blink");
+const blinkDuration = 1200;
 const shakeClassName = cn("animate-shake");
 const shakeDuration = 800;
 
-type AnimationVariant = "bounce" | "shake";
+type AnimationVariant = "blink" | "bounce" | "shake";
 
 export function useAnimate(): {
   animationClassName: string;
   animate: (variant: AnimationVariant) => void;
 } {
-  const [animationVariant, setAnimationVariant] = React.useState<
-    AnimationVariant | undefined
+  const [animation, setAnimation] = React.useState<
+    { variant: AnimationVariant; seq: number } | undefined
   >(undefined);
 
+  const seqRef = React.useRef(0);
+
   React.useEffect(() => {
-    if (!animationVariant) {
+    if (!animation) {
       return;
     }
 
     const timeout = setTimeout(
       () => {
-        setAnimationVariant(undefined);
+        setAnimation(undefined);
       },
-      animationVariant === "bounce" ? bounceDuration : shakeDuration,
+      animation.variant === "blink"
+        ? blinkDuration
+        : animation.variant === "bounce"
+          ? bounceDuration
+          : shakeDuration,
     );
 
     return () => {
       clearTimeout(timeout);
     };
-  }, [animationVariant]);
+  }, [animation]);
+
+  const animate = React.useCallback((variant: AnimationVariant) => {
+    seqRef.current += 1;
+    setAnimation({ variant, seq: seqRef.current });
+  }, []);
 
   return {
-    animationClassName: animationVariant
-      ? animationVariant === "bounce"
-        ? bounceClassName
-        : shakeClassName
+    animationClassName: animation
+      ? animation.variant === "blink"
+        ? blinkClassName
+        : animation.variant === "bounce"
+          ? bounceClassName
+          : shakeClassName
       : "",
-    animate: setAnimationVariant,
+    animate,
   };
 }

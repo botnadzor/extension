@@ -4,13 +4,27 @@ import { nanoid } from "nanoid";
 import * as React from "react";
 import type { JsonValue } from "type-fest";
 
-import { useLogger } from "../@logging/react";
+import { useEntrypointLogger } from "../@logging/react";
 import type { PollResult, PollVersion } from "./core";
 
 type UsePollableValue<
   Payload extends JsonValue | undefined = never,
   Result extends JsonValue | undefined = undefined,
 > = [Payload] extends [never] ? () => Result : (payload: Payload) => Result;
+
+type NewValueDebugLogPayload = Readonly<{
+  message: string;
+  properties: Record<string, unknown>;
+}>;
+
+type NewValueDebugLogFormatter<
+  Value extends JsonValue | undefined = undefined,
+> = (payload: {
+  lastPollVersion: PollVersion;
+  newPollResult: PollResult<Value>;
+  setterCount: number;
+  watcherId: string;
+}) => NewValueDebugLogPayload | undefined;
 
 const minStaleTimeout = 100;
 const payloadKeyForUndefined = "-";
@@ -45,10 +59,12 @@ export function createPollableValueHook<
     payload: Payload,
   ) => Promise<PollResult<Value>>,
   {
+    formatNewValueDebugLog,
     hookNameForDebugging,
     staleTimeout = 30_000,
     throttleInterval = 50,
   }: {
+    formatNewValueDebugLog?: NewValueDebugLogFormatter<Value> | undefined;
     hookNameForDebugging: string;
     /**
      * When all components that poll the same value are unmounted, the value becomes
@@ -114,16 +130,30 @@ export function createPollableValueHook<
         );
       }
 
-      logger.debug(
-        "Received new value {newValue} (version {lastPollVersion} -> {newPollVersion}), notified {setterCount} component(s) in watcher {watcherId}",
-        {
+      const newValueDebugLogPayload = formatNewValueDebugLog
+        ? formatNewValueDebugLog({
+            lastPollVersion,
+            newPollResult,
+            setterCount: latestRecord.setters.length,
+            watcherId,
+          })
+        : {
+            message:
+              "Received new value {newValue} (version {lastPollVersion} -> {newPollVersion}), notified {setterCount} component(s) in watcher {watcherId}",
+            properties: {
+              newValue: newPollResult.value,
+            },
+          };
+
+      if (newValueDebugLogPayload !== undefined) {
+        logger.debug(newValueDebugLogPayload.message, {
           lastPollVersion,
           newPollVersion: newPollResult.version,
-          newValue: newPollResult.value,
           setterCount: latestRecord.setters.length,
           watcherId,
-        },
-      );
+          ...newValueDebugLogPayload.properties,
+        });
+      }
     }
 
     logger.debug("Stopped watching payload with watcherId {watcherId}", {
@@ -132,7 +162,7 @@ export function createPollableValueHook<
   }
 
   function usePollableValue(payload: Payload): Value {
-    const parentLogger = useLogger();
+    const entrypointLogger = useEntrypointLogger();
 
     const payloadKey =
       payload === undefined ? payloadKeyForUndefined : JSON.stringify(payload);
@@ -140,7 +170,7 @@ export function createPollableValueHook<
     let recordInRender = payloadKeyRecordMap.get(payloadKey);
     if (!recordInRender) {
       recordInRender = {
-        logger: parentLogger.getChild([
+        logger: entrypointLogger.getChild([
           "pollable-value-hook",
           `${hookNameForDebugging}(${payloadKey === payloadKeyForUndefined ? "" : payloadKey})`,
         ]),
@@ -157,6 +187,16 @@ export function createPollableValueHook<
         : recordInRender.pollResult;
 
     const [value, setValue] = React.useState<Value>(initialPollResult.value);
+
+    // Reset value when payloadKey changes. useState's initial value is only
+    // used on mount, so without this the component would show the stale value
+    // from the previous payload key until the next poll cycle.
+    // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+    const [prevPayloadKey, setPrevPayloadKey] = React.useState(payloadKey);
+    if (prevPayloadKey !== payloadKey) {
+      setPrevPayloadKey(payloadKey);
+      setValue(initialPollResult.value);
+    }
 
     React.useEffect(() => {
       const initialRecordInEffect = payloadKeyRecordMap.get(payloadKey);

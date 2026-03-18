@@ -1,11 +1,15 @@
 import type { JsonValue } from "type-fest";
 
+import { getBackgroundLogger } from "@/shared/@logging/categories";
+
 import {
   type AliasManager,
   type AliasToUse,
   unavailableAliasReasons,
 } from "./alias-manager";
 import { fetchFromAlias } from "./fetch-from-alias";
+
+const logger = getBackgroundLogger(["fetch-from-remote-system"]);
 
 export const unavailableRemoteSystemReasons = [
   ...unavailableAliasReasons,
@@ -64,6 +68,10 @@ export async function fetchFromRemoteSystem({
 
     aliasManager.markAliasAsUnavailable(aliasToUse.baseUrl, fetchResult.reason);
   }
+
+  logger.warn("No alias available to fetch remote URL suffix {urlSuffix}", {
+    urlSuffix,
+  });
 
   return { success: false, reason: "noAliasToUse" };
 }
