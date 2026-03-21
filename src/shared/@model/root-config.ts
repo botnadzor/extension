@@ -1,3 +1,4 @@
+import { isJSONObject } from "es-toolkit";
 import { z } from "zod/mini";
 
 import { itemCountSchema } from "../@primitives/misc";
@@ -10,6 +11,38 @@ export const remoteSystemAliasLookupSchema = z.readonly(
   z.record(
     z.url(),
     z.readonly(z.object({ role: z.exactOptional(z.literal("primary")) })),
+  ),
+);
+
+const staticListLookupSchema = z.pipe(
+  // z.record(z.enum(), ...) or z.looseRecord(z.string(), ...) error on unknown list ids
+  // because they are not in the enum. This may create forwards compatibility issues
+  // (when we add a new list in the new version and try to read root config with old version).
+  // Added z.transform ensures that unknown lists are removed from the lookup.
+  // Related issue: https://github.com/colinhacks/zod/issues/5666
+  z.transform((input) => {
+    const result: Record<string, unknown> = {};
+    if (!isJSONObject(input)) {
+      return input;
+    }
+    for (const key of Object.keys(input)) {
+      // @ts-expect-error -- expected check of arbitrary string belonging to staticListIds
+      if (staticListIds.includes(key)) {
+        result[key] = input[key];
+      }
+    }
+    return result;
+  }),
+  z.readonly(
+    z.record(
+      z.enum(staticListIds),
+      z.readonly(
+        z.object({
+          generatedAt: isoDateTimeSchema,
+          itemCount: itemCountSchema,
+        }),
+      ),
+    ),
   ),
 );
 
@@ -34,17 +67,7 @@ export const rootConfigSchema = z.readonly(
         staticApi: z.readonly(
           z.object({
             aliasLookup: remoteSystemAliasLookupSchema,
-            listLookup: z.readonly(
-              z.record(
-                z.enum(staticListIds),
-                z.readonly(
-                  z.object({
-                    generatedAt: isoDateTimeSchema,
-                    itemCount: itemCountSchema,
-                  }),
-                ),
-              ),
-            ),
+            listLookup: staticListLookupSchema,
           }),
         ),
       }),
