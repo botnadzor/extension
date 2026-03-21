@@ -5,26 +5,19 @@
     "helpers:pinGitHubActionDigestsToSemver",
     ":dependencyDashboardApproval",
     ":disableDigestUpdates",
-    ":maintainLockFilesWeekly",
     ":semanticCommitsDisabled"
   ],
   "postUpdateOptions": ["pnpmDedupe"],
-  "prConcurrentLimit": 5,
+  "prConcurrentLimit": 1,
   "rangeStrategy": "pin",
   "timezone": "Etc/UTC",
   "packageRules": [
-    {
-      "enabled": true,
-      "groupName": "eslint",
-      "matchManagers": ["npm"],
-      "matchPackageNames": ["/eslint/"]
-    },
     {
       "autoApprove": true,
       "automerge": true,
       "dependencyDashboardApproval": false,
       "enabled": true,
-      "minimumReleaseAge": "2 days",
+      "minimumReleaseAge": "1 day",
       "matchPackageNames": ["/^pnpm$/"],
       "schedule": ["after 14:00 on Friday", "before 10:00 on Saturday"]
     },
@@ -36,7 +29,7 @@
       "matchUpdateTypes": ["patch"],
       "matchCurrentValue": "!/^0\\./",
       "matchManagers": ["npm"],
-      "minimumReleaseAge": "2 days",
+      "minimumReleaseAge": "1 day",
       "schedule": ["after 14:00 on Friday", "before 10:00 on Saturday"]
     },
     {
@@ -46,7 +39,7 @@
       "enabled": true,
       "matchDepTypes": ["devDependencies"],
       "matchManagers": ["npm"],
-      "minimumReleaseAge": "2 days",
+      "minimumReleaseAge": "1 day",
       "schedule": ["after 14:00 on Friday", "before 10:00 on Saturday"]
     },
     {
@@ -56,8 +49,17 @@
       "enabled": true,
       "matchManagers": ["npm"],
       "matchPackageNames": ["/^lucide-/"],
-      "minimumReleaseAge": "2 days",
+      "minimumReleaseAge": "1 day",
       "schedule": ["after 14:00 on Friday", "before 10:00 on Saturday"]
+    },
+    {
+      "autoApprove": true,
+      "automerge": true,
+      "dependencyDashboardApproval": false,
+      "enabled": true,
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "matchManagers": ["npm"],
+      "schedule": ["before 05:00 on Monday"]
     }
   ]
 }
