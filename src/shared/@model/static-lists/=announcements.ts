@@ -41,7 +41,7 @@ export const announcementListDefinition: StaticListDefinition<
   typeof storedAnnouncementListItemSchema,
   typeof announcementListSummarySchema
 > = {
-  dxSidepanelTab: { label: "Анонсы" },
+  dxSidepanelTab: { label: "Объявления" },
   receivedItemSchema: announcementListItemSchema,
   storedItemSchema: storedAnnouncementListItemSchema,
   mapReceivedToStored: ([
