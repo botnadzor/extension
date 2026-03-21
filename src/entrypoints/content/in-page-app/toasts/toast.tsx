@@ -38,8 +38,9 @@ export function Toast({
       className={cn(
         `
           dark-theme fixed inset-x-2.5 bottom-2.5 z-999999 rounded-lg
-          bg-background/85 p-4 text-foreground shadow-md backdrop-blur-xs
+          bg-background/95 p-4 text-foreground shadow-md backdrop-blur-xs
           sm:w-[320px]
+          dark:bg-background/90
         `,
         triggeredForTheFirstTime && "animate-in duration-100 fade-in zoom-in",
         animationClassName,

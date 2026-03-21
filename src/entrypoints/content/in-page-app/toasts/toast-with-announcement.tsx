@@ -24,7 +24,15 @@ export function ToastWithAnnouncement({
       <div className="-mt-1 pb-1 font-play text-xs text-muted-foreground">
         {formatDate(createdAt)}
       </div>
-      <Markdown baseURL={frontendBaseUrl} value={content} />
+      <div
+        className="
+          prose-sm
+          prose-ol:list-decimal prose-ol:pl-4
+          prose-ul:list-['–'] prose-ul:pl-2.5
+        "
+      >
+        <Markdown baseURL={frontendBaseUrl} value={content} />
+      </div>
     </Toast>
   );
 }

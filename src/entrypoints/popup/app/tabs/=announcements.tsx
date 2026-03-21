@@ -34,7 +34,9 @@ export function AnnouncementsTabBody() {
             <AccordionContent>
               <div
                 className="
-                  text-sm
+                  prose-sm
+                  prose-ol:list-decimal prose-ol:pl-4
+                  prose-ul:list-['–'] prose-ul:pl-2.5
                   [&_a]:u-link
                 "
               >

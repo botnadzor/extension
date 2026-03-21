@@ -28,7 +28,7 @@ export const popupTabDefinitionLookup: Record<PopupTab, PopupTabDefinition> = {
   },
   announcements: {
     Body: AnnouncementsTabBody,
-    tabLabel: "Уведомления",
+    tabLabel: "Объявления",
   },
   stats: {
     Body: StatsTabBody,
