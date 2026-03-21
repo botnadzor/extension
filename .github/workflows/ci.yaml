@@ -15,7 +15,7 @@ env:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-24.04
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-24.04' }}
     permissions:
       actions: write
       contents: read
@@ -151,7 +151,7 @@ jobs:
 
   lint-and-test:
     name: Lint and Test
-    runs-on: ubuntu-24.04
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-24.04' }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 

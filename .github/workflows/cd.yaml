@@ -11,7 +11,7 @@ on:
 jobs:
   release:
     name: Create Release Draft
-    runs-on: ubuntu-24.04
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-24.04' }}
     permissions:
       actions: read
       contents: write
