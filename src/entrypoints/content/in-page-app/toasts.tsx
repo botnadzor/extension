@@ -105,7 +105,7 @@ export function Toasts() {
     return (
       <React.Suspense>
         <ToastWithDataWarmup
-          onClose={() => {
+          onDone={() => {
             setDataWarmupToastNeeded(false);
           }}
         />
