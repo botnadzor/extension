@@ -161,6 +161,7 @@ export function createPollableValueHook<
     });
   }
 
+  // eslint-disable-next-line @eslint-react/component-hook-factories -- this utility intentionally creates reusable hooks from shared pollers
   function usePollableValue(payload: Payload): Value {
     const entrypointLogger = useEntrypointLogger();
 
