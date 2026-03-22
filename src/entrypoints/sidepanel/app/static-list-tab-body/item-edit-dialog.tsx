@@ -26,8 +26,20 @@ import { parsePastedContent } from "./item-edit-dialog/parse-pasted-content";
 
 export type ItemEditDialogMode =
   | { type: "add" }
-  | { type: "edit"; item: unknown; origin: StaticListItemOrigin }
-  | { type: "override"; item: unknown };
+  | {
+      type: "edit";
+      item: unknown;
+      origin: StaticListItemOrigin;
+      rowKey: string;
+    }
+  | {
+      type: "editRaw";
+      origin: Exclude<StaticListItemOrigin, "remote">;
+      rowKey: string;
+      sourceText: string;
+    }
+  | { type: "override"; item: unknown }
+  | { type: "viewRaw"; origin: "remote"; sourceText: string };
 
 export function ItemEditDialog({
   combiningMode,
@@ -43,38 +55,72 @@ export function ItemEditDialog({
   onSaved: () => void;
 }) {
   const listDefinition = staticListDefinitionLookup[listId];
-  const firstIndex = listDefinition.indexes[0];
-
   const initialJson =
-    mode.type === "add" ? "" : JSON.stringify(mode.item, undefined, 2);
+    mode.type === "add"
+      ? ""
+      : mode.type === "editRaw" || mode.type === "viewRaw"
+        ? mode.sourceText
+        : JSON.stringify(mode.item, undefined, 2);
 
   const [json, setJson] = React.useState(initialJson);
+  const [addMode, setAddMode] = React.useState<"typed" | "raw">("typed");
   const [error, setError] = React.useState<string | undefined>(undefined);
   const [saving, setSaving] = React.useState(false);
 
   const title =
     mode.type === "add"
       ? "Новая локальная запись"
-      : mode.type === "override"
-        ? "Запись с сервера"
-        : "Локальная запись";
+      : mode.type === "viewRaw"
+        ? "Невалидная запись с сервера"
+        : mode.type === "editRaw"
+          ? "Невалидная локальная запись"
+          : mode.type === "override"
+            ? "Запись с сервера"
+            : "Локальная запись";
+
+  const localRowKey =
+    mode.type === "edit" || mode.type === "editRaw" ? mode.rowKey : undefined;
 
   async function handleSave() {
     setError(undefined);
 
     if (mode.type === "add") {
-      const result = parsePastedContent(json, listDefinition);
-      if (!result.success) {
-        setError(result.error);
-        return;
-      }
       setSaving(true);
       try {
-        await Promise.all(
-          result.storedItems.map((item) =>
-            staticListsService.putLocalItem(listId, item),
-          ),
-        );
+        if (addMode === "typed") {
+          const result = parsePastedContent(json, listDefinition);
+          if (!result.success) {
+            setError(result.error);
+            setSaving(false);
+            return;
+          }
+
+          const saveResult = await staticListsService.putLocalItems(
+            listId,
+            result.interpretedItems,
+            { validate: true },
+          );
+          if (!saveResult.success) {
+            setError(saveResult.error);
+            setSaving(false);
+            return;
+          }
+        } else {
+          const lines = json
+            .split("\n")
+            .map((line) => line.trimEnd())
+            .filter((line) => line.trim() !== "");
+          const saveResult = await staticListsService.putLocalItems(
+            listId,
+            lines,
+            { validate: false },
+          );
+          if (!saveResult.success) {
+            setError(saveResult.error);
+            setSaving(false);
+            return;
+          }
+        }
         onSaved();
       } catch (saveError: unknown) {
         setError(
@@ -82,6 +128,32 @@ export function ItemEditDialog({
         );
         setSaving(false);
       }
+      return;
+    }
+
+    if (mode.type === "editRaw") {
+      setSaving(true);
+      try {
+        const saveResult = await staticListsService.putLocalItem(listId, json, {
+          rowKey: mode.rowKey,
+          validate: false,
+        });
+        if (!saveResult.success) {
+          setError(saveResult.error);
+          setSaving(false);
+          return;
+        }
+        onSaved();
+      } catch (saveError: unknown) {
+        setError(
+          saveError instanceof Error ? saveError.message : "Ошибка сохранения",
+        );
+        setSaving(false);
+      }
+      return;
+    }
+
+    if (mode.type === "viewRaw") {
       return;
     }
 
@@ -94,7 +166,7 @@ export function ItemEditDialog({
       return;
     }
 
-    const validation = listDefinition.storedItemSchema.safeParse(parsed);
+    const validation = listDefinition.interpretedItemSchema.safeParse(parsed);
     if (!validation.success) {
       setError(
         validation.error.issues
@@ -108,7 +180,19 @@ export function ItemEditDialog({
 
     setSaving(true);
     try {
-      await staticListsService.putLocalItem(listId, validation.data);
+      const saveResult = await staticListsService.putLocalItem(
+        listId,
+        validation.data,
+        {
+          validate: true,
+          ...(mode.type === "edit" ? { rowKey: mode.rowKey } : {}),
+        },
+      );
+      if (!saveResult.success) {
+        setError(saveResult.error);
+        setSaving(false);
+        return;
+      }
       onSaved();
     } catch (saveError: unknown) {
       setError(
@@ -119,26 +203,13 @@ export function ItemEditDialog({
   }
 
   async function handleDelete() {
-    if (mode.type === "add") {
+    if (localRowKey === undefined) {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- item is always a record from Dexie
-    const itemRecord = mode.item as Record<string, unknown>;
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- firstIndex is always a string key
-    const firstIndexKey = firstIndex as string;
-
     setSaving(true);
     try {
-      /* eslint-disable @typescript-eslint/consistent-type-assertions -- generic Index cannot be inferred from union StaticListId; runtime values are correct */
-      await (
-        staticListsService.removeLocalItem as (
-          listId: StaticListId,
-          index: string,
-          value: unknown,
-        ) => Promise<{ deletedCount: number }>
-      )(listId, firstIndexKey, itemRecord[firstIndexKey]);
-      /* eslint-enable @typescript-eslint/consistent-type-assertions -- re-enable after block above */
+      await staticListsService.removeLocalItem(listId, { rowKey: localRowKey });
       onSaved();
     } catch (deleteError: unknown) {
       setError(
@@ -149,7 +220,7 @@ export function ItemEditDialog({
   }
 
   const canDelete =
-    mode.type === "edit" &&
+    (mode.type === "edit" || mode.type === "editRaw") &&
     (mode.origin === "local" || mode.origin === "localOverride");
 
   return (
@@ -170,9 +241,12 @@ export function ItemEditDialog({
           className="flex-1 font-mono text-xs"
           placeholder={
             mode.type === "add"
-              ? "JSON, JSONL или содержимое .ts файла"
+              ? addMode === "typed"
+                ? "JSON, JSONL или содержимое .ts файла"
+                : "Одна сырая JSONL-строка на запись"
               : undefined
           }
+          readOnly={mode.type === "viewRaw"}
           value={json}
           onChange={(event) => {
             setJson(event.target.value);
@@ -181,6 +255,31 @@ export function ItemEditDialog({
             }
           }}
         />
+
+        {mode.type === "add" && (
+          <div className="flex gap-2 text-sm">
+            <Button
+              onClick={() => {
+                setAddMode("typed");
+                setError(undefined);
+              }}
+              size="sm"
+              variant={addMode === "typed" ? "default" : "outline"}
+            >
+              Typed import
+            </Button>
+            <Button
+              onClick={() => {
+                setAddMode("raw");
+                setError(undefined);
+              }}
+              size="sm"
+              variant={addMode === "raw" ? "default" : "outline"}
+            >
+              Raw import
+            </Button>
+          </div>
+        )}
 
         {error && (
           <FieldError className="whitespace-pre-wrap">{error}</FieldError>
@@ -204,7 +303,7 @@ export function ItemEditDialog({
             </Button>
           )}
           <div className="-my-1 flex-1" />
-          {combiningMode === "remoteOnly" ? (
+          {combiningMode === "remoteOnly" || mode.type === "viewRaw" ? (
             <>
               <DialogClose render={<Button size="sm" variant="outline" />}>
                 Закрыть
@@ -224,9 +323,11 @@ export function ItemEditDialog({
                   ? "Сохранение..."
                   : mode.type === "override"
                     ? "Перезаписать локально"
-                    : mode.type === "edit"
-                      ? "Сохранить локально"
-                      : "Добавить локально"}
+                    : mode.type === "editRaw"
+                      ? "Сохранить raw"
+                      : mode.type === "edit"
+                        ? "Сохранить локально"
+                        : "Добавить локально"}
               </Button>
             </>
           )}

@@ -2,6 +2,7 @@ import * as React from "react";
 import type { JsonValue } from "type-fest";
 
 import type { AnnouncementVersionFilter } from "../../entrypoints/background/@services/extension-version-service";
+import type { StaticListMetadata } from "../@model/static-list-metadata";
 import type {
   StaticListId,
   StaticListItem,
@@ -69,19 +70,19 @@ export const useGlobalNotificationsState = createPollableValueHook(
   { hookNameForDebugging: "useGlobalNotificationsState" },
 );
 
-type UseRemoteNextStaticListSummary = <ListId extends StaticListId>(
+type UseRemoteStagingStaticListSummary = <ListId extends StaticListId>(
   listId: ListId,
-) => StaticListSummary<ListId>;
+) => StaticListSummary<ListId> | undefined;
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Mapping generic list return type to specific list summary shape
-export const useRemoteNextStaticListSummary = createPollableValueHook(
+export const useRemoteStagingStaticListSummary = createPollableValueHook(
   (lastPollVersion, listId: StaticListId) =>
-    staticListsService.pollRemoteNextListSummary(lastPollVersion, listId),
+    staticListsService.pollRemoteStagingSummary(lastPollVersion, listId),
   {
-    hookNameForDebugging: "useRemoteNextStaticListSummary",
+    hookNameForDebugging: "useRemoteStagingStaticListSummary",
     throttleInterval: 100,
   },
-) as UseRemoteNextStaticListSummary;
+) as UseRemoteStagingStaticListSummary;
 
 type UseStaticListItems = <ListId extends StaticListId>(
   listId: ListId,
@@ -94,11 +95,16 @@ export const useStaticListItems = createPollableValueHook(
   { hookNameForDebugging: "useStaticListItems" },
 ) as UseStaticListItems;
 
+type UseStaticListMetadata = <ListId extends StaticListId>(
+  listId: ListId,
+) => StaticListMetadata<ListId>;
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Mapping generic list return type to specific list metadata shape
 export const useStaticListMetadata = createPollableValueHook(
   (lastPollVersion, listId: StaticListId) =>
     staticListsService.pollListMetadata(lastPollVersion, listId),
   { hookNameForDebugging: "useStaticListMetadata" },
-);
+) as UseStaticListMetadata;
 
 type UseStaticListSummary = <ListId extends StaticListId>(
   listId: ListId,

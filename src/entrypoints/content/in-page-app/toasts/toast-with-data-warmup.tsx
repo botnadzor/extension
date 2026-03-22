@@ -1,6 +1,5 @@
 import { clamp, round } from "es-toolkit";
 import * as React from "react";
-import type { JsonValue } from "type-fest";
 
 import { useStaticListMetadata } from "@/shared/@ui-helpers/data-hooks";
 
@@ -18,18 +17,6 @@ const showIfEstimatedRemainingMoreThanMs = 2000;
 // Handles the case where loading sprints to a high percentage and then stalls.
 const showIfProgressStuckForMs = 2000;
 
-function extractItemCountFromRawSummary(
-  summary: JsonValue | undefined,
-): number {
-  if (summary && typeof summary === "object") {
-    const itemCount = "itemCount" in summary ? summary["itemCount"] : undefined;
-    if (itemCount && typeof itemCount === "number") {
-      return itemCount;
-    }
-  }
-  return 0;
-}
-
 export function ToastWithDataWarmup({ onDone }: { onDone: () => void }) {
   const accountsMetadata = useStaticListMetadata("accounts");
   const insertionsMetadata = useStaticListMetadata("insertions");
@@ -40,18 +27,22 @@ export function ToastWithDataWarmup({ onDone }: { onDone: () => void }) {
     insertionsMetadata.remoteActive &&
     tagsMetadata.remoteActive;
 
-  const nextExpectedItemCount =
-    (accountsMetadata.remoteNext?.upstreamInfo.itemCount ?? 0) +
-    (insertionsMetadata.remoteNext?.upstreamInfo.itemCount ?? 0) +
-    (tagsMetadata.remoteNext?.upstreamInfo.itemCount ?? 0);
+  const stagingExpectedItemCount =
+    (accountsMetadata.remoteStaging?.upstreamInfo.itemCount ?? 0) +
+    (insertionsMetadata.remoteStaging?.upstreamInfo.itemCount ?? 0) +
+    (tagsMetadata.remoteStaging?.upstreamInfo.itemCount ?? 0);
 
-  const nextItemCount =
-    extractItemCountFromRawSummary(accountsMetadata.remoteNext?.summary) +
-    extractItemCountFromRawSummary(insertionsMetadata.remoteNext?.summary) +
-    extractItemCountFromRawSummary(tagsMetadata.remoteNext?.summary);
+  const stagingItemCount =
+    (accountsMetadata.remoteStaging?.summary.itemCount ?? 0) +
+    (insertionsMetadata.remoteStaging?.summary.itemCount ?? 0) +
+    (tagsMetadata.remoteStaging?.summary.itemCount ?? 0);
 
-  const progressInPercentage = nextExpectedItemCount
-    ? clamp(round((nextItemCount / nextExpectedItemCount) * 100, 1), 0, 99.9)
+  const progressInPercentage = stagingExpectedItemCount
+    ? clamp(
+        round((stagingItemCount / stagingExpectedItemCount) * 100, 1),
+        0,
+        99.9,
+      )
     : 95;
 
   // Refs let the interval callback read the latest values without being

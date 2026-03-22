@@ -2,7 +2,6 @@ import { clamp } from "es-toolkit";
 import * as React from "react";
 
 import type { StaticListUpstreamInfo } from "@/shared/@model/static-list-helpers";
-import { staticListDefinitionLookup } from "@/shared/@model/static-lists";
 import {
   useStaticListMetadata,
   useStaticListsAutoUpdate,
@@ -13,45 +12,42 @@ import { formatDateTime } from "@/shared/formatting";
 function Percentage({
   extractFrom,
 }: {
-  extractFrom: { summary: unknown; upstreamInfo: StaticListUpstreamInfo };
+  extractFrom: {
+    summary: { itemCount: number };
+    upstreamInfo: StaticListUpstreamInfo;
+  };
 }) {
-  // TODO: Apply summary schema inside useStaticListMetadata
-  const summaryResult =
-    staticListDefinitionLookup.accounts.summarySchema.safeParse(
-      extractFrom.summary,
-    );
-
-  const loaded = summaryResult.data?.itemCount ?? 0;
+  const loaded = extractFrom.summary.itemCount;
   const total = extractFrom.upstreamInfo.itemCount;
+  const percentage =
+    total > 0 && Number.isFinite(total)
+      ? clamp(Math.round((loaded / total) * 100), 0, 99)
+      : 0;
 
-  return (
-    <span className="tabular-nums">
-      {clamp(Math.round((loaded / total) * 100), 0, 99)}%
-    </span>
-  );
+  return <span className="tabular-nums">{percentage}%</span>;
 }
 
 function AccountListMetadata() {
   const accountsMetadata = useStaticListMetadata("accounts");
 
   if (!accountsMetadata.remoteActive) {
-    if (!accountsMetadata.remoteNext) {
+    if (!accountsMetadata.remoteStaging) {
       return <>Список аккаунтов пока не начал загружаться</>;
     }
 
     return (
       <>
         Список аккаунтов обрабатывается:{" "}
-        <Percentage extractFrom={accountsMetadata.remoteNext} />
+        <Percentage extractFrom={accountsMetadata.remoteStaging} />
       </>
     );
   }
 
-  if (accountsMetadata.remoteNext) {
+  if (accountsMetadata.remoteStaging) {
     return (
       <>
         Список аккаунтов обновляется:{" "}
-        <Percentage extractFrom={accountsMetadata.remoteNext} />
+        <Percentage extractFrom={accountsMetadata.remoteStaging} />
       </>
     );
   }

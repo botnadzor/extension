@@ -1,6 +1,6 @@
 import {
   useFrontendBaseUrl,
-  useRemoteNextStaticListSummary,
+  useRemoteStagingStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
 } from "@/shared/@ui-helpers/data-hooks";
@@ -42,13 +42,13 @@ function ListItem({
   count,
   href,
   name,
-  nextCount,
+  stagingCount,
 }: {
   color: string | undefined;
   count: number | undefined;
   href: string;
   name: string;
-  nextCount: number | undefined;
+  stagingCount: number | undefined;
 }) {
   return (
     <>
@@ -56,7 +56,7 @@ function ListItem({
         <UpdatableCount
           className="inline-block"
           count={count}
-          nextCount={nextCount}
+          stagingCount={stagingCount}
         />
       </div>
 
@@ -84,7 +84,8 @@ function ListItem({
 
 export function StatsTabBody() {
   const accountListSummary = useStaticListSummary("accounts");
-  const nextAccountListSummary = useRemoteNextStaticListSummary("accounts");
+  const stagingAccountListSummary =
+    useRemoteStagingStaticListSummary("accounts");
   const tags = useStaticListItems("tags");
   const frontendBaseUrl = useFrontendBaseUrl();
 
@@ -117,9 +118,9 @@ export function StatsTabBody() {
             href={generateUrl(frontendBaseUrl, `/region/${tag.id}`)}
             key={tag.id}
             name={tag.name}
-            nextCount={
-              nextAccountListSummary.itemCount > 0
-                ? (nextAccountListSummary.itemCountByTagId[tag.id] ?? 0)
+            stagingCount={
+              (stagingAccountListSummary?.itemCount ?? 0) > 0
+                ? (stagingAccountListSummary?.itemCountByTagId[tag.id] ?? 0)
                 : undefined
             }
           />
@@ -141,9 +142,9 @@ export function StatsTabBody() {
             )}
             key={tag.id}
             name={tag.name}
-            nextCount={
-              nextAccountListSummary.itemCount > 0
-                ? (nextAccountListSummary.itemCountByTagId[tag.id] ?? 0)
+            stagingCount={
+              (stagingAccountListSummary?.itemCount ?? 0) > 0
+                ? (stagingAccountListSummary?.itemCountByTagId[tag.id] ?? 0)
                 : undefined
             }
           />

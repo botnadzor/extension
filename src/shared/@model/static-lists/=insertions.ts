@@ -2,7 +2,10 @@ import { z } from "zod/mini";
 
 import { itemCountSchema } from "../../@primitives/misc";
 import { insertionConfigSchema } from "../insertion-configs";
-import type { StaticListDefinition } from "../static-list-helpers";
+import {
+  defineStaticListDefinition,
+  type StaticListDefinition,
+} from "../static-list-helpers";
 
 const insertionListItemSchema = insertionConfigSchema;
 /** @public */
@@ -24,12 +27,18 @@ export const insertionListDefinition: StaticListDefinition<
   typeof insertionListItemSchema,
   typeof insertionListItemSchema,
   typeof insertionListSummarySchema
-> = {
+> = defineStaticListDefinition({
   dxSidepanelTab: { label: "Вставки" },
-  receivedItemSchema: insertionListItemSchema,
-  storedItemSchema: insertionListItemSchema,
-  mapReceivedToStored: (receivedItem) => receivedItem,
-  mapStoredToReceived: (storedItem) => {
+  physicalStorageVersion: 1,
+  derivedDataVersion: "20260321",
+  jsonlItemSchema: insertionListItemSchema,
+  interpretedItemSchema: insertionListItemSchema,
+  logicalPrimaryKey: {
+    name: "id",
+    extractFromJsonlItem: (jsonlItem) => jsonlItem.id,
+  },
+  interpretJsonlItem: (jsonlItem) => jsonlItem,
+  serializeInterpretedItemAsJsonl: (storedItem) => {
     const {
       disabled,
       appliesTo,
@@ -64,18 +73,13 @@ export const insertionListDefinition: StaticListDefinition<
         (match, p1: string) =>
           `variant":"${p1}",${" ".repeat(insertionVariantMaxLength - p1.length)}`,
       ),
-  jsonlRowSortingBy: ["variant", "disabled", "extensionVersionRange", "id"],
-
-  indexes: ["id"],
+  jsonlExportSortingBy: ["variant", "disabled", "extensionVersionRange", "id"],
 
   summarySchema: insertionListSummarySchema,
   createEmptySummary: () => ({
     itemCount: 0,
   }),
-  mutateSummary: (mutableSummary) => {
-    mutableSummary.itemCount += 1;
+  adjustSummary: (mutableSummary, item, delta) => {
+    mutableSummary.itemCount += delta;
   },
-  unmutateSummary: (mutableSummary) => {
-    mutableSummary.itemCount -= 1;
-  },
-};
+});

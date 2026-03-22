@@ -3,8 +3,8 @@
  *
  * For each .ts file in src/curated-static-lists/, the script:
  * 1. Extracts the default-exported array from the TypeScript source
- * 2. Validates each item against the list definition's storedItemSchema
- * 3. Converts data to received format using mapStoredToReceived()
+ * 2. Validates each item against the list definition's interpretedItemSchema
+ * 3. Converts data to JSONL format using serializeInterpretedItemAsJsonl()
  * 4. Writes JSONL output to dist/curated-static-lists/{listId}.jsonl
  *
  * Usage: npx tsx scripts/dump-curated-static-lists.script.ts
@@ -15,7 +15,6 @@ import path from "node:path";
 
 import { staticListIdSchema } from "@/shared/@model/dx-config";
 import { extractCuratedListFromTs } from "@/shared/@model/static-list-extraction";
-import type { StaticListDefinition } from "@/shared/@model/static-list-helpers";
 import {
   staticListDefinitionLookup,
   staticListIds,
@@ -49,7 +48,7 @@ async function main() {
     }
 
     const listId = listIdResult.data;
-    const definition: StaticListDefinition = staticListDefinitionLookup[listId];
+    const definition = staticListDefinitionLookup[listId];
 
     logger.log(`Processing ${tsFile}...`);
 
@@ -63,9 +62,9 @@ async function main() {
       );
     }
 
-    const storedItems: Array<Record<string, unknown>> = [];
+    const interpretedItems: Array<Record<string, unknown>> = [];
     for (const [index, rawItem] of rawItems.entries()) {
-      const parseResult = definition.storedItemSchema.safeParse(rawItem);
+      const parseResult = definition.interpretedItemSchema.safeParse(rawItem);
       if (!parseResult.success) {
         const messages = parseResult.error.issues
           .map(
@@ -77,12 +76,12 @@ async function main() {
         );
       }
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safeParse result is a validated object
-      storedItems.push(parseResult.data as Record<string, unknown>);
+      interpretedItems.push(parseResult.data as Record<string, unknown>);
     }
 
-    if (definition.jsonlRowSortingBy) {
-      const sortingKeys = definition.jsonlRowSortingBy;
-      storedItems.sort((a, b) => {
+    if (definition.jsonlExportSortingBy) {
+      const sortingKeys = definition.jsonlExportSortingBy;
+      interpretedItems.sort((a, b) => {
         for (const key of sortingKeys) {
           const aVal = String(a[key]);
           const bVal = String(b[key]);
@@ -98,11 +97,16 @@ async function main() {
     }
 
     const jsonlLines: string[] = [];
-    for (const storedItem of storedItems) {
-      const receivedItem = definition.mapStoredToReceived(storedItem);
-      const line =
-        definition.jsonlStringifyRow?.(receivedItem) ??
-        JSON.stringify(receivedItem);
+    /* eslint-disable @typescript-eslint/consistent-type-assertions -- each item in interpretedItems was validated against this exact definition above */
+    const serializeInterpretedItemAsJsonl =
+      definition.serializeInterpretedItemAsJsonl as (item: unknown) => unknown;
+    const jsonlStringifyRow = definition.jsonlStringifyRow as
+      | ((item: unknown) => string)
+      | undefined;
+    /* eslint-enable @typescript-eslint/consistent-type-assertions -- re-enable after bridging the validated definition callbacks */
+    for (const interpretedItem of interpretedItems) {
+      const jsonlItem = serializeInterpretedItemAsJsonl(interpretedItem);
+      const line = jsonlStringifyRow?.(jsonlItem) ?? JSON.stringify(jsonlItem);
       jsonlLines.push(line);
     }
 

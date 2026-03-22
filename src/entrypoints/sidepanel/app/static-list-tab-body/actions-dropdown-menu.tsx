@@ -7,12 +7,9 @@ import {
 
 import type {
   StaticListCombiningMode,
-  StaticListDefinition,
+  StaticListPageEntry,
 } from "@/shared/@model/static-list-helpers";
-import {
-  staticListDefinitionLookup,
-  type StaticListId,
-} from "@/shared/@model/static-lists";
+import type { StaticListId } from "@/shared/@model/static-lists";
 import { Button } from "@/shared/@ui-primitives/button";
 import {
   DropdownMenu,
@@ -26,52 +23,44 @@ import { staticListsService } from "@/shared/proxy-services";
 
 const exportPageSize = 10_000;
 
-async function fetchAllStoredItems(listId: StaticListId): Promise<unknown[]> {
-  const rawItems: unknown[] = [];
+async function fetchAllEntries(
+  listId: StaticListId,
+): Promise<StaticListPageEntry[]> {
+  const entries: StaticListPageEntry[] = [];
   let offset = 0;
   let hasMore = true;
 
   while (hasMore) {
-    const result = await staticListsService.getItemsPage(listId, {
+    const result = await staticListsService.getEntriesPage(listId, {
       offset,
       limit: exportPageSize,
     });
 
-    for (const pageItem of result.items) {
-      rawItems.push(pageItem.item);
-    }
+    entries.push(...result.items);
     offset += result.items.length;
     hasMore = offset < result.totalCount;
   }
 
-  return rawItems;
+  return entries;
 }
 
 async function handleCopyAsJson(listId: StaticListId) {
-  const rawItems = await fetchAllStoredItems(listId);
-  const text = JSON.stringify(rawItems, undefined, 2);
+  const entries = await fetchAllEntries(listId);
+  const text = JSON.stringify(
+    entries.flatMap((entry) =>
+      entry.interpretation.success ? [entry.interpretation.item] : [],
+    ),
+    undefined,
+    2,
+  );
   await navigator.clipboard.writeText(text);
 }
 
 async function handleCopyAsJsonl(listId: StaticListId) {
-  const rawItems = await fetchAllStoredItems(listId);
-
-  const definition: StaticListDefinition = staticListDefinitionLookup[listId];
-
+  const entries = await fetchAllEntries(listId);
   const text =
-    rawItems
-      .map((rawItem) => {
-        const item = definition.storedItemSchema.safeParse(rawItem);
-
-        return item.success
-          ? definition.mapStoredToReceived(item.data)
-          : undefined;
-      })
-      .filter((item) => item !== undefined)
-      .map(
-        (item) => definition.jsonlStringifyRow?.(item) ?? JSON.stringify(item),
-      )
-      .join("\n") + (rawItems.length > 0 ? "\n" : "");
+    entries.map((entry) => entry.sourceText).join("\n") +
+    (entries.length > 0 ? "\n" : "");
   await navigator.clipboard.writeText(text);
 }
 
