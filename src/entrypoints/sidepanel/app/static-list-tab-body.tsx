@@ -101,17 +101,17 @@ export function StaticListTabBody({ listId }: { listId: StaticListId }) {
         setLocalItemCount(summary.itemCount);
       });
     } else {
-      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect -- intentional reset when not in local mode
+      // eslint-disable-next-line @eslint-react/set-state-in-effect -- intentional reset when not in local mode
       setLocalItemCount(0);
     }
   }, [listId, combiningMode]);
 
   React.useEffect(() => {
-    // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect -- intentional state reset when deps change
+    // eslint-disable-next-line @eslint-react/set-state-in-effect -- intentional state reset when deps change
     setItems([]);
-    // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect -- intentional state reset when deps change
+    // eslint-disable-next-line @eslint-react/set-state-in-effect -- intentional state reset when deps change
     setHasMore(true);
-    // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect -- intentional state reset when deps change
+    // eslint-disable-next-line @eslint-react/set-state-in-effect -- intentional state reset when deps change
     setTotalItemCount(undefined);
     void loadPage(0);
   }, [loadPage, combiningMode]);
