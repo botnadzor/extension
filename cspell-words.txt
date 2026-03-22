@@ -1,4 +1,5 @@
 add-ons
+bivariance
 botnadzor
 btn
 callees
@@ -15,6 +16,8 @@ esbuild
 firefox
 github
 HMR
+IDB
+inspectable
 jsonrepair
 keyof
 knip
@@ -35,6 +38,7 @@ orpc
 oxc-resolver
 pnpm-dedupe
 pollable
+redownload
 repost
 rowsmembers
 rsc
@@ -50,6 +54,8 @@ tailwindcss
 testid
 tsc
 unmutate
+Unvalidated
+upserts
 userrichcell
 vesti
 vite

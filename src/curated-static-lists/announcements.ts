@@ -1,6 +1,6 @@
 import type { z } from "zod/mini";
 
-import type { storedAnnouncementListItemSchema } from "@/shared/@model/static-lists/=announcements";
+import type { interpretedAnnouncementListItemSchema } from "@/shared/@model/static-lists/=announcements";
 
 export default [
   {
@@ -10,4 +10,4 @@ export default [
     content:
       "Рады представить вам новую версию расширения! В ней мы переработали внутреннее устройство функционирования расширения и подготовили его для работы с постоянно растущим количеством аккаунтов для подсветки",
   },
-] satisfies Array<z.input<typeof storedAnnouncementListItemSchema>>;
+] satisfies Array<z.input<typeof interpretedAnnouncementListItemSchema>>;

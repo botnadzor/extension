@@ -48,7 +48,7 @@ export default defineConfig({
       }
     },
 
-    "entrypoints:found": (_wxt, entrypointInfos) => {
+    "entrypoints:found": (wxt, entrypointInfos) => {
       if (process.env["WXT_DX_FEATURES_ENABLED"] !== "true") {
         const index = entrypointInfos.findIndex(
           (ep) => ep.name === "sidepanel",

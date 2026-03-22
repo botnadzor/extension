@@ -4,11 +4,13 @@ import { itemCountSchema, tagIdSchema } from "../../@primitives/misc";
 import { vkIdSchema, vkNicknameSchema } from "../../@primitives/vk";
 import { omitUndefined } from "../../omit-undefined";
 import {
+  defineStaticListDefinition,
   receivedTagIdSchema,
   type StaticListDefinition,
+  stringifyReceivedTagId,
 } from "../static-list-helpers";
 
-const receivedAccountListItemSchema = z.readonly(
+const jsonlAccountListItemSchema = z.readonly(
   z.tuple([
     vkIdSchema,
     z // tagIds
@@ -20,7 +22,7 @@ const receivedAccountListItemSchema = z.readonly(
   ]),
 );
 
-const storedAccountListItemSchema = z.readonly(
+const interpretedAccountListItemSchema = z.readonly(
   z.object({
     vkId: vkIdSchema,
     vkNickname: z.exactOptional(vkNicknameSchema),
@@ -28,7 +30,7 @@ const storedAccountListItemSchema = z.readonly(
   }),
 );
 /** @public */
-export type AccountListItem = z.infer<typeof storedAccountListItemSchema>;
+export type AccountListItem = z.infer<typeof interpretedAccountListItemSchema>;
 
 const accountListSummarySchema = z.readonly(
   z.object({
@@ -38,44 +40,47 @@ const accountListSummarySchema = z.readonly(
 );
 
 export const accountListDefinition: StaticListDefinition<
-  typeof receivedAccountListItemSchema,
-  typeof storedAccountListItemSchema,
+  typeof jsonlAccountListItemSchema,
+  typeof interpretedAccountListItemSchema,
   typeof accountListSummarySchema
-> = {
-  receivedItemSchema: receivedAccountListItemSchema,
-  storedItemSchema: storedAccountListItemSchema,
-  mapReceivedToStored: ([vkId, rawTagIds, vkNickname]) =>
+> = defineStaticListDefinition({
+  physicalStorageVersion: 1,
+  derivedDataVersion: "20260321",
+  jsonlItemSchema: jsonlAccountListItemSchema,
+  interpretedItemSchema: interpretedAccountListItemSchema,
+  logicalPrimaryKey: {
+    name: "vkId",
+    extractFromJsonlItem: ([vkId]) => vkId,
+  },
+  secondaryIndexes: [
+    {
+      name: "vkNickname",
+      extractFromJsonlItem: (jsonlItem) => jsonlItem[2],
+    },
+  ],
+  interpretJsonlItem: ([vkId, rawTagIds, vkNickname]) =>
     omitUndefined({
       vkId,
       vkNickname,
       tagIds:
         typeof rawTagIds === "string" || typeof rawTagIds === "number"
-          ? [tagIdSchema.parse(String(rawTagIds))]
-          : rawTagIds.map((rawTagId) => tagIdSchema.parse(String(rawTagId))),
+          ? [stringifyReceivedTagId(rawTagIds)]
+          : rawTagIds.map((rawTagId) => stringifyReceivedTagId(rawTagId)),
     }),
 
-  mapStoredToReceived: ({ vkId, tagIds, vkNickname }) =>
+  serializeInterpretedItemAsJsonl: ({ vkId, tagIds, vkNickname }) =>
     vkNickname ? [vkId, tagIds, vkNickname] : [vkId, tagIds],
-
-  indexes: ["vkId", "vkNickname"],
 
   summarySchema: accountListSummarySchema,
   createEmptySummary: () => ({
     itemCount: 0,
     itemCountByTagId: {},
   }),
-  mutateSummary: (mutableSummary, item) => {
-    mutableSummary.itemCount += 1;
+  adjustSummary: (mutableSummary, item, delta) => {
+    mutableSummary.itemCount += delta;
     for (const tagId of item.tagIds) {
       mutableSummary.itemCountByTagId[tagId] =
-        (mutableSummary.itemCountByTagId[tagId] ?? 0) + 1;
+        (mutableSummary.itemCountByTagId[tagId] ?? 0) + delta;
     }
   },
-  unmutateSummary: (mutableSummary, item) => {
-    mutableSummary.itemCount -= 1;
-    for (const tagId of item.tagIds) {
-      mutableSummary.itemCountByTagId[tagId] =
-        (mutableSummary.itemCountByTagId[tagId] ?? 1) - 1;
-    }
-  },
-};
+});

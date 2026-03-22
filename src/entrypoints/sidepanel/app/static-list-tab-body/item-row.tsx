@@ -1,7 +1,8 @@
-import type { StaticListItemOrigin } from "@/shared/@model/static-list-helpers";
+import type {
+  StaticListItemOrigin,
+  StaticListPageEntry,
+} from "@/shared/@model/static-list-helpers";
 import { cn } from "@/shared/tailwindcss-helpers";
-
-import type { PageItem } from "../static-list-tab-body";
 
 const originDefinitionLookup: Record<
   StaticListItemOrigin,
@@ -47,11 +48,14 @@ export function ItemRow({
   onClick,
 }: {
   indexNames: readonly string[];
-  item: PageItem;
+  item: StaticListPageEntry;
   onClick: () => void;
 }) {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- item is always a record from Dexie
-  const itemRecord = pageItem.item as Record<string, unknown>;
+  function getIndexValue(indexPosition: number): unknown {
+    const slotName: "p" | `s${number}` =
+      indexPosition === 0 ? "p" : `s${indexPosition}`;
+    return pageItem.indexValues[slotName];
+  }
 
   return (
     <button
@@ -61,7 +65,7 @@ export function ItemRow({
           text-xs transition-colors
           hover:bg-accent/50
         `,
-        !pageItem.valid && "bg-destructive/10",
+        !pageItem.interpretation.success && "bg-destructive/10",
       )}
       onClick={onClick}
       style={{
@@ -79,9 +83,9 @@ export function ItemRow({
           {originDefinitionLookup[pageItem.origin].label}
         </span>
       </div>
-      {indexNames.map((indexName) => (
+      {indexNames.map((indexName, indexPosition) => (
         <div className="truncate" key={indexName}>
-          {formatCellValue(itemRecord[indexName])}
+          {formatCellValue(getIndexValue(indexPosition))}
         </div>
       ))}
     </button>

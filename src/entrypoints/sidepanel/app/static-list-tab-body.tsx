@@ -3,7 +3,7 @@ import * as React from "react";
 
 import type {
   StaticListCombiningMode,
-  StaticListItemOrigin,
+  StaticListPageEntry,
 } from "@/shared/@model/static-list-helpers";
 import {
   staticListDefinitionLookup,
@@ -50,12 +50,6 @@ const combiningModeOptions: Array<{
   { mode: "localOnly", label: "Local only" },
 ];
 
-export type PageItem = {
-  item: unknown;
-  origin: StaticListItemOrigin;
-  valid: boolean;
-};
-
 export function StaticListTabBody({ listId }: { listId: StaticListId }) {
   const [combiningMode, setCombiningMode] =
     React.useState<StaticListCombiningMode>("remoteOnly");
@@ -64,7 +58,7 @@ export function StaticListTabBody({ listId }: { listId: StaticListId }) {
     number | undefined
   >(undefined);
 
-  const [items, setItems] = React.useState<PageItem[]>([]);
+  const [items, setItems] = React.useState<StaticListPageEntry[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [hasMore, setHasMore] = React.useState(true);
   const [editDialog, setEditDialog] = React.useState<
@@ -72,12 +66,15 @@ export function StaticListTabBody({ listId }: { listId: StaticListId }) {
   >(undefined);
 
   const listDefinition = staticListDefinitionLookup[listId];
-  const indexNames = listDefinition.indexes;
+  const indexNames = [
+    listDefinition.logicalPrimaryKey.name,
+    ...(listDefinition.secondaryIndexes ?? []).map((index) => index.name),
+  ];
 
   const loadPage = React.useCallback(
     async (offset: number) => {
       setLoading(true);
-      const result = await staticListsService.getItemsPage(listId, {
+      const result = await staticListsService.getEntriesPage(listId, {
         offset,
         limit: pageSize,
       });
@@ -128,16 +125,36 @@ export function StaticListTabBody({ listId }: { listId: StaticListId }) {
     void loadPage(items.length);
   }
 
-  function handleItemClick(pageItem: PageItem) {
-    if (pageItem.origin === "remote") {
-      setEditDialog({ type: "override", item: pageItem.item });
-    } else {
+  function handleItemClick(entry: StaticListPageEntry) {
+    if (entry.origin === "remote") {
+      if (entry.interpretation.success) {
+        setEditDialog({ type: "override", item: entry.interpretation.item });
+      } else {
+        setEditDialog({
+          type: "viewRaw",
+          origin: "remote",
+          sourceText: entry.sourceText,
+        });
+      }
+      return;
+    }
+
+    if (entry.interpretation.success) {
       setEditDialog({
         type: "edit",
-        item: pageItem.item,
-        origin: pageItem.origin,
+        item: entry.interpretation.item,
+        origin: entry.origin,
+        rowKey: String(entry.rowKey),
       });
+      return;
     }
+
+    setEditDialog({
+      type: "editRaw",
+      origin: entry.origin,
+      rowKey: String(entry.rowKey),
+      sourceText: entry.sourceText,
+    });
   }
 
   function handleDialogSaved() {

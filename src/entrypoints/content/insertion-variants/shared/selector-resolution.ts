@@ -131,7 +131,7 @@ function substituteInSelector(
 ): NormalizedSingleSelector {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- JSON roundtrip preserves shape
   return JSON.parse(
-    JSON.stringify(selector, (_key, value: unknown) =>
+    JSON.stringify(selector, (key, value: unknown) =>
       typeof value === "string" ? value.replaceAll("%", replacement) : value,
     ),
   );

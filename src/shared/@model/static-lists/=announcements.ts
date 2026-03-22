@@ -3,9 +3,12 @@ import { z } from "zod/mini";
 import { itemCountSchema } from "../../@primitives/misc";
 import { semverRangeSchema } from "../../@primitives/semver";
 import { isoDateTimeSchema } from "../../@primitives/temporal";
-import type { StaticListDefinition } from "../static-list-helpers";
+import {
+  defineStaticListDefinition,
+  type StaticListDefinition,
+} from "../static-list-helpers";
 
-const announcementListItemSchema = z.readonly(
+const jsonlAnnouncementListItemSchema = z.readonly(
   z.tuple([
     isoDateTimeSchema, // createdAt
     z // extensionVersionRange or [extensionVersionRange, extensionVersionRangeForToast]
@@ -18,9 +21,11 @@ const announcementListItemSchema = z.readonly(
   ]),
 );
 /** @public */
-export type AnnouncementListItem = z.infer<typeof announcementListItemSchema>;
+export type AnnouncementListItem = z.infer<
+  typeof interpretedAnnouncementListItemSchema
+>;
 
-export const storedAnnouncementListItemSchema = z.readonly(
+export const interpretedAnnouncementListItemSchema = z.readonly(
   z.object({
     createdAt: isoDateTimeSchema,
     extensionVersionRange: semverRangeSchema,
@@ -37,14 +42,20 @@ const announcementListSummarySchema = z.readonly(
 );
 
 export const announcementListDefinition: StaticListDefinition<
-  typeof announcementListItemSchema,
-  typeof storedAnnouncementListItemSchema,
+  typeof jsonlAnnouncementListItemSchema,
+  typeof interpretedAnnouncementListItemSchema,
   typeof announcementListSummarySchema
-> = {
+> = defineStaticListDefinition({
   dxSidepanelTab: { label: "Объявления" },
-  receivedItemSchema: announcementListItemSchema,
-  storedItemSchema: storedAnnouncementListItemSchema,
-  mapReceivedToStored: ([
+  physicalStorageVersion: 1,
+  derivedDataVersion: "20260321",
+  jsonlItemSchema: jsonlAnnouncementListItemSchema,
+  interpretedItemSchema: interpretedAnnouncementListItemSchema,
+  logicalPrimaryKey: {
+    name: "createdAt",
+    extractFromJsonlItem: ([createdAt]) => createdAt,
+  },
+  interpretJsonlItem: ([
     createdAt,
     extensionVersionRange,
     header,
@@ -62,7 +73,7 @@ export const announcementListDefinition: StaticListDefinition<
     content,
   }),
 
-  mapStoredToReceived: ({
+  serializeInterpretedItemAsJsonl: ({
     createdAt,
     extensionVersionRange,
     extensionVersionRangeForToast,
@@ -77,18 +88,13 @@ export const announcementListDefinition: StaticListDefinition<
     content,
   ],
 
-  jsonlRowSortingBy: ["createdAt"],
-
-  indexes: ["createdAt"],
+  jsonlExportSortingBy: ["createdAt"],
 
   summarySchema: announcementListSummarySchema,
   createEmptySummary: () => ({
     itemCount: 0,
   }),
-  mutateSummary: (mutableSummary) => {
-    mutableSummary.itemCount += 1;
+  adjustSummary: (mutableSummary, item, delta) => {
+    mutableSummary.itemCount += delta;
   },
-  unmutateSummary: (mutableSummary) => {
-    mutableSummary.itemCount -= 1;
-  },
-};
+});
