@@ -7,6 +7,7 @@ import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 import {
   migrateAuthInputFromLegacyTokenState,
   migrateUserConfigFromLegacyState,
+  parseLegacyUserSettings,
 } from "./legacy-v1-migration-helpers";
 
 function authInput(accessCode: string): AuthInput {
@@ -89,6 +90,37 @@ describe("migrateUserConfigFromLegacyState", () => {
     expect(defaultUserConfig).toEqual({
       tagOverrideLookup: {},
       fansDisplay: "default",
+    });
+  });
+
+  it("should tolerate string ids in disabledTypesIds", () => {
+    const legacyUserSettings = parseLegacyUserSettings({
+      disabledTypesIds: ["1", 2, "oops"],
+      customTypesColors: {
+        1: "#123456",
+      },
+      isRepliesCollectingEnabled: true,
+    });
+
+    const result = migrateUserConfigFromLegacyState({
+      legacyConfig: {
+        types: [{ id: 1 }, { id: 2 }],
+      },
+      legacyUserSettings,
+    });
+
+    expect(result).toEqual({
+      tagOverrideLookup: {
+        1: {
+          colorForHighlight: "#123456",
+          hidden: true,
+        },
+        2: {
+          hidden: true,
+        },
+      },
+      fansDisplay: "default",
+      collectingComments: true,
     });
   });
 });
