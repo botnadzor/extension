@@ -9,11 +9,13 @@ import {
 } from "../../@primitives/misc";
 import { omitUndefined } from "../../omit-undefined";
 import {
+  defineStaticListDefinition,
   receivedTagIdSchema,
   type StaticListDefinition,
+  stringifyReceivedTagId,
 } from "../static-list-helpers";
 
-const receivedTagListItemSchema = z.readonly(
+const jsonlTagListItemSchema = z.readonly(
   z.tuple([
     z.union([
       hexColorSchema,
@@ -28,8 +30,9 @@ const receivedTagListItemSchema = z.readonly(
     z.exactOptional(z.string()), // customPathname
   ]),
 );
+type JsonlTagListItem = z.infer<typeof jsonlTagListItemSchema>;
 
-const storedTagListItemSchema = z.readonly(
+const interpretedTagListItemSchema = z.readonly(
   z.object({
     color: z.exactOptional(hexColorSchema),
     colorForHighlight: z.exactOptional(hexColorSchema),
@@ -45,7 +48,7 @@ const storedTagListItemSchema = z.readonly(
   }),
 );
 /** @public */
-export type TagListItem = z.infer<typeof storedTagListItemSchema>;
+export type TagListItem = z.infer<typeof interpretedTagListItemSchema>;
 
 const tagListSummarySchema = z.readonly(
   z.object({
@@ -62,14 +65,20 @@ function expandFlagBitmask(flagBitmask: number): Partial<TagListItem> {
 }
 
 export const tagListDefinition: StaticListDefinition<
-  typeof receivedTagListItemSchema,
-  typeof storedTagListItemSchema,
+  typeof jsonlTagListItemSchema,
+  typeof interpretedTagListItemSchema,
   typeof tagListSummarySchema
-> = {
+> = defineStaticListDefinition({
   dxSidepanelTab: { label: "Теги" },
-  receivedItemSchema: receivedTagListItemSchema,
-  storedItemSchema: storedTagListItemSchema,
-  mapReceivedToStored: ([
+  physicalStorageVersion: 1,
+  derivedDataVersion: "20260321",
+  jsonlItemSchema: jsonlTagListItemSchema,
+  interpretedItemSchema: interpretedTagListItemSchema,
+  logicalPrimaryKey: {
+    name: "id",
+    extractFromJsonlItem: (jsonlItem) => stringifyReceivedTagId(jsonlItem[2]),
+  },
+  interpretJsonlItem: ([
     color,
     type,
     rawId,
@@ -81,47 +90,52 @@ export const tagListDefinition: StaticListDefinition<
       color: Array.isArray(color) ? color[0] : (color ?? undefined),
       colorForHighlight: Array.isArray(color) ? color[1] : undefined,
       type,
-      id: tagIdSchema.parse(String(rawId)),
+      id: stringifyReceivedTagId(rawId),
       name,
       ...expandFlagBitmask(flagBitmask ?? 0),
       customPathname,
     }),
 
-  mapStoredToReceived: (storedItem) => {
+  serializeInterpretedItemAsJsonl: (storedItem): JsonlTagListItem => {
     const flagBitmask =
       (storedItem.botnadzorPage ? 1 : 0) |
       (storedItem.botnadzorCard ? 2 : 0) |
       (storedItem.visibilityLock ? 4 : 0);
-
-    const baseResult = [
-      // eslint-disable-next-line unicorn/no-null -- need to map to JSON
-      storedItem.color ?? null,
-      storedItem.type,
-      storedItem.id,
-      storedItem.name,
-    ] as const;
+    const color: JsonlTagListItem[0] =
+      storedItem.color && storedItem.colorForHighlight
+        ? [storedItem.color, storedItem.colorForHighlight]
+        : // eslint-disable-next-line unicorn/no-null -- need to map to JSON
+          (storedItem.color ?? null);
 
     if (storedItem.customPathname) {
-      return [...baseResult, flagBitmask, storedItem.customPathname];
+      return [
+        color,
+        storedItem.type,
+        storedItem.id,
+        storedItem.name,
+        flagBitmask,
+        storedItem.customPathname,
+      ];
     }
 
     if (flagBitmask) {
-      return [...baseResult, flagBitmask];
+      return [
+        color,
+        storedItem.type,
+        storedItem.id,
+        storedItem.name,
+        flagBitmask,
+      ];
     }
 
-    return baseResult;
+    return [color, storedItem.type, storedItem.id, storedItem.name];
   },
-
-  indexes: ["id"],
 
   summarySchema: tagListSummarySchema,
   createEmptySummary: () => ({
     itemCount: 0,
   }),
-  mutateSummary: (mutableSummary) => {
-    mutableSummary.itemCount += 1;
+  adjustSummary: (mutableSummary, item, delta) => {
+    mutableSummary.itemCount += delta;
   },
-  unmutateSummary: (mutableSummary) => {
-    mutableSummary.itemCount -= 1;
-  },
-};
+});

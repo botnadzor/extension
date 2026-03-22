@@ -60,26 +60,26 @@ export function CollectingCommentsCheckbox() {
 export function UpdatableCount({
   className,
   count,
-  nextCount,
+  stagingCount,
 }: {
   className?: string | undefined;
   count: number | undefined;
-  nextCount: number | undefined;
+  stagingCount: number | undefined;
   wrapper?: undefined | "parentheses";
 }) {
-  if (count === undefined && nextCount === undefined) {
+  if (count === undefined && stagingCount === undefined) {
     return;
   }
 
   const formattedCount =
     typeof count === "number" ? formatInt(count) : undefined;
 
-  const formattedNextCount =
-    typeof nextCount === "number" ? formatInt(nextCount) : undefined;
+  const formattedStagingCount =
+    typeof stagingCount === "number" ? formatInt(stagingCount) : undefined;
 
-  const countToShow = formattedCount ?? formattedNextCount;
+  const countToShow = formattedCount ?? formattedStagingCount;
 
-  if (nextCount === undefined) {
+  if (stagingCount === undefined) {
     return <span className={cn("tabular-nums", className)}>{countToShow}</span>;
   }
   return (
@@ -90,7 +90,7 @@ export function UpdatableCount({
       <TooltipContent className="tabular-nums">
         {count === undefined
           ? "Данные обрабатываются"
-          : `Данные обновляются: ${formattedNextCount}`}
+          : `Данные обновляются: ${formattedStagingCount}`}
       </TooltipContent>
     </Tooltip>
   );

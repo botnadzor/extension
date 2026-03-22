@@ -7,7 +7,7 @@ import {
   type TagId,
 } from "@/shared/@primitives/misc";
 import {
-  useRemoteNextStaticListSummary,
+  useRemoteStagingStaticListSummary,
   useStaticListItems,
   useStaticListSummary,
   useUserConfig,
@@ -135,7 +135,8 @@ export function ConfigTabBody() {
   const userConfig = useUserConfig();
   const tags = useStaticListItems("tags");
   const accountListSummary = useStaticListSummary("accounts");
-  const nextAccountListSummary = useRemoteNextStaticListSummary("accounts");
+  const stagingAccountListSummary =
+    useRemoteStagingStaticListSummary("accounts");
 
   const tagsToShow = tags.filter((tag) => tag.type === "accountCategory");
 
@@ -243,9 +244,9 @@ export function ConfigTabBody() {
                     ? accountListSummary.itemCountByTagId[tag.id]
                     : undefined
                 }
-                nextCount={
-                  nextAccountListSummary.itemCount > 0
-                    ? (nextAccountListSummary.itemCountByTagId[tag.id] ?? 0)
+                stagingCount={
+                  (stagingAccountListSummary?.itemCount ?? 0) > 0
+                    ? (stagingAccountListSummary?.itemCountByTagId[tag.id] ?? 0)
                     : undefined
                 }
               />
