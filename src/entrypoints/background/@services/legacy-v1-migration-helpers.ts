@@ -46,17 +46,6 @@ const legacyTokenStateSchema = z.readonly(
   }),
 );
 
-const legacyUserSettingsSchema = z.readonly(
-  z.object({
-    disabledTypesIds: z.exactOptional(
-      z.array(z.number().check(z.int(), z.nonnegative())),
-    ),
-    customTypesColors: z.exactOptional(z.record(z.string(), z.string())),
-    isRepliesCollectingEnabled: z.exactOptional(z.boolean()),
-    isFansTableView: z.exactOptional(z.boolean()),
-  }),
-);
-
 const legacyConfigSchema = z.readonly(
   z.object({
     types: z.array(
@@ -68,7 +57,12 @@ const legacyConfigSchema = z.readonly(
 );
 
 type LegacyTokenState = z.infer<typeof legacyTokenStateSchema>;
-type LegacyUserSettings = z.infer<typeof legacyUserSettingsSchema>;
+type LegacyUserSettings = Readonly<{
+  disabledTypesIds?: number[];
+  customTypesColors?: Record<string, string>;
+  isRepliesCollectingEnabled?: boolean;
+  isFansTableView?: boolean;
+}>;
 type LegacyConfig = z.infer<typeof legacyConfigSchema>;
 
 type GlobalNotificationsMigrationState = Readonly<{
@@ -76,6 +70,10 @@ type GlobalNotificationsMigrationState = Readonly<{
   welcomeMessageShownAt: IsoDateTime;
   welcomeMessageReadAt: IsoDateTime;
 }>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 function parseLegacyValue<T extends z.ZodMiniType>(
   schema: T,
@@ -96,6 +94,73 @@ function parseLegacyValue<T extends z.ZodMiniType>(
   }
 
   return result.data;
+}
+
+function parseLegacyNonnegativeInt(value: unknown): number | undefined {
+  if (typeof value === "number") {
+    return Number.isInteger(value) && value >= 0 ? value : undefined;
+  }
+
+  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+    return Number(value);
+  }
+
+  return undefined;
+}
+
+export function parseLegacyUserSettings(
+  value: unknown,
+): LegacyUserSettings | undefined {
+  if (!isRecord(value)) {
+    if (value !== undefined) {
+      logger.warn(
+        "Skipping invalid legacy value user_settings: expected object",
+      );
+    }
+    return undefined;
+  }
+
+  const raw = value;
+
+  const disabledTypesIds = Array.isArray(raw["disabledTypesIds"])
+    ? raw["disabledTypesIds"].flatMap((item) => {
+        const parsed = parseLegacyNonnegativeInt(item);
+        return parsed === undefined ? [] : [parsed];
+      })
+    : undefined;
+
+  const customTypesColors = isRecord(raw["customTypesColors"])
+    ? (() => {
+        const result: Record<string, string> = {};
+
+        for (const [typeId, color] of Object.entries(
+          raw["customTypesColors"],
+        )) {
+          if (typeof color === "string") {
+            result[typeId] = color;
+          }
+        }
+
+        return result;
+      })()
+    : undefined;
+
+  const isRepliesCollectingEnabled =
+    typeof raw["isRepliesCollectingEnabled"] === "boolean"
+      ? raw["isRepliesCollectingEnabled"]
+      : undefined;
+
+  const isFansTableView =
+    typeof raw["isFansTableView"] === "boolean"
+      ? raw["isFansTableView"]
+      : undefined;
+
+  return omitUndefined({
+    disabledTypesIds,
+    customTypesColors,
+    isRepliesCollectingEnabled,
+    isFansTableView,
+  });
 }
 
 function formatErrorMessage(error: unknown): string {
@@ -286,10 +351,8 @@ export async function migrateUserConfigFromV1(): Promise<
       rawLegacyState["config"],
       "config",
     ),
-    legacyUserSettings: parseLegacyValue(
-      legacyUserSettingsSchema,
+    legacyUserSettings: parseLegacyUserSettings(
       rawLegacyState["user_settings"],
-      "user_settings",
     ),
   });
 }
