@@ -14,21 +14,44 @@ import type { RootConfigService } from "./root-config-service";
 import type { StaticListsService } from "./static-lists-service";
 
 /**
- * Determines which semver range field to use for filtering announcements.
+ * Determines how announcements are filtered by extension version.
  *
- * - `"default"`: Always uses `extensionVersionRange`. This is the primary
- *   version range that determines general visibility of the announcement.
+ * - `"default"`: Uses only `extensionVersionRange`, which controls whether the
+ *   announcement is visible at all.
  *
- * - `"toast"`: Uses `extensionVersionRangeForToast` if present, otherwise
- *   falls back to `extensionVersionRange`. This allows announcements to have
- *   a narrower version range for toasts while being visible in the default
- *   view for a wider range.
+ * - `"toast"`: First applies `extensionVersionRange`, then additionally applies
+ *   `extensionVersionRangeForToast` when present. This allows toast visibility
+ *   to be narrower than the general announcement visibility, but never wider.
  *
- * Note that announcements are filtered only if the current extension version
- * is a release or a prerelease (e.g. 2.0.0 or 2.0.0-beta.1). Snapshots (i.e.
- * builds from commits or local development builds) do not filter announcements.
+ * Announcements are filtered only for release and prerelease builds
+ * (e.g. 2.0.0 or 2.0.0-beta.1). Snapshot builds do not filter announcements.
  */
 export type AnnouncementVersionFilter = "default" | "toast";
+
+function checkVersionRange(versionToUse: string, semverRange: string): boolean {
+  return semverSatisfies(versionToUse, semverRange, {
+    includePrerelease: true,
+  });
+}
+
+function applyFilter(
+  announcement: StaticListItem<"announcements">,
+  filter: AnnouncementVersionFilter,
+  versionToUse: string,
+): boolean {
+  if (!checkVersionRange(versionToUse, announcement.extensionVersionRange)) {
+    return false;
+  }
+
+  if (filter !== "toast" || !announcement.extensionVersionRangeForToast) {
+    return true;
+  }
+
+  return checkVersionRange(
+    versionToUse,
+    announcement.extensionVersionRangeForToast,
+  );
+}
 
 export class ExtensionVersionService {
   private readonly rootConfigService: RootConfigService;
@@ -113,17 +136,9 @@ export class ExtensionVersionService {
       return result;
     }
 
-    const filteredItems = result.value.filter((announcement) => {
-      const semverRangeToUse =
-        filter === "default"
-          ? announcement.extensionVersionRange
-          : (announcement.extensionVersionRangeForToast ??
-            announcement.extensionVersionRange);
-
-      return semverSatisfies(versionToUse, semverRangeToUse, {
-        includePrerelease: true,
-      });
-    });
+    const filteredItems = result.value.filter((announcement) =>
+      applyFilter(announcement, filter, versionToUse),
+    );
 
     return { value: filteredItems, version: result.version };
   }
