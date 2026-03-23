@@ -113,11 +113,14 @@ export function Toasts() {
     );
   }
 
-  const announcementToShow = announcements.find(
-    ({ createdAt }) =>
-      !announcementReadAtByCreatedAt[createdAt] &&
-      createdAt > welcomeMessageReadAt,
-  );
+  const announcementToShow = announcements
+    // Show older announcements first
+    .toSorted((a, b) => a.createdAt.localeCompare(b.createdAt))
+    .find(
+      ({ createdAt }) =>
+        !announcementReadAtByCreatedAt[createdAt] &&
+        createdAt > welcomeMessageReadAt,
+    );
 
   if (announcementToShow) {
     return (

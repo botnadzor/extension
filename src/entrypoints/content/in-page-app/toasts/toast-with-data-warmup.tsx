@@ -5,17 +5,15 @@ import { useStaticListMetadata } from "@/shared/@ui-helpers/data-hooks";
 
 import { Toast } from "./toast";
 
-// Minimum time before we even consider showing the toast.
-const showToastAfterMs = 2000;
+// Wait for one observed interval before deciding whether the toast is needed.
+const startForecastingAfterMs = 1000;
 
 // Show the toast if the linearly-extrapolated remaining time exceeds this.
-// Example: at 2 s in with 50 % done → ~2 s estimated remaining → show.
-//          at 2 s in with 98 % done → ~40 ms estimated remaining  → skip.
+// Example: if we first saw 40 % and after 1 s we see 50 %, we estimate the
+// remaining time from that observed speed instead of assuming we started at 0 %.
 const showIfEstimatedRemainingMoreThanMs = 2000;
 
-// Also show if progress hasn't moved for this long after the initial delay.
-// Handles the case where loading sprints to a high percentage and then stalls.
-const showIfProgressStuckForMs = 2000;
+const forecastCheckIntervalMs = 1000;
 
 export function ToastWithDataWarmup({ onDone }: { onDone: () => void }) {
   const accountsMetadata = useStaticListMetadata("accounts");
@@ -46,52 +44,60 @@ export function ToastWithDataWarmup({ onDone }: { onDone: () => void }) {
     : 95;
 
   // Refs let the interval callback read the latest values without being
-  // re-registered on every render. Initialized and synced via effect -
-  // avoids calling Date.now() during render.
-  const mountTimeRef = React.useRef<number | undefined>(undefined);
+  // re-registered on every render.
+  const initialProgressMeasuredAtRef = React.useRef<number | undefined>(
+    undefined,
+  );
+  const initialProgressRef = React.useRef<number | undefined>(undefined);
   const progressRef = React.useRef(progressInPercentage);
-  const lastProgressChangeAtRef = React.useRef<number | undefined>(undefined);
+
   React.useEffect(() => {
-    const now = Date.now();
-    if (mountTimeRef.current === undefined) {
-      mountTimeRef.current = now;
-      lastProgressChangeAtRef.current = now;
-    } else if (progressInPercentage !== progressRef.current) {
-      lastProgressChangeAtRef.current = now;
+    if (initialProgressMeasuredAtRef.current === undefined) {
+      initialProgressMeasuredAtRef.current = Date.now();
+      initialProgressRef.current = progressInPercentage;
     }
+
     progressRef.current = progressInPercentage;
-  });
+  }, [progressInPercentage]);
 
   const [shouldShow, setShouldShow] = React.useState(false);
 
   React.useEffect(() => {
     function check() {
-      const mountTime = mountTimeRef.current;
-      const lastProgressChangeAt = lastProgressChangeAtRef.current;
-      if (mountTime === undefined || lastProgressChangeAt === undefined) {
+      const initialProgressMeasuredAt = initialProgressMeasuredAtRef.current;
+      const initialProgress = initialProgressRef.current;
+
+      if (
+        initialProgressMeasuredAt === undefined ||
+        initialProgress === undefined
+      ) {
         return;
       }
 
       const now = Date.now();
-      const elapsed = now - mountTime;
-      if (elapsed < showToastAfterMs) {
+      const elapsed = now - initialProgressMeasuredAt;
+
+      if (elapsed < startForecastingAfterMs) {
         return;
       }
 
-      const progress = progressRef.current;
-      const estimatedRemaining =
-        progress > 0 ? (elapsed * (100 - progress)) / progress : Infinity;
-      const timeSinceProgressChange = now - lastProgressChangeAt;
+      const currentProgress = progressRef.current;
+      const observedProgressDelta = currentProgress - initialProgress;
 
-      if (
-        estimatedRemaining > showIfEstimatedRemainingMoreThanMs ||
-        timeSinceProgressChange > showIfProgressStuckForMs
-      ) {
+      if (observedProgressDelta <= 0) {
+        setShouldShow(true);
+        return;
+      }
+
+      const estimatedRemaining =
+        (elapsed * (100 - currentProgress)) / observedProgressDelta;
+
+      if (estimatedRemaining > showIfEstimatedRemainingMoreThanMs) {
         setShouldShow(true);
       }
     }
 
-    const interval = setInterval(check, 500);
+    const interval = setInterval(check, forecastCheckIntervalMs);
     return () => {
       clearInterval(interval);
     };

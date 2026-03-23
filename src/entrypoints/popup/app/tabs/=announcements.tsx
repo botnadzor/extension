@@ -16,7 +16,10 @@ export function AnnouncementsTabBody() {
   const announcements = useFilteredAnnouncements("default");
   const frontendBaseUrl = useFrontendBaseUrl();
 
-  const announcementsToShow = announcements.toReversed();
+  // Show newer announcements first
+  const announcementsToShow = announcements.toSorted((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  );
 
   return (
     <div className="px-3 pt-2 pb-4">
