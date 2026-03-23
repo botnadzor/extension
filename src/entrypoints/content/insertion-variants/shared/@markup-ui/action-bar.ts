@@ -58,17 +58,23 @@ export function createActionUi<TagName extends "a" | "button">({
       bn:focus-visible:opacity-100!
       bn:pointer-fine:opacity-0
       bn:pointer-fine:hover:opacity-100!
-      bn:[[data-bn-insertion-instance-id]:has(:focus-visible)_&]:opacity-70
-      bn:pointer-fine:[[data-bn-insertion-instance-id]:hover_&]:opacity-70
-      bn:pointer-fine:[[data-bn-insertion-instance-id]:hover_&]:duration-0
     `,
 
-    // slightly wider buttons to ease touch interaction + adjust for global
+    // In nested insertions, multiple ancestors may have data-bn-insertion-instance-id.
+    // These selectors intentionally react only to the nearest such ancestor for this
+    // action button, so hovering/focusing an outer insertion does not reveal inner action bars.
+    `
+      bn:pointer-fine:[[data-bn-insertion-instance-id]:has(:focus-visible):not(:has([data-bn-insertion-instance-id]:has(:focus-visible)_&))_&]:opacity-70
+      bn:pointer-fine:[[data-bn-insertion-instance-id]:hover:not(:has([data-bn-insertion-instance-id]_&))_&]:opacity-70
+      bn:pointer-fine:[[data-bn-insertion-instance-id]:hover:not(:has([data-bn-insertion-instance-id]_&))_&]:duration-0
+    `,
+
+    // Slightly wider buttons to ease touch interaction + adjust for global
     derivedPageInfo?.websiteVariant === "mobileVkWebsite"
       ? "bn:w-[24px]"
       : "bn:w-[22px]",
 
-    // adjust for global outline styles
+    // Adjust for global outline styles
     derivedPageInfo?.websiteVariant === "mobileVkWebsite"
       ? "bn:outline-offset-1"
       : `
