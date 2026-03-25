@@ -12,8 +12,8 @@ importers:
         specifier: 1.3.0
         version: 1.3.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@logtape/logtape':
-        specifier: 2.0.4
-        version: 2.0.4
+        specifier: 2.0.5
+        version: 2.0.5
       '@orpc/client':
         specifier: 1.13.9
         version: 1.13.9
@@ -1050,8 +1050,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@logtape/logtape@2.0.4':
-    resolution: {integrity: sha512-Z4COeAMdedcBFuFkXaPFvDPOVuHoEom1hwNnPCIkSyojyikuNguplwPoSG+kZthWrS7GiOJo1USQyjWwIFfTKA==}
+  '@logtape/logtape@2.0.5':
+    resolution: {integrity: sha512-UizDkh20ZPJVOddRxG1F77WhHdlNl/sbQgoO8T534R7XvUBMAJ9En9f35u+meW2tRsNLvjz6R87Zanwf53tspQ==}
 
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
@@ -5453,7 +5453,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@logtape/logtape@2.0.4': {}
+  '@logtape/logtape@2.0.5': {}
 
   '@lukeed/csprng@1.1.0': {}
 
