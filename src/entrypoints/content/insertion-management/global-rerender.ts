@@ -1,6 +1,6 @@
 import type { Logger } from "@logtape/logtape";
 
-import type { DxConfig } from "@/shared/@model/dx-config";
+import { defaultDxConfig, type DxConfig } from "@/shared/@model/dx-config";
 import type { InsertionConfig } from "@/shared/@model/insertion-configs";
 import type { StaticListItem } from "@/shared/@model/static-lists";
 import type { PollVersion } from "@/shared/@pollable/core";
@@ -18,29 +18,36 @@ import {
   type InsertionInstanceMap,
   mountNewInsertions,
   refreshExistingInsertions,
+  syncElementDataAttributes,
 } from "./instance-lifecycle";
 
 let lastInsertionConfigs: InsertionConfig[] | undefined;
 
 let lastDxInsertionsRemoved: boolean | undefined;
 let lastDxInsertionForceRerenderedAt: string | undefined;
+let lastDxConfig: DxConfig = defaultDxConfig;
 
 export function startGlobalRerenderPolling({
   contentId,
   contentLogger,
   derivedPageInfo,
   getConfigs,
+  initialDxConfig,
   instanceMap,
   onConfigsChanged,
+  onDxConfigChanged,
 }: {
   derivedPageInfo: DerivedPageInfo;
   contentId: ContentId;
   contentLogger: Logger;
   getConfigs: () => InsertionConfig[];
+  initialDxConfig: DxConfig;
   instanceMap: InsertionInstanceMap;
   onConfigsChanged: (configs: InsertionConfig[]) => void;
+  onDxConfigChanged?: (dxConfig: DxConfig) => void;
 }): () => void {
   let disposed = false;
+  lastDxConfig = initialDxConfig;
 
   const logger = contentLogger.getChild([
     "insertion-management",
@@ -63,12 +70,14 @@ export function startGlobalRerenderPolling({
       contentId,
       contentLogger,
       derivedPageInfo,
+      dxConfig: lastDxConfig,
     });
     refreshExistingInsertions({
       contentId,
       contentLogger,
       derivedPageInfo,
       instanceMap,
+      dxConfig: lastDxConfig,
     });
   }
 
@@ -141,6 +150,27 @@ export function startGlobalRerenderPolling({
           }
           lastDxInsertionForceRerenderedAt = currentInsertionForceRenderedAtAt;
         }
+
+        if (
+          dxConfig.insertionDataInDom !== lastDxConfig.insertionDataInDom ||
+          dxConfig.insertionLabeling !== lastDxConfig.insertionLabeling ||
+          dxConfig.insertionFraming !== lastDxConfig.insertionFraming
+        ) {
+          for (const instance of instanceMap.values()) {
+            syncElementDataAttributes(instance.rootElement, dxConfig, {
+              innerData: instance.innerData,
+              ...("markupData" in instance && {
+                markupData: instance.markupData,
+              }),
+              ...("serviceData" in instance && {
+                serviceData: instance.serviceData,
+              }),
+            });
+          }
+        }
+
+        lastDxConfig = dxConfig;
+        onDxConfigChanged?.(dxConfig);
       },
     } satisfies ThingToPoll<DxConfig>,
     {

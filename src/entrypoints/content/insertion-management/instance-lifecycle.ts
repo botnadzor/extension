@@ -4,6 +4,7 @@ import { produce } from "immer";
 import { nanoid } from "nanoid";
 import type { JsonObject } from "type-fest";
 
+import type { DxConfig } from "@/shared/@model/dx-config";
 import type { InsertionConfig } from "@/shared/@model/insertion-configs";
 import type { ContentId } from "@/shared/@primitives/misc";
 import {
@@ -35,6 +36,60 @@ const insertionMarkupDataKey = "bnInsertionMarkupData";
 const insertionServiceDataKey = "bnInsertionServiceData";
 
 export type InsertionInstanceMap = Map<string, InsertionInstance>;
+
+/**
+ * Syncs the three JSON data attributes on an insertion's root element according
+ * to the current dxConfig. Pass only the keys whose data you want to manage;
+ * omitted keys are left untouched.
+ *
+ * - insertionDataInDom on  → write JSON for each provided key
+ * - insertionDataInDom off → delete inner/service; write sentinel "present" for
+ *   markup if labeling/framing is on, otherwise delete it
+ */
+export function syncElementDataAttributes(
+  rootElement: HTMLElement,
+  dxConfig: DxConfig,
+  data: {
+    innerData?: JsonObject;
+    markupData?: JsonObject;
+    serviceData?: JsonObject;
+  },
+): void {
+  if (dxConfig.insertionDataInDom) {
+    if (data.innerData !== undefined) {
+      rootElement.dataset[insertionInnerDataKey] = JSON.stringify(
+        data.innerData,
+      );
+    }
+    if (data.markupData !== undefined) {
+      rootElement.dataset[insertionMarkupDataKey] = JSON.stringify(
+        data.markupData,
+      );
+    }
+    if (data.serviceData !== undefined) {
+      rootElement.dataset[insertionServiceDataKey] = JSON.stringify(
+        data.serviceData,
+      );
+    }
+    return;
+  }
+  if (data.innerData !== undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- key is a runtime const
+    delete rootElement.dataset[insertionInnerDataKey];
+  }
+  if (data.serviceData !== undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- key is a runtime const
+    delete rootElement.dataset[insertionServiceDataKey];
+  }
+  if (data.markupData !== undefined) {
+    if (dxConfig.insertionLabeling || dxConfig.insertionFraming) {
+      rootElement.dataset[insertionMarkupDataKey] = "present";
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- key is a runtime const
+      delete rootElement.dataset[insertionMarkupDataKey];
+    }
+  }
+}
 
 const serviceLookup: AvailableServiceLookup = {
   affiliationService,
@@ -86,6 +141,7 @@ export function mountInstance(
   contentLogger: Logger,
   instanceMap: InsertionInstanceMap,
   derivedPageInfo: DerivedPageInfo,
+  dxConfig: DxConfig,
 ): MountedInsertionInstance {
   const definition = insertionVariantLookup[instance.config.variant];
 
@@ -129,10 +185,10 @@ export function mountInstance(
         return;
       }
 
-      instanceAfterRevalidate.rootElement.dataset[insertionMarkupDataKey] =
-        JSON.stringify(newMarkupData);
-      instanceAfterRevalidate.rootElement.dataset[insertionServiceDataKey] =
-        JSON.stringify(newServiceData);
+      syncElementDataAttributes(instanceAfterRevalidate.rootElement, dxConfig, {
+        markupData: newMarkupData,
+        serviceData: newServiceData,
+      });
 
       instanceMap.set(instance.instanceId, {
         ...instanceAfterRevalidate,
@@ -176,7 +232,7 @@ export function mountInstance(
 
         // Trigger re-render automatically
         // eslint-disable-next-line @typescript-eslint/no-use-before-define -- mutually recursive with mountInstance; call is deferred via callback
-        requestInstanceRerender(instance.instanceId, instanceMap);
+        requestInstanceRerender(instance.instanceId, instanceMap, dxConfig);
       }
     },
   });
@@ -193,6 +249,7 @@ export function mountInstance(
 function requestInstanceRerender(
   instanceId: string,
   instanceMap: InsertionInstanceMap,
+  dxConfig: DxConfig,
 ): void {
   const instance = instanceMap.get(instanceId);
   if (!instance || !("render" in instance)) {
@@ -218,13 +275,10 @@ function requestInstanceRerender(
       serviceData: current.serviceData,
     });
 
-    current.rootElement.dataset[insertionInnerDataKey] = JSON.stringify(
-      current.innerData,
-    );
-
-    current.rootElement.dataset[insertionServiceDataKey] = JSON.stringify(
-      current.serviceData,
-    );
+    syncElementDataAttributes(current.rootElement, dxConfig, {
+      innerData: current.innerData,
+      serviceData: current.serviceData,
+    });
   });
 }
 
@@ -265,11 +319,13 @@ export function mountNewInsertions({
   instanceMap,
   contentId,
   derivedPageInfo,
+  dxConfig,
 }: {
   configs: InsertionConfig[];
   contentId: ContentId;
   contentLogger: Logger;
   derivedPageInfo: DerivedPageInfo;
+  dxConfig: DxConfig;
   instanceMap: InsertionInstanceMap;
 }): void {
   const logger = contentLogger.getChild(["insertion-management", "mount"]);
@@ -304,8 +360,9 @@ export function mountNewInsertions({
       const initialInnerData = definition.defaultInnerData;
 
       rootElement.dataset[insertionInstanceIdKey] = instanceId;
-      rootElement.dataset[insertionInnerDataKey] =
-        JSON.stringify(initialInnerData);
+      syncElementDataAttributes(rootElement, dxConfig, {
+        innerData: initialInnerData,
+      });
 
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- key is a runtime const
       delete rootElement.dataset[insertionMarkupDataKey];
@@ -348,10 +405,10 @@ export function mountNewInsertions({
             return;
           }
 
-          instance.rootElement.dataset[insertionMarkupDataKey] =
-            JSON.stringify(markupData);
-          instance.rootElement.dataset[insertionServiceDataKey] =
-            JSON.stringify(serviceData);
+          syncElementDataAttributes(instance.rootElement, dxConfig, {
+            markupData,
+            serviceData,
+          });
 
           const mountedInstance = mountInstance(
             { ...instance, markupData, serviceData },
@@ -359,6 +416,7 @@ export function mountNewInsertions({
             contentLogger,
             instanceMap,
             derivedPageInfo,
+            dxConfig,
           );
 
           instanceMap.set(instanceId, mountedInstance);
@@ -383,10 +441,12 @@ export function refreshExistingInsertions({
   contentId,
   contentLogger,
   derivedPageInfo,
+  dxConfig,
 }: {
   contentId: ContentId;
   contentLogger: Logger;
   derivedPageInfo: DerivedPageInfo;
+  dxConfig: DxConfig;
   instanceMap: InsertionInstanceMap;
 }): void {
   const logger = contentLogger.getChild(["insertion-management", "refresh"]);
@@ -453,12 +513,11 @@ export function refreshExistingInsertions({
           instanceId,
         });
 
-        instanceAfterData.rootElement.dataset[insertionInnerDataKey] =
-          JSON.stringify(instanceAfterData.innerData);
-        instanceAfterData.rootElement.dataset[insertionMarkupDataKey] =
-          JSON.stringify(newMarkupData);
-        instanceAfterData.rootElement.dataset[insertionServiceDataKey] =
-          JSON.stringify(newServiceData);
+        syncElementDataAttributes(instanceAfterData.rootElement, dxConfig, {
+          innerData: instanceAfterData.innerData,
+          markupData: newMarkupData,
+          serviceData: newServiceData,
+        });
 
         if ("unmount" in instanceAfterData) {
           instanceAfterData.unmount();
@@ -474,6 +533,7 @@ export function refreshExistingInsertions({
           contentLogger,
           instanceMap,
           derivedPageInfo,
+          dxConfig,
         );
 
         instanceMap.set(instanceId, mountedInstance);

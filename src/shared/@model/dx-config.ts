@@ -9,6 +9,7 @@ export const staticListIdSchema = z.enum(staticListIds);
 export const dxConfigSchema = z.readonly(
   z.object({
     insertionForceRerenderedAt: z.exactOptional(isoDateTimeSchema),
+    insertionDataInDom: optionalTrueSchema,
     insertionFraming: optionalTrueSchema,
     insertionLabeling: optionalTrueSchema,
     insertionsRemoved: optionalTrueSchema,

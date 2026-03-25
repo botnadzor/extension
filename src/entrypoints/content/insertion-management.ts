@@ -83,12 +83,15 @@ export async function startManagingInsertions({
 
   updateConfigs(initialDxConfig.insertionsRemoved ? [] : initialItems);
 
+  let latestDxConfig = initialDxConfig;
+
   mountNewInsertions({
     configs: currentConfigs,
     contentId,
     contentLogger,
     derivedPageInfo,
     instanceMap,
+    dxConfig: initialDxConfig,
   });
 
   let throttleTimeout: number | undefined;
@@ -103,6 +106,7 @@ export async function startManagingInsertions({
         contentLogger,
         derivedPageInfo,
         instanceMap,
+        dxConfig: latestDxConfig,
       });
       throttleTimeout = undefined;
     }, 100);
@@ -118,8 +122,12 @@ export async function startManagingInsertions({
     instanceMap,
     contentLogger,
     contentId,
+    initialDxConfig,
     getConfigs: () => currentConfigs,
     onConfigsChanged: updateConfigs,
+    onDxConfigChanged: (config) => {
+      latestDxConfig = config;
+    },
   });
 
   window.addEventListener("beforeunload", () => {
