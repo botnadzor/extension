@@ -1,6 +1,7 @@
 import { z } from "zod/mini";
 
 import {
+  actionBarPlacementSchema,
   elementPlacementSchema,
   imageUrlSelectorSchema,
   markupEditSchema,
@@ -31,7 +32,7 @@ export const commentInsertionConfigSchema = createInsertionConfigSchema(
         edits: z.readonly(z.array(markupEditSchema)),
         ui: z.readonly(
           z.object({
-            actionBar: elementPlacementSchema,
+            actionBar: actionBarPlacementSchema,
             affiliationBadge: elementPlacementSchema,
             affiliationHighlight: elementPlacementSchema,
             regDate: elementPlacementSchema,
