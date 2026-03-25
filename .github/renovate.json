@@ -7,6 +7,7 @@
     ":disableDigestUpdates",
     ":semanticCommitsDisabled"
   ],
+  "lockFileMaintenance": { "enabled": true },
   "postUpdateOptions": ["pnpmDedupe"],
   "prConcurrentLimit": 1,
   "rangeStrategy": "pin",
