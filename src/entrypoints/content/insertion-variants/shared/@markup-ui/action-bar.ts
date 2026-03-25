@@ -1,7 +1,7 @@
 import type { Logger } from "@logtape/logtape";
 
 import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
-import type { ElementPlacementSchema } from "@/shared/@model/insertion-configs/shared/primitives";
+import type { ActionBarPlacementSchema } from "@/shared/@model/insertion-configs/shared/primitives";
 import type {
   InspectorInstancePayload,
   InspectorTrigger,
@@ -22,6 +22,19 @@ import { createInsertionUi, type InsertionUi } from "./helpers";
 import { createIconElement, type IconId } from "./icons";
 import type { RegDateInfo } from "./reg-date";
 import { createTooltipUi, type TooltipDirection } from "./tooltip";
+
+function handleAnyButtonClick(event: Event | MouseEvent) {
+  // If placed inside <a>, prevent navigation (We should aim to avoid nested links, but they sometimes wrap the entire insertion)
+  event.preventDefault();
+
+  // Ensure the click event is not propagated to the parent element
+  event.stopPropagation();
+}
+
+function handleAnyLinkClick(event: Event | MouseEvent) {
+  // Ensure the click event is not propagated to the parent element
+  event.stopPropagation();
+}
 
 export function createActionUi<TagName extends "a" | "button">({
   className,
@@ -46,6 +59,9 @@ export function createActionUi<TagName extends "a" | "button">({
 
   if (tagName === "button") {
     element.setAttribute("type", "button"); // default is type="submit"
+    element.addEventListener("click", handleAnyButtonClick);
+  } else {
+    element.addEventListener("click", handleAnyLinkClick);
   }
 
   element.className = cn(
@@ -67,6 +83,12 @@ export function createActionUi<TagName extends "a" | "button">({
       bn:pointer-fine:[[data-bn-insertion-instance-id]:has(:focus-visible):not(:has([data-bn-insertion-instance-id]:has(:focus-visible)_&))_&]:opacity-70
       bn:pointer-fine:[[data-bn-insertion-instance-id]:hover:not(:has([data-bn-insertion-instance-id]_&))_&]:opacity-70
       bn:pointer-fine:[[data-bn-insertion-instance-id]:hover:not(:has([data-bn-insertion-instance-id]_&))_&]:duration-0
+    `,
+    // Extra fallback handles non-nested insertions where nearest-ancestor matching may not kick in.
+    `
+      bn:pointer-fine:[[data-bn-insertion-instance-id]:not(:has([data-bn-insertion-instance-id])):has(:focus-visible)_&]:opacity-70
+      bn:pointer-fine:[[data-bn-insertion-instance-id]:not(:has([data-bn-insertion-instance-id])):hover_&]:opacity-70
+      bn:pointer-fine:[[data-bn-insertion-instance-id]:not(:has([data-bn-insertion-instance-id])):hover_&]:duration-0
     `,
 
     // Slightly wider buttons to ease touch interaction + adjust for global
@@ -248,10 +270,7 @@ function createInspectorButton({
 
   let eventPayload: InspectorInstancePayload | undefined;
 
-  function handleClick(event: MouseEvent) {
-    // Ensure the click event is not propagated to the parent element
-    event.stopPropagation();
-
+  function handleClick() {
     if (eventPayload) {
       void serviceLookup.inspectorService.trigger(contentId, eventPayload);
     }
@@ -328,10 +347,7 @@ function createRegDateAction({
 
   const fetchingCnTokens = cnt("bn:cursor-default", "bn:text-muted-foreground");
 
-  function handleClick(event: MouseEvent) {
-    // Ensure the click event is not propagated to the parent element
-    event.stopPropagation();
-
+  function handleClick() {
     const accountIdentifier = lastAccountIdentifier;
     const regDateInfo = lastRegDateInfo;
 
@@ -444,16 +460,14 @@ export function createUiWithActionBar({
   placement,
   rootElement,
   serviceLookup,
-  tooltipDirection = "down",
   onRegDateInfoChange,
 }: {
   contentId: ContentId;
   derivedPageInfo: DerivedPageInfo;
   instanceLogger: Logger;
-  placement: ElementPlacementSchema;
+  placement: ActionBarPlacementSchema;
   rootElement: HTMLElement;
   serviceLookup: AvailableServiceLookup;
-  tooltipDirection?: TooltipDirection | undefined;
   onRegDateInfoChange: (regDateInfo: RegDateInfo | undefined) => void;
 }):
   | InsertionUi<{
@@ -466,7 +480,7 @@ export function createUiWithActionBar({
       regDateInfo?: RegDateInfo;
     }>
   | undefined {
-  const { element } = createInsertionUi({
+  const { element, pickedPlacement } = createInsertionUi({
     className: cn("bn:pointer-events-auto bn:relative bn:inline-flex"),
     dxLabel: "actionBar",
     placement,
@@ -477,6 +491,8 @@ export function createUiWithActionBar({
   if (!element) {
     return;
   }
+
+  const tooltipDirection = pickedPlacement.tooltipDirection ?? "down";
 
   const bnPageAction = createBnPageAction({
     derivedPageInfo,

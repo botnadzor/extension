@@ -228,3 +228,15 @@ export const elementPlacementSchema = allowMultiple(
   singleElementPlacementSchema,
 );
 export type ElementPlacementSchema = z.infer<typeof elementPlacementSchema>;
+
+export const singleActionBarPlacementSchema = z.readonly(
+  z.object({
+    ...singleElementPlacementSchema._zod.def.innerType.shape,
+    tooltipDirection: z.exactOptional(z.enum(["up", "down"])),
+  }),
+);
+
+export const actionBarPlacementSchema = allowMultiple(
+  singleActionBarPlacementSchema,
+);
+export type ActionBarPlacementSchema = z.infer<typeof actionBarPlacementSchema>;
