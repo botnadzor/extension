@@ -37,6 +37,18 @@ export function AdditionalInsertionControls() {
     );
   }
 
+  function handleDataInDomChange(checked: boolean) {
+    void dxConfigService.set(
+      produce(dxConfig, (draft) => {
+        if (checked) {
+          draft.insertionDataInDom = true;
+        } else {
+          delete draft.insertionDataInDom;
+        }
+      }),
+    );
+  }
+
   function handleHiddenToggle() {
     const newConfig = produce(dxConfig, (draft) => {
       if (draft.insertionsRemoved) {
@@ -124,7 +136,7 @@ export function AdditionalInsertionControls() {
             onCheckedChange={handleFramingChange}
             disabled={insertionsRemoved}
           />
-          Рамки у вставок
+          Рамки вставок
         </Label>
         <Label className={cn(insertionsRemoved && "text-foreground/50")}>
           <Checkbox
@@ -134,7 +146,17 @@ export function AdditionalInsertionControls() {
             onCheckedChange={handleLabelingChange}
             disabled={insertionsRemoved}
           />
-          Метки у вставок
+          Метки вставок
+        </Label>
+        <Label className={cn(insertionsRemoved && "text-foreground/50")}>
+          <Checkbox
+            checked={
+              insertionsRemoved ? false : (dxConfig.insertionDataInDom ?? false)
+            }
+            onCheckedChange={handleDataInDomChange}
+            disabled={insertionsRemoved}
+          />
+          <code className="text-xs whitespace-nowrap">bn-insertion-*-data</code>
         </Label>
       </div>
     </div>
