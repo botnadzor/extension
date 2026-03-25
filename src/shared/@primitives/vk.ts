@@ -13,14 +13,14 @@ export type VkDomain = z.infer<typeof vkDomainSchema>;
 
 export const positiveVkIdSchema = z
   .int()
-  .check(z.minimum(1), z.maximum(5_000_000_000))
+  .check(z.minimum(1), z.maximum(1_000_000_000_000))
   .brand<"PositiveVkId">();
 /** @public */
 export type PositiveVkId = z.infer<typeof positiveVkIdSchema>;
 
 export const negativeVkIdSchema = z
   .int()
-  .check(z.minimum(-5_000_000_000), z.maximum(-1))
+  .check(z.minimum(-1_000_000_000_000), z.maximum(-1))
   .brand<"NegativeVkId">();
 /** @public */
 export type NegativeVkId = z.infer<typeof negativeVkIdSchema>;
