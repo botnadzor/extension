@@ -481,7 +481,7 @@ export default [
         },
         regDate: [
           {
-            selector: '[data-testid="post-header-title"]',
+            selector: "[data-testid='post-header-title']",
             position: "after",
             style: { marginTop: "2px" },
           },
@@ -511,18 +511,18 @@ export default [
       '[data-testid="post"] > .vkuiDiv__host > [class*="vkitPostHeader__container"]',
     markup: {
       data: {
-        accountAvatar: '[data-testid="post-header-avatar"] img',
+        accountAvatar: "[data-testid='post-header-avatar'] img",
         accountIdentifier: [
           {
             selector: "",
             reactProp: "MeProvider:feedItem/id",
           },
           {
-            selector: '[data-testid="post-header-title"][href^="/"]',
+            selector: "[data-testid='post-header-title'][href^='/']",
             attribute: "href",
           },
         ],
-        accountName: '[data-testid="post-header-title"]',
+        accountName: "[data-testid='post-header-title']",
       },
       edits: [
         {
@@ -535,7 +535,7 @@ export default [
         },
         {
           // Ensure tooltips are visible
-          selector: '[class*="vkitPostHeader__mainInfo"]',
+          selector: "[class*='vkitPostHeader__mainInfo']",
           style: { overflow: "visible" },
         },
         {
@@ -621,7 +621,7 @@ export default [
         affiliationBadge: [
           {
             // post
-            selector: '[data-testid="mobile-wall-post-author"]',
+            selector: "[data-testid='mobile-wall-post-author']",
             position: "after",
             style: { paddingLeft: "4px", top: "1px" },
           },
@@ -638,7 +638,7 @@ export default [
           style: { top: "-4px", bottom: "-4px" },
         },
         regDate: {
-          selector: '[data-testid="mobile-wall-post-author"]',
+          selector: "[data-testid='mobile-wall-post-author']",
           position: "after",
           style: { marginTop: "2px" },
         },
@@ -704,10 +704,10 @@ export default [
     selector: "[data-testid='userrichcell']",
     markup: {
       data: {
-        accountAvatar: '[data-testid="userrichcell-avatar"] img',
+        accountAvatar: "[data-testid='userrichcell-avatar'] img",
         accountIdentifier: [
           {
-            selector: '[data-testid="userrichcell-avatar"] a',
+            selector: "[data-testid='userrichcell-avatar'] a",
             attribute: "href",
           },
           {
@@ -715,42 +715,57 @@ export default [
             attribute: "href",
           },
         ],
-        accountName: '[data-testid="userrichcell-name"]',
+        accountName: "[data-testid='userrichcell-name']",
       },
       edits: [
         {
-          selector: '[class*="RichCell__children"]',
+          selector: "[class*='RichCell__children']",
           style: { overflow: "visible" },
         },
       ],
       ui: {
-        actionBar: {
-          selector: "[class*='vkitUserRichCell__name']",
-          position: "after",
-          style: { marginLeft: "2px", top: "3px" },
-        },
+        actionBar: [
+          {
+            selector: "[class*='vkuiRichCell__extraSubtitle']",
+            position: "after",
+            style: { top: "3px", marginLeft: "-3px" },
+          },
+          {
+            selector: ".vkuiRichCell__children",
+            position: "after",
+            style: { top: "3px", marginLeft: "-3px" },
+          },
+        ],
         affiliationBadge: {
-          selector: "[data-bn-insertion-ui-element='actionBar']",
-          position: "before",
+          selector: "[class*='vkitUserRichCell__name']",
+          position: "append",
+          style: { marginLeft: "3px" },
         },
         affiliationHighlight: {
           selector: "",
           position: "prepend",
-          style: { inset: "-2px", left: "-2px" },
+          style: { inset: "-2px", left: "-2px", marginRight: "2px" },
         },
-        regDate: {
-          selector: ".vkuiRichCell__children",
-          position: "after",
-        },
+        regDate: [
+          {
+            selector: "[class*='vkuiRichCell__extraSubtitle']",
+            position: "after",
+          },
+          {
+            selector: ".vkuiRichCell__children",
+            position: "after",
+          },
+        ],
       },
     },
   },
 
   // - https://m.vk.com/wall-140899168_3954792?reply=3955042
+  // - https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
   {
-    id: "mobileLikeCell",
+    id: "desktopAndMobileLikeCell",
     variant: "account",
-    appliesTo: "mobileVkWebsite",
+    appliesTo: "desktopAndMobileVkWebsite",
     selector: "[class*='vkitVirtualizedList'] > * > .vkuiSimpleCell__host",
     markup: {
       data: {
@@ -766,16 +781,45 @@ export default [
       },
       edits: [
         {
+          selector: ".vkuiSimpleCell__middle",
+          style: {
+            // Ensure highlight is placed relative to its parent
+            position: "relative",
+            // Ensure tooltips are not clipped when overflow
+            overflow: "visible",
+            // Ensure highlight height remains fixed, even when we trigger reg date
+            height: "42px",
+            padding: "0px",
+          },
+        },
+        {
+          // Prevent account name from going under highlight
           selector: ".vkuiSimpleCell__middle > *",
           style: { position: "relative" },
         },
+        {
+          // Inserting affiliationHighlight makes this element second, so it gets marginTop: 2px - needs cancelling
+          selector: ".vkuiSimpleCell__content",
+          style: { marginTop: "0px" },
+        },
       ],
       ui: {
-        actionBar: {
-          selector: ".vkuiSimpleCell__content",
-          position: "append",
-          style: { marginLeft: "2px" },
-        },
+        actionBar: [
+          {
+            selector: ":first-child > :scope .vkuiSimpleCell__content",
+            position: "append",
+            style: { marginLeft: "2px" },
+            // Tooltip direction is down for the first element because of overflow:scroll in parent (not ideal because is partially overlapping with the next element's highlight)
+            tooltipDirection: "down",
+          },
+          {
+            selector: ":not(:first-child) > :scope .vkuiSimpleCell__content",
+            position: "append",
+            style: { marginLeft: "2px" },
+            // Elements are too close to each other. If tooltip is placed down, it will be partially hidden by the next element's highlight
+            tooltipDirection: "up",
+          },
+        ],
         affiliationBadge: {
           selector: "[data-bn-insertion-ui-element='actionBar']",
           position: "before",
@@ -783,10 +827,13 @@ export default [
         affiliationHighlight: {
           selector: ".vkuiSimpleCell__middle",
           position: "prepend",
+          style: { left: "-5px" },
         },
         regDate: {
           selector: ".vkuiSimpleCell__content",
           position: "after",
+          // Ensure reg date does not increase the cell height
+          style: { marginTop: "-2px" },
         },
       },
     },
