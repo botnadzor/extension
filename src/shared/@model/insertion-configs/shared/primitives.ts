@@ -19,12 +19,15 @@ export type Attribute = z.infer<typeof attributeSchema>;
  * Resolution is async so should be used if the same data is not available
  * in DOM attribute.
  *
+ * If the prop name is 'key', the value is extracted from the React key.
+ *
  * Traverses up to 16 components wrapping the given DOM element. Traversal stops
  * as soon as a value is encountered. All extracted values are converted to strings
  * for compatibility with attribute selectors.
  *
  * @example "*:foo" - React component with any name, prop name 'foo'
  * @example "Example:foo" - React component named 'Example', prop name 'foo'
+ * @example "Example:key" - React component named 'Example', React key
  * @example "Example:foo/bar" - React component named 'Example', prop name 'foo' (JSON object) → field 'bar'
  * @example "*:foo/bar/baz" - React component with any name, prop name 'foo' (JSON object) → field 'bar' → field 'baz'
  */

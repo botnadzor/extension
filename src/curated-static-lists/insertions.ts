@@ -11,12 +11,12 @@ export default [
   // ---------------------------------------------------------------------------
 
   /**
-   * Followers (lists of user cards) on desktop (React-based UI: tabs have outlines and shadows)
+   * Follower (in a list of user cards) on desktop (React-based UI: tabs have outlines and shadows)
    * Examples:
    * - https://vk.com/ria → followers
    */
   {
-    id: "desktopDialogFollowers",
+    id: "desktopDialogFollower",
     variant: "account",
     appliesTo: "desktopVkWebsite",
     selector:
@@ -26,10 +26,16 @@ export default [
         accountAvatar: {
           selector: ".vkuiAvatar_host>img",
         },
-        accountIdentifier: {
-          selector: ".vkuiHorizontalCell__content a",
-          attribute: "href",
-        },
+        accountIdentifier: [
+          {
+            selector: "",
+            reactProp: "GridItem:key",
+          },
+          {
+            selector: ".vkuiHorizontalCell__content a",
+            attribute: "href",
+          },
+        ],
         accountName: ".vkuiHorizontalCell__content a",
       },
       edits: [
