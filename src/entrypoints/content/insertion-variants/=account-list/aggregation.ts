@@ -56,8 +56,8 @@ const chartCategories: readonly ChartCategory[] = [
   {
     color: "var(--chart-1)",
     id: "hasCard",
-    label: "Подтверждённые боты",
-    matches: (account) => account.accountAffiliation?.botnadzorCard === true,
+    label: "Аккаунты с маркировкой",
+    matches: (account) => Boolean(account.accountAffiliation),
   },
   {
     color: "var(--chart-2)",
