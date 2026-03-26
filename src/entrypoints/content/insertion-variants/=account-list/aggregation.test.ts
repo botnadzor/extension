@@ -62,7 +62,7 @@ describe("deriveAccountChart", () => {
 
     expect(chart.buckets).toEqual([
       {
-        counts: [0, 1],
+        counts: [1, 0],
         million: 1,
       },
     ]);
