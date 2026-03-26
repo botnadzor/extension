@@ -105,6 +105,7 @@ function resolveReactProp(
     const node = current as {
       return?: unknown;
       type?: unknown;
+      key?: unknown;
       memoizedProps?: Record<string, unknown>;
     };
 
@@ -114,6 +115,13 @@ function resolveReactProp(
       const name = type.displayName ?? type.name;
 
       if (componentName === "*" || name === componentName) {
+        if (propPath === "key") {
+          const keyValue = stringifyExtractedValue(node.key);
+          if (keyValue !== undefined) {
+            return keyValue;
+          }
+        }
+
         const stringified = stringifyExtractedValue(
           extractNestedValue(node.memoizedProps, pathSegments),
         );
