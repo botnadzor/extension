@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  lodash@4.17.23:
+    hash: 3988be7bdab0757690c4da375c7bea87fa35b3a284f60c7a43503856b9f6af96
+    path: patches/lodash@4.17.23.patch
+
 importers:
 
   .:
@@ -6412,7 +6417,7 @@ snapshots:
       classnames: 2.5.1
       d3-path: 1.0.9
       d3-shape: 1.3.7
-      lodash: 4.17.23
+      lodash: 4.17.23(patch_hash=3988be7bdab0757690c4da375c7bea87fa35b3a284f60c7a43503856b9f6af96)
       prop-types: 15.8.1
       react: 19.2.4
 
@@ -6421,7 +6426,7 @@ snapshots:
       '@types/lodash': 4.17.24
       '@types/react': 19.2.14
       classnames: 2.5.1
-      lodash: 4.17.23
+      lodash: 4.17.23(patch_hash=3988be7bdab0757690c4da375c7bea87fa35b3a284f60c7a43503856b9f6af96)
       prop-types: 15.8.1
       react: 19.2.4
       reduce-css-calc: 1.3.0
@@ -8405,7 +8410,7 @@ snapshots:
 
   lodash.once@4.1.1: {}
 
-  lodash@4.17.23: {}
+  lodash@4.17.23(patch_hash=3988be7bdab0757690c4da375c7bea87fa35b3a284f60c7a43503856b9f6af96): {}
 
   log-update@6.1.0:
     dependencies:
