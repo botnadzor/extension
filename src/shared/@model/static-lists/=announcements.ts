@@ -88,8 +88,6 @@ export const announcementListDefinition: StaticListDefinition<
     content,
   ],
 
-  jsonlExportSortingBy: ["createdAt"],
-
   summarySchema: announcementListSummarySchema,
   createEmptySummary: () => ({
     itemCount: 0,
