@@ -32,12 +32,6 @@ export const problemSchemaForNotFound = z.object({
   description: z.string(),
 });
 
-export const problemSchemaForNotYetKnown = z.object({
-  problem: z.literal(true),
-  type: z.literal("bn:ext:not-yet-known"),
-  description: z.string(),
-});
-
 export const problemSchemaForRateLimited = z.object({
   problem: z.literal(true),
   type: z.literal("bn:ext:rate-limited"),
