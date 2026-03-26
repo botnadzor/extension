@@ -1,4 +1,3 @@
-import { kebabCase } from "es-toolkit";
 import type * as React from "react";
 import type { JsonObject } from "type-fest";
 
@@ -10,6 +9,7 @@ import type { SingleElementPlacement } from "@/shared/@model/insertion-configs/s
 import { cn } from "@/shared/tailwindcss-helpers";
 
 import { ensureArray, resolveSelector } from "../selector-resolution";
+import { interpretStyleProperty } from "../styling";
 
 export type InsertionUi<
   RenderPayload extends Readonly<JsonObject> = Record<string, never>,
@@ -64,22 +64,13 @@ export function createInsertionUi<
 
     if (singlePlacement.style) {
       for (const [prop, val] of Object.entries(singlePlacement.style)) {
-        if (prop.startsWith("--")) {
-          element.style.setProperty(prop, val);
-        } else {
-          element.style.setProperty(kebabCase(prop), val);
-        }
+        element.style.setProperty(interpretStyleProperty(prop), val);
       }
     }
 
     if (style) {
       for (const [prop, val] of Object.entries(style)) {
-        // Detect CSS custom property (starts with "--"), don't kebab-case
-        if (prop.startsWith("--")) {
-          element.style.setProperty(prop, String(val));
-        } else {
-          element.style.setProperty(kebabCase(prop), String(val));
-        }
+        element.style.setProperty(interpretStyleProperty(prop), String(val));
       }
     }
 

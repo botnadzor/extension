@@ -14,6 +14,7 @@ import {
   inspectorService,
   notificationService,
   regDateService,
+  userConfigService,
 } from "@/shared/proxy-services";
 
 import type { DerivedPageInfo } from "../derived-page-info";
@@ -24,6 +25,7 @@ import type {
   MountedInsertionInstance,
 } from "../insertion-instance-typings";
 import type {
+  AvailableInsertionLookup,
   AvailableServiceLookup,
   BaseInsertionVariantDefinition,
 } from "../insertion-variant-typings";
@@ -98,7 +100,48 @@ const serviceLookup: AvailableServiceLookup = {
   inspectorService,
   notificationService,
   regDateService,
+  userConfigService,
 };
+
+function createInsertionLookup(
+  instanceMap: InsertionInstanceMap,
+): AvailableInsertionLookup {
+  return {
+    getInsertionSnapshot: (instanceId, expectedVariant) => {
+      const instance = instanceMap.get(instanceId);
+      if (!instance) {
+        return {
+          success: false,
+          reason: "notFound",
+        };
+      }
+
+      if (instance.config.variant !== expectedVariant) {
+        return {
+          success: false,
+          reason: "variantMismatch",
+        };
+      }
+
+      if (!("render" in instance)) {
+        return {
+          success: false,
+          reason: "notMounted",
+        };
+      }
+
+      return {
+        success: true,
+        snapshot: {
+          instanceId: instance.instanceId,
+          markupData: instance.markupData,
+          serviceData: instance.serviceData,
+          variant: instance.config.variant,
+        },
+      };
+    },
+  };
+}
 
 type InstanceForObtainingData = Pick<
   InsertionInstanceWithServiceData,
@@ -109,6 +152,7 @@ async function obtainMarkupAndServiceData(
   instance: InstanceForObtainingData,
   definition: BaseInsertionVariantDefinition,
   derivedPageInfo: DerivedPageInfo,
+  insertionLookup: AvailableInsertionLookup,
   instanceLogger: Logger,
 ): Promise<{ markupData: JsonObject; serviceData: JsonObject } | undefined> {
   const markupData = await Promise.resolve(
@@ -126,6 +170,7 @@ async function obtainMarkupAndServiceData(
     definition.getServiceData({
       config: instance.config,
       derivedPageInfo,
+      insertionLookup,
       instanceLogger,
       innerData: instance.innerData,
       markupData,
@@ -144,6 +189,7 @@ export function mountInstance(
   dxConfig: DxConfig,
 ): MountedInsertionInstance {
   const definition = insertionVariantLookup[instance.config.variant];
+  const insertionLookup = createInsertionLookup(instanceMap);
 
   const instanceLogger = contentLogger.getChild([
     "insertion-instance",
@@ -166,6 +212,7 @@ export function mountInstance(
         current,
         definition,
         derivedPageInfo,
+        insertionLookup,
         instanceLogger,
       );
       if (result === undefined) {
@@ -390,6 +437,7 @@ export function mountNewInsertions({
             instanceAfterMarkup,
             definition,
             derivedPageInfo,
+            createInsertionLookup(instanceMap),
             instanceLogger,
           );
         })
@@ -480,6 +528,7 @@ export function refreshExistingInsertions({
           current,
           definition,
           derivedPageInfo,
+          createInsertionLookup(instanceMap),
           instanceLogger,
         );
         return { data };

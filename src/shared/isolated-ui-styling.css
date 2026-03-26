@@ -1,4 +1,4 @@
-@source not "../entrypoints/content/insertion-variants";
+@source not "../entrypoints/content/insertion-variants/**/*.ts";
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -60,6 +60,7 @@
 }
 
 :root,
+#root,
 body {
   --background: #ffffff;
   --foreground: #020617;
@@ -81,8 +82,8 @@ body {
   --input: #cbd5e1;
   --ring: #94a3b8;
   --active: #da310b;
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-1: #db7093;
+  --chart-2: #20b2aa;
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
@@ -97,6 +98,7 @@ body {
 }
 
 .dark-theme,
+.dark-theme #root,
 .dark-theme body {
   --background: #0f172a;
   --foreground: #f8fafc;
@@ -114,12 +116,12 @@ body {
   --accent-foreground: #f8fafc;
   --destructive: #f87171;
   --warning: #fb8500;
-  --border: #1e293b;
-  --input: #1e293b;
+  --border: #263447;
+  --input: #263447;
   --ring: #51637b;
   --active: #f44b25;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-1: #db7093;
+  --chart-2: #20b2aa;
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
@@ -242,4 +244,8 @@ body {
 }
 @utility u-ring-in-group {
   @apply ring-offset-background group-focus-visible:outline-hidden group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2;
+}
+
+@utility u-no-ring-in-group {
+  @apply group-focus-visible:outline-hidden group-focus-visible:ring-0 group-focus-visible:ring-offset-0;
 }

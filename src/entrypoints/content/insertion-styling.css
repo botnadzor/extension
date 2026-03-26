@@ -1,5 +1,6 @@
 @source ".";
 @source not "./in-page-app";
+@source not "../insertion-variants/**/*.tsx";
 
 @layer theme, base, components, utilities;
 

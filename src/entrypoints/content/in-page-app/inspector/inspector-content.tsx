@@ -86,6 +86,7 @@ export function InspectorContent({
   tab,
 }: InspectorInstanceConfig) {
   const contentId = useContentId();
+  const canReport = trigger.type !== "account";
   return (
     <>
       <InspectedAccount {...accountInfo} />
@@ -111,23 +112,27 @@ export function InspectorContent({
           >
             Обнаруженная активность
           </TabsTrigger>
-          <TabsTrigger
-            value={"report" satisfies InspectorTab}
-            className="px-2.5"
-          >
-            Отправить на проверку
-          </TabsTrigger>
+          {canReport && (
+            <TabsTrigger
+              value={"report" satisfies InspectorTab}
+              className="px-2.5"
+            >
+              Отправить на проверку
+            </TabsTrigger>
+          )}
         </TabsList>
         <InspectorTabsContent value="activity">
           <React.Suspense fallback={<TabLoader />}>
             <AccountActivity vkDomain={accountInfo.vkDomain} />
           </React.Suspense>
         </InspectorTabsContent>
-        <InspectorTabsContent value="report">
-          <React.Suspense fallback={<TabLoader />}>
-            <ReportForm vkDomain={accountInfo.vkDomain} trigger={trigger} />
-          </React.Suspense>
-        </InspectorTabsContent>
+        {canReport && (
+          <InspectorTabsContent value="report">
+            <React.Suspense fallback={<TabLoader />}>
+              <ReportForm vkDomain={accountInfo.vkDomain} trigger={trigger} />
+            </React.Suspense>
+          </InspectorTabsContent>
+        )}
       </Tabs>
     </>
   );

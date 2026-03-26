@@ -330,7 +330,7 @@ export default defineConfig(
   },
 
   {
-    files: ["src/entrypoints/content/insertion-variants/**/*.{ts,tsx}"],
+    files: ["src/entrypoints/content/insertion-variants/**/*.ts"],
     settings: {
       "better-tailwindcss": {
         entryPoint: `${import.meta.dirname}/src/entrypoints/content/insertion-styling.css`,

@@ -99,6 +99,7 @@ export class AffiliationService {
     return {
       color,
       colorForHighlight,
+      resolvedVkId: account.vkId,
       tags: [firstTag, ...otherTags],
       ...(hidden && { hidden: true }),
       ...(botnadzorPage && { botnadzorPage: true }),

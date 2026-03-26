@@ -1,6 +1,4 @@
-import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
 import type { AccountInsertionConfig } from "@/shared/@model/insertion-configs/account";
-import type { AccountIdentifier } from "@/shared/@primitives/vk";
 import { omitUndefined } from "@/shared/omit-undefined";
 
 import { defineInsertionVariant } from "../insertion-variant-typings";
@@ -14,22 +12,15 @@ import {
   mountUiWithRegDate,
   type RegDateInfo,
 } from "./shared/@markup-ui/reg-date";
+import type {
+  AccountInsertionMarkupData as AccountMarkupData,
+  AccountInsertionServiceData as AccountServiceData,
+} from "./shared/account-insertion-payload";
 import { warnAboutUndefinedFields } from "./shared/helpers-for-logger";
 import { applyMarkupEdits } from "./shared/markup-edits";
 
 export type AccountInnerData = {
   regDateInfo?: RegDateInfo;
-};
-
-type AccountMarkupData = {
-  accountAvatarUrl: string;
-  accountIdentifier: AccountIdentifier;
-  accountName: string;
-};
-
-type AccountServiceData = {
-  accountAffiliation?: AccountAffiliation;
-  frontendBaseUrl: string;
 };
 
 export default defineInsertionVariant<

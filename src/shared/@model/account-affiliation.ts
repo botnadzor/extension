@@ -1,9 +1,11 @@
 import { type HexColor, hexColorSchema } from "../@primitives/misc";
+import type { VkId } from "../@primitives/vk";
 import type { TagListItem } from "./static-lists";
 
 export type AccountAffiliation = {
   color: HexColor;
   colorForHighlight: HexColor;
+  resolvedVkId: VkId;
   tags: [TagListItem, ...TagListItem[]];
   /** true if user has chosen to not highlight these kinds of accounts */
   hidden?: boolean;

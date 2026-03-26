@@ -197,7 +197,6 @@ export function ConfigTabBody() {
       <Label>
         <Checkbox
           checked={userConfig.fansDisplay === "table"}
-          disabled={true}
           onCheckedChange={(checked) => {
             void userConfigService.set({
               ...userConfig,
@@ -205,10 +204,7 @@ export function ConfigTabBody() {
             });
           }}
         />
-        <span className="line-through">Табличный вид лайков в окне</span>
-        <span className="w-24 text-xs text-muted-foreground italic">
-          ← доделывается
-        </span>
+        Табличный вид лайков в окне
       </Label>
 
       <div className="space-y-1">

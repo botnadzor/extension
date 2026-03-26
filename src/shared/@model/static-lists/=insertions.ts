@@ -2,6 +2,7 @@ import { z } from "zod/mini";
 
 import { itemCountSchema } from "../../@primitives/misc";
 import { insertionConfigSchema } from "../insertion-configs";
+import { appliesToSchema } from "../insertion-configs/shared/schema";
 import {
   defineStaticListDefinition,
   type StaticListDefinition,
@@ -15,6 +16,10 @@ const insertionListSummarySchema = z.readonly(
   z.object({
     itemCount: itemCountSchema,
   }),
+);
+
+const appliesToMaxLength = Math.max(
+  ...appliesToSchema.options.map((appliesTo) => appliesTo.length),
 );
 
 const insertionVariantMaxLength = Math.max(
@@ -67,13 +72,16 @@ export const insertionListDefinition: StaticListDefinition<
   jsonlStringifyRow: (item) =>
     // vertically align json string to make it easier to read
     JSON.stringify(item)
-      .replace('mobileVkWebsite",', 'mobileVkWebsite", ')
+      .replace(
+        /appliesTo":"(\w+)",/,
+        (match, appliesTo: string) =>
+          `appliesTo":"${appliesTo}",${" ".repeat(appliesToMaxLength - appliesTo.length)}`,
+      )
       .replace(
         /variant":"(\w+)",/,
-        (match, p1: string) =>
-          `variant":"${p1}",${" ".repeat(insertionVariantMaxLength - p1.length)}`,
+        (match, variant: string) =>
+          `variant":"${variant}",${" ".repeat(insertionVariantMaxLength - variant.length)}`,
       ),
-
   summarySchema: insertionListSummarySchema,
   createEmptySummary: () => ({
     itemCount: 0,
