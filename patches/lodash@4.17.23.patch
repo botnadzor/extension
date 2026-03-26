@@ -1,0 +1,53 @@
+diff --git a/_root.js b/_root.js
+index d2852bed4d2e469b3b87ed31df2350047e005ff4..5d406e2e8c50c06d8e4dacb87733589322675aa0 100644
+--- a/_root.js
++++ b/_root.js
+@@ -3,7 +3,10 @@ var freeGlobal = require('./_freeGlobal');
+ /** Detect free variable `self`. */
+ var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+ 
+-/** Used as a reference to the global object. */
+-var root = freeGlobal || freeSelf || Function('return this')();
++/** Used as a reference to the global object without dynamic eval. */
++var freeGlobalThis = typeof globalThis == 'object' && globalThis &&
++  globalThis.Object === Object && globalThis;
++
++var root = freeGlobal || freeSelf || freeGlobalThis;
+ 
+ module.exports = root;
+diff --git a/core.js b/core.js
+index caf078f6987f2b47ef6485938ea51cd244f03ef2..c552cc9b5529e091ec107b4600c93af08c089b16 100644
+--- a/core.js
++++ b/core.js
+@@ -67,8 +67,11 @@
+   /** Detect free variable `self`. */
+   var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+ 
+-  /** Used as a reference to the global object. */
+-  var root = freeGlobal || freeSelf || Function('return this')();
++  /** Used as a reference to the global object without dynamic eval. */
++  var freeGlobalThis = typeof globalThis == 'object' && globalThis &&
++    globalThis.Object === Object && globalThis;
++
++  var root = freeGlobal || freeSelf || freeGlobalThis;
+ 
+   /** Detect free variable `exports`. */
+   var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+diff --git a/lodash.js b/lodash.js
+index ba61bcba083afe38d65e1a05f714b9be8f3b2ed3..2e56ae4c3faf373febda78d89648d7159fd3e750 100644
+--- a/lodash.js
++++ b/lodash.js
+@@ -432,8 +432,11 @@
+   /** Detect free variable `self`. */
+   var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+ 
+-  /** Used as a reference to the global object. */
+-  var root = freeGlobal || freeSelf || Function('return this')();
++  /** Used as a reference to the global object without dynamic eval. */
++  var freeGlobalThis = typeof globalThis == 'object' && globalThis &&
++    globalThis.Object === Object && globalThis;
++
++  var root = freeGlobal || freeSelf || freeGlobalThis;
+ 
+   /** Detect free variable `exports`. */
+   var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
