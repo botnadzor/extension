@@ -79,23 +79,6 @@ async function main() {
       interpretedItems.push(parseResult.data as Record<string, unknown>);
     }
 
-    if (definition.jsonlExportSortingBy) {
-      const sortingKeys = definition.jsonlExportSortingBy;
-      interpretedItems.sort((a, b) => {
-        for (const key of sortingKeys) {
-          const aVal = String(a[key]);
-          const bVal = String(b[key]);
-          if (aVal < bVal) {
-            return -1;
-          }
-          if (aVal > bVal) {
-            return 1;
-          }
-        }
-        return 0;
-      });
-    }
-
     const jsonlLines: string[] = [];
     /* eslint-disable @typescript-eslint/consistent-type-assertions -- each item in interpretedItems was validated against this exact definition above */
     const serializeInterpretedItemAsJsonl =

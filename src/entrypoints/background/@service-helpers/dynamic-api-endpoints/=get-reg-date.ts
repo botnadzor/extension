@@ -13,7 +13,7 @@ import {
   problemSchemaForInvalidAccessCode,
   problemSchemaForInvalidPayload,
   problemSchemaForMissingPermission,
-  problemSchemaForNotYetKnown,
+  problemSchemaForNotFound,
   problemSchemaForRateLimited,
   problemSchemaForUnforeseenError,
 } from "./problems";
@@ -44,7 +44,7 @@ export const contractForGetRegDate = base
         problemSchemaForInvalidAccessCode,
         problemSchemaForInvalidPayload,
         problemSchemaForMissingPermission,
-        problemSchemaForNotYetKnown,
+        problemSchemaForNotFound,
         problemSchemaForRateLimited,
         problemSchemaForUnforeseenError,
       ]),
