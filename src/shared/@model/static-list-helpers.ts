@@ -175,7 +175,6 @@ export type StaticListDefinition<
     z.infer<InterpretedItemSchema>,
     z.infer<JsonlItemSchema>
   >;
-  jsonlExportSortingBy?: InterpretedKeyName[];
   jsonlStringifyRow?: StaticListMapper<z.infer<JsonlItemSchema>, string>;
 
   summarySchema: SummarySchema;
