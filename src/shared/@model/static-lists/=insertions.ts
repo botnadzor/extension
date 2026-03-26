@@ -73,7 +73,6 @@ export const insertionListDefinition: StaticListDefinition<
         (match, p1: string) =>
           `variant":"${p1}",${" ".repeat(insertionVariantMaxLength - p1.length)}`,
       ),
-  jsonlExportSortingBy: ["variant", "disabled", "extensionVersionRange", "id"],
 
   summarySchema: insertionListSummarySchema,
   createEmptySummary: () => ({
