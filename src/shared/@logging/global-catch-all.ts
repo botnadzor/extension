@@ -15,6 +15,12 @@ const wrappedConsoleMethods = [
   "error",
 ] as const;
 
+const ignoredGlobalRuntimeErrorPatterns = [
+  // Browser-generated noise from page-level ResizeObserver churn can spam logs
+  // without indicating an extension defect, so we suppress it centrally here.
+  /^ResizeObserver loop completed with undelivered notifications\.$/u,
+] as const;
+
 type WrappedConsoleMethod = (typeof wrappedConsoleMethods)[number];
 type CatchAllLogLevel = "debug" | "info" | "warning" | "error";
 
@@ -144,6 +150,12 @@ function getUnhandledRejectionMessage(event: Event): string {
   return "Unhandled promise rejection";
 }
 
+function shouldIgnoreGlobalRuntimeMessage(message: string): boolean {
+  return ignoredGlobalRuntimeErrorPatterns.some((pattern) =>
+    pattern.test(message),
+  );
+}
+
 function forwardConsoleCall({
   args,
   consoleLogger,
@@ -179,6 +191,11 @@ function forwardErrorEvent({
   const colno = getEventValue(event, "colno");
   const filename = getEventValue(event, "filename");
   const lineno = getEventValue(event, "lineno");
+  const message = getErrorMessage(event);
+
+  if (shouldIgnoreGlobalRuntimeMessage(message)) {
+    return;
+  }
 
   logWithLevel({
     level: "error",
@@ -191,7 +208,7 @@ function forwardErrorEvent({
         ? { source: filename }
         : {}),
       ...(typeof lineno === "number" ? { lineno } : {}),
-      message: getErrorMessage(event),
+      message,
     },
   });
 }
@@ -204,13 +221,18 @@ function forwardUnhandledRejection({
   runtimeLogger: Logger;
 }): void {
   const reason = getEventValue(event, "reason");
+  const message = getUnhandledRejectionMessage(event);
+
+  if (shouldIgnoreGlobalRuntimeMessage(message)) {
+    return;
+  }
 
   logWithLevel({
     level: "error",
     logger: runtimeLogger,
     message: "{message}",
     properties: {
-      message: getUnhandledRejectionMessage(event),
+      message,
       ...(reason === undefined ? {} : { reason }),
     },
   });
