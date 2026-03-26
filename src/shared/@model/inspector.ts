@@ -19,6 +19,11 @@ export type InspectorAccountInfo = z.infer<typeof inspectorAccountInfoSchema>;
 export const inspectorTriggerSchema = z.discriminatedUnion("type", [
   z.readonly(
     z.object({
+      type: z.literal("account"),
+    }),
+  ),
+  z.readonly(
+    z.object({
       type: z.literal("comment"),
       postType: z.enum(["photo", "video", "wall"]),
       wallVkId: vkIdSchema,

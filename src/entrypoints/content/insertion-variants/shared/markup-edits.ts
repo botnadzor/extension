@@ -1,9 +1,10 @@
-import { kebabCase, noop } from "es-toolkit";
+import { noop } from "es-toolkit";
 
 import type { MarkupEdits } from "@/shared/@model/insertion-configs/shared/primitives";
 
 import type { UnmountFunction } from "../../insertion-variant-typings";
 import { resolveListSelector } from "./selector-resolution";
+import { interpretStyleProperty } from "./styling";
 
 /**
  * Applies style patches to matching elements.
@@ -32,18 +33,19 @@ export function applyMarkupEdits(
 
     for (const element of elements) {
       for (const [property, value] of Object.entries(edit.style)) {
-        const kebabCaseProperty = kebabCase(property);
-        const originalValue = element.style.getPropertyValue(kebabCaseProperty);
+        const interpretedProperty = interpretStyleProperty(property);
+        const originalValue =
+          element.style.getPropertyValue(interpretedProperty);
 
         if (originalValue === value) {
           continue;
         }
 
-        element.style.setProperty(kebabCaseProperty, value);
+        element.style.setProperty(interpretedProperty, value);
 
         appliedMarkupEdits.push({
           element,
-          kebabCaseProperty,
+          kebabCaseProperty: interpretedProperty,
           originalValue,
           value,
         });

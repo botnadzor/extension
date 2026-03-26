@@ -1,16 +1,10 @@
 import type { AccountAffiliation } from "@/shared/@model/account-affiliation";
 import type { ElementPlacementSchema } from "@/shared/@model/insertion-configs/shared/primitives";
-import type { TagListItem } from "@/shared/@model/static-lists";
 import type { AccountIdentifier } from "@/shared/@primitives/vk";
 import { cn } from "@/shared/tailwindcss-helpers";
 
+import { getAffiliationLabel } from "./affiliation-label";
 import { createInsertionUi, type InsertionUi } from "./helpers";
-
-function stringifyAffiliationTags(
-  tags: [TagListItem, ...TagListItem[]],
-): string {
-  return `(${tags.at(-1)?.name})`;
-}
 
 export function mountUiWithAffiliationBadge({
   placement,
@@ -50,7 +44,7 @@ export function mountUiWithAffiliationBadge({
         return;
       }
 
-      element.textContent = stringifyAffiliationTags(accountAffiliation.tags);
+      element.textContent = `(${getAffiliationLabel(accountAffiliation.tags)})`;
 
       element.style.setProperty(
         "--bn-inline-affiliation-color",

@@ -2,6 +2,7 @@ import type { Logger } from "@logtape/logtape";
 import type { Draft } from "immer";
 import type { JsonObject } from "type-fest";
 
+import type { InsertionVariant } from "@/shared/@model/insertion-configs";
 import type { ContentId } from "@/shared/@primitives/misc";
 import type {
   affiliationService,
@@ -10,6 +11,7 @@ import type {
   inspectorService,
   notificationService,
   regDateService,
+  userConfigService,
 } from "@/shared/proxy-services";
 
 import type { DerivedPageInfo } from "./derived-page-info";
@@ -22,6 +24,29 @@ export type AvailableServiceLookup = {
   inspectorService: typeof inspectorService;
   notificationService: typeof notificationService;
   regDateService: typeof regDateService;
+  userConfigService: typeof userConfigService;
+};
+
+export type GetInsertionSnapshotResult =
+  | Readonly<{
+      success: true;
+      snapshot: Readonly<{
+        instanceId: string;
+        markupData: JsonObject;
+        serviceData: JsonObject;
+        variant: InsertionVariant;
+      }>;
+    }>
+  | Readonly<{
+      success: false;
+      reason: "notFound" | "notMounted" | "variantMismatch";
+    }>;
+
+export type AvailableInsertionLookup = {
+  getInsertionSnapshot: (
+    instanceId: string,
+    expectedVariant: InsertionVariant,
+  ) => GetInsertionSnapshotResult;
 };
 
 /** Callback to update instance state using an Immer recipe function. */
@@ -63,6 +88,7 @@ export type InsertionVariantDefinition<
     config: Config;
     derivedPageInfo: DerivedPageInfo;
     innerData: InnerData;
+    insertionLookup: AvailableInsertionLookup;
     instanceLogger: Logger;
     markupData: MarkupData;
     serviceLookup: AvailableServiceLookup;

@@ -24,7 +24,7 @@ export default [
     markup: {
       data: {
         accountAvatar: {
-          selector: ".vkuiAvatar_host>img",
+          selector: ".vkuiAvatar__host>img",
         },
         accountIdentifier: [
           {
@@ -198,6 +198,119 @@ export default [
             right: "0px",
             textAlign: "center",
             top: "0px",
+          },
+        },
+      },
+    },
+  },
+
+  {
+    id: "desktopDialogFollowers",
+    variant: "accountList",
+    appliesTo: "desktopVkWebsite",
+    selector: "[class*=MembersListModal__modalContainer]",
+    markup: {
+      data: {
+        accountList:
+          "[class*=MembersListModal__modalContainer] .vkuiCustomScrollView__host",
+        activeTab: "[role=tab][aria-selected=true]",
+        loadMoreButton: false,
+      },
+      edits: [
+        {
+          selector: "",
+          style: { "--bn-insertion-summary-height": "300px" },
+        },
+        {
+          selector: "[data-testid=modalbox] > div:last-child",
+          style: {
+            "--max-height-scroll":
+              "calc(100vh - var(--bn-insertion-summary-height) - var(--empty-space))",
+            position: "relative",
+          },
+        },
+      ],
+      ui: {
+        summary: {
+          selector: "[data-testid=modalheader]",
+          position: "after",
+          style: {
+            height: "var(--bn-insertion-summary-height)",
+            flexShrink: "0",
+            padding: "4px",
+            paddingLeft: "10px",
+            paddingRight: "10px",
+          },
+        },
+        tableMeasurer: {
+          selector: "[data-testid=modalbox] > div:last-child",
+          position: "append",
+          style: {
+            backgroundColor: "var(--bn-color-background)",
+            borderBottomLeftRadius: "12px",
+            borderBottomRightRadius: "12px",
+            position: "absolute",
+            inset: "0",
+            padding: "4px",
+            paddingTop: "10px",
+          },
+        },
+      },
+    },
+  },
+
+  /*
+   * Desktop reactions dialog
+   * Examples:
+   * - post: https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892265%3Ftype%3Dpost
+   * - comment: https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
+   */
+  {
+    id: "desktopDialogReactions",
+    variant: "accountList",
+    appliesTo: "desktopVkWebsite",
+    selector: "[data-testid=feed-reactions-modal]",
+    markup: {
+      data: {
+        accountList: "[class*=ReactionsViewer__modalBody]",
+        activeTab: "[role=tab][aria-selected=true]",
+        loadMoreButton: false,
+      },
+      edits: [
+        {
+          selector: "",
+          style: { "--bn-insertion-summary-height": "300px" },
+        },
+        {
+          selector: "[class*=ReactionsViewer__modalBody]",
+          style: {
+            position: "relative", // Ensure table measurer is positioned correctly
+          },
+        },
+      ],
+      ui: {
+        summary: {
+          selector: "[data-testid=modalheader]",
+          position: "after",
+          style: {
+            height: "var(--bn-insertion-summary-height)",
+            flexShrink: "0",
+            padding: "4px",
+            paddingLeft: "10px",
+            paddingRight: "10px",
+          },
+        },
+        tableMeasurer: {
+          selector: "[class*=ReactionsViewer__modalBody]",
+          position: "append",
+          style: {
+            backgroundColor: "var(--bn-color-background)",
+            borderBottomLeftRadius: "8px",
+            borderBottomRightRadius: "8px",
+            inset: "0",
+            padding: "4px",
+            paddingTop: "10px",
+            position: "absolute",
           },
         },
       },
@@ -766,8 +879,11 @@ export default [
     },
   },
 
-  // - https://m.vk.com/wall-140899168_3954792?reply=3955042
-  // - https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
+  /*
+   * Examples:
+   * - https://m.vk.com/wall-140899168_3954792?reply=3955042 -- TODO: Fix  link or annotate it with instructions (relationship to this insertion is unclear)
+   * - https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
+   */
   {
     id: "desktopAndMobileLikeCell",
     variant: "account",

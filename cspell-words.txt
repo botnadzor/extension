@@ -1,4 +1,6 @@
 add-ons
+autoload
+bbox
 bivariance
 botnadzor
 btn
@@ -6,6 +8,7 @@ callees
 claude
 cnt
 contenteditable
+cooldown
 cva
 cyrillic
 DBG
@@ -40,6 +43,7 @@ pnpm-dedupe
 pollable
 redownload
 repost
+roledescription
 rowsmembers
 rsc
 rt_russian
@@ -58,6 +62,7 @@ Unvalidated
 upserts
 userrichcell
 vesti
+visx
 vite
 vitest
 vkcom
@@ -68,6 +73,8 @@ vkvideo
 webext-core
 WRN
 wxt
+автоподгрузка
+айди
 Ботнадзор
 Ботнадзора
 ботоферма
