@@ -29,7 +29,7 @@ export type AlwaysAvailableLowestLogLevel =
   (typeof lowestLogLevelsForProd)[number] &
     (typeof lowestLogLevelsForDev)[number];
 
-function getConsoleSnapshot(): Console {
+export function getConsoleSnapshot(): Console {
   const boundConsoleMethodByName = {
     debug: globalThis.console.debug.bind(globalThis.console),
     error: globalThis.console.error.bind(globalThis.console),
@@ -38,31 +38,14 @@ function getConsoleSnapshot(): Console {
     warn: globalThis.console.warn.bind(globalThis.console),
   } as const;
 
-  return new Proxy(globalThis.console, {
-    get(target, property, receiver) {
-      switch (property) {
-        case "debug": {
-          return boundConsoleMethodByName.debug;
-        }
-        case "error": {
-          return boundConsoleMethodByName.error;
-        }
-        case "info": {
-          return boundConsoleMethodByName.info;
-        }
-        case "log": {
-          return boundConsoleMethodByName.log;
-        }
-        case "warn": {
-          return boundConsoleMethodByName.warn;
-        }
-        default: {
-          const result: unknown = Reflect.get(target, property, receiver);
-          return result;
-        }
-      }
-    },
-  });
+  // Firefox enforces strict invariants for non-configurable `console`
+  // properties like `warn`, so a Proxy is not a safe shape here. A plain
+  // snapshot keeps the methods bound while remaining compatible with LogTape.
+  return Object.assign(
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Object.create returns any
+    Object.create(globalThis.console) as Console,
+    boundConsoleMethodByName,
+  );
 }
 
 export function setupLogging(
