@@ -40,6 +40,9 @@ export const staticListMetadataSchema = z.readonly(
     remoteStaging: z.exactOptional(
       z.readonly(
         z.object({
+          durableLineNumber: z.exactOptional(
+            z.number().check(z.int(), z.nonnegative()),
+          ),
           startedAt: isoDateTimeSchema,
           summary: z.json(),
           updatedAt: isoDateTimeSchema,
@@ -55,12 +58,23 @@ export type StoredStaticListMetadata = z.infer<typeof staticListMetadataSchema>;
 type StoredStaticListMetadataRemoteState = NonNullable<
   StoredStaticListMetadata["remoteActive"]
 >;
-
-type StaticListMetadataRemoteState<ListId extends StaticListId> = Readonly<
-  Omit<StoredStaticListMetadataRemoteState, "summary"> & {
-    summary: StaticListSummary<ListId>;
-  }
+type StoredStaticListMetadataRemoteStagingState = NonNullable<
+  StoredStaticListMetadata["remoteStaging"]
 >;
+
+type StaticListMetadataRemoteActiveState<ListId extends StaticListId> =
+  Readonly<
+    Omit<StoredStaticListMetadataRemoteState, "summary"> & {
+      summary: StaticListSummary<ListId>;
+    }
+  >;
+
+type StaticListMetadataRemoteStagingState<ListId extends StaticListId> =
+  Readonly<
+    Omit<StoredStaticListMetadataRemoteStagingState, "summary"> & {
+      summary: StaticListSummary<ListId>;
+    }
+  >;
 
 type StaticListMetadataBase = Omit<
   StoredStaticListMetadata,
@@ -71,8 +85,8 @@ type StaticListMetadataByListId = {
   [ListId in StaticListId]: Readonly<
     StaticListMetadataBase & {
       listId: ListId;
-      remoteActive?: StaticListMetadataRemoteState<ListId>;
-      remoteStaging?: StaticListMetadataRemoteState<ListId>;
+      remoteActive?: StaticListMetadataRemoteActiveState<ListId>;
+      remoteStaging?: StaticListMetadataRemoteStagingState<ListId>;
     }
   >;
 };

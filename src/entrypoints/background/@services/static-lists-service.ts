@@ -7,6 +7,8 @@ import { getBackgroundLogger } from "@/shared/@logging/categories";
 import type {
   StaticListCombiningMode,
   StaticListItemOrigin,
+  StaticListRemoteInstance,
+  StaticListUpstreamInfo,
 } from "@/shared/@model/static-list-helpers";
 import type { StaticListMetadata } from "@/shared/@model/static-list-metadata";
 import {
@@ -54,6 +56,12 @@ import {
   tryParseStaticListMetadata,
 } from "./static-lists-service/metadata-helpers";
 import {
+  analyzeRemoteStagingTailRows,
+  reconcileRemoteStagingMetadataWithRowsState,
+  shouldVerifyResumedLine,
+  type StaticListRemoteRowsState,
+} from "./static-lists-service/remote-metadata-helpers";
+import {
   createStoredRemoteRow,
   prepareUnvalidatedLocalRow,
   prepareValidatedLocalRow,
@@ -78,6 +86,7 @@ const logger = getBackgroundLogger(["static-lists-service"]);
 const itemBatchSize = 1000;
 const maxGetItemsCount = 10_000;
 const defaultLocalRowLimit = 1000;
+const resumeVerificationStride = 1000;
 
 type PopulateFromUrlIfOutdatedResult =
   | {
@@ -100,6 +109,15 @@ type ListContext = {
 type PreparedLocalRowResult =
   | { success: true; row: StoredLocalRow }
   | { success: false; error: string; details?: unknown };
+
+type RemoteStagingSession = {
+  activeInstance: StaticListRemoteInstance;
+  mutableStagingSummary: WritableDeep<StaticListSummary>;
+  resumedHeadLineNumber: number;
+  startedAtIso: IsoDateTime;
+  targetInstance: StaticListRemoteInstance;
+  targetTable: Table<StoredRemoteRow, number>;
+};
 
 async function* streamLines(
   readableStream: ReadableStream<Uint8Array>,
@@ -331,6 +349,272 @@ export class StaticListsService {
     return logger.getChild([listId]);
   }
 
+  private async getRemoteRowsState(
+    remoteTable: Table<StoredRemoteRow, number> | undefined,
+  ): Promise<StaticListRemoteRowsState> {
+    if (!remoteTable) {
+      return "missing";
+    }
+
+    return (await remoteTable.count()) === 0 ? "empty" : "present";
+  }
+
+  private async getRemoteHeadLineNumber(
+    remoteTable: Table<StoredRemoteRow, number>,
+  ): Promise<number> {
+    const lastRow = await remoteTable.orderBy("r").last();
+    return lastRow?.r ?? 0;
+  }
+
+  private async getRemoteTailRows(
+    remoteTable: Table<StoredRemoteRow, number>,
+    lineNumberExclusive: number,
+  ): Promise<StoredRemoteRow[]> {
+    return lineNumberExclusive <= 0
+      ? await remoteTable.orderBy("r").toArray()
+      : await remoteTable.where("r").above(lineNumberExclusive).sortBy("r");
+  }
+
+  private async discardRemoteStaging(
+    listId: StaticListId,
+    options?: { deleteRows?: boolean },
+  ): Promise<void> {
+    const context = await this.ensureListContext(listId);
+
+    if (options?.deleteRows !== false) {
+      await context.databases.deleteRemoteDatabase(
+        pickAnotherRemoteInstance(context.metadata.remoteActiveInstance),
+      );
+    }
+
+    if (context.metadata.remoteStaging) {
+      await this.persistMetadata(listId, omitRemoteStaging(context.metadata));
+    }
+  }
+
+  private async promoteRemoteStaging({
+    activeInstance,
+    listId,
+    startedAtIso,
+    summary,
+    targetInstance,
+    upstreamInfo,
+  }: {
+    activeInstance: StaticListRemoteInstance;
+    listId: StaticListId;
+    startedAtIso: IsoDateTime;
+    summary: StaticListSummary;
+    targetInstance: StaticListRemoteInstance;
+    upstreamInfo: StaticListUpstreamInfo;
+  }): Promise<void> {
+    const context = await this.ensureListContext(listId);
+    const finalMetadata = withUpdatedDerivedDataVersion(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
+      {
+        ...this.getCurrentMetadata(listId),
+        remoteActiveInstance: targetInstance,
+        remoteActive: {
+          startedAt: startedAtIso,
+          updatedAt: isoDateTimeSchema.parse(Date.now()),
+          upstreamInfo,
+          summary: structuredClone(summary),
+        },
+      } as StaticListMetadata,
+    );
+
+    if (shouldComputeDevSummaries(finalMetadata.combiningMode)) {
+      await this.persistMetadata(listId, omitRemoteStaging(finalMetadata), {
+        publish: false,
+      });
+      await this.recomputeDevSummaries(listId);
+    } else {
+      await this.persistMetadata(listId, omitRemoteStaging(finalMetadata));
+    }
+
+    await context.databases.deleteRemoteDatabase(activeInstance);
+  }
+
+  private async createFreshRemoteStaging(
+    listId: StaticListId,
+    upstreamInfo: StaticListUpstreamInfo,
+  ): Promise<RemoteStagingSession> {
+    const context = await this.ensureListContext(listId);
+    const startedAtIso = isoDateTimeSchema.parse(Date.now());
+    const targetInstance = pickAnotherRemoteInstance(
+      context.metadata.remoteActiveInstance,
+    );
+    const activeInstance = context.metadata.remoteActiveInstance;
+    const targetDatabase =
+      await context.databases.resetRemoteDatabase(targetInstance);
+    const mutableStagingSummary: WritableDeep<StaticListSummary> =
+      cloneEmptySummary(listId);
+
+    await this.persistMetadata(
+      listId,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
+      {
+        ...context.metadata,
+        remoteStaging: {
+          durableLineNumber: 0,
+          startedAt: startedAtIso,
+          updatedAt: startedAtIso,
+          upstreamInfo,
+          summary: structuredClone(mutableStagingSummary),
+        },
+      } as StaticListMetadata,
+    );
+
+    return {
+      activeInstance,
+      mutableStagingSummary,
+      resumedHeadLineNumber: 0,
+      startedAtIso,
+      targetInstance,
+      targetTable: targetDatabase.rows,
+    };
+  }
+
+  private async tryResumeRemoteStaging(
+    listId: StaticListId,
+    upstreamInfo: StaticListUpstreamInfo,
+  ): Promise<RemoteStagingSession | undefined> {
+    const context = await this.ensureListContext(listId);
+    const listLogger = this.getListLogger(listId);
+    const remoteStaging = context.metadata.remoteStaging;
+    if (!remoteStaging) {
+      return;
+    }
+
+    if (
+      remoteStaging.upstreamInfo.generatedAt !== upstreamInfo.generatedAt ||
+      remoteStaging.upstreamInfo.itemCount !== upstreamInfo.itemCount
+    ) {
+      listLogger.info(
+        "Discarding staging because upstream info changed ({oldGeneratedAt}/{oldItemCount} -> {newGeneratedAt}/{newItemCount})",
+        {
+          newGeneratedAt: upstreamInfo.generatedAt,
+          newItemCount: upstreamInfo.itemCount,
+          oldGeneratedAt: remoteStaging.upstreamInfo.generatedAt,
+          oldItemCount: remoteStaging.upstreamInfo.itemCount,
+        },
+      );
+      await this.discardRemoteStaging(listId);
+      return;
+    }
+
+    if (remoteStaging.durableLineNumber === undefined) {
+      listLogger.info(
+        "Discarding staging because durable cursor is missing in persisted metadata",
+      );
+      await this.discardRemoteStaging(listId);
+      return;
+    }
+
+    const targetInstance = pickAnotherRemoteInstance(
+      context.metadata.remoteActiveInstance,
+    );
+    const targetTable = await context.databases.getRemoteRows(targetInstance, {
+      createIfMissing: false,
+    });
+    const remoteRowsState = await this.getRemoteRowsState(targetTable);
+
+    if (remoteRowsState !== "present" || !targetTable) {
+      listLogger.info(
+        "Discarding staging because resumable rows are no longer present ({remoteRowsState})",
+        { remoteRowsState },
+      );
+      await this.discardRemoteStaging(listId, {
+        deleteRows: remoteRowsState !== "missing",
+      });
+      return;
+    }
+
+    const resumedHeadLineNumber =
+      await this.getRemoteHeadLineNumber(targetTable);
+    if (resumedHeadLineNumber > upstreamInfo.itemCount) {
+      listLogger.info(
+        "Discarding staging because staged rows exceed upstream item count ({resumedHeadLineNumber} > {itemCount})",
+        {
+          itemCount: upstreamInfo.itemCount,
+          resumedHeadLineNumber,
+        },
+      );
+      await this.discardRemoteStaging(listId);
+      return;
+    }
+
+    const tailRows = await this.getRemoteTailRows(
+      targetTable,
+      remoteStaging.durableLineNumber,
+    );
+    const tailAnalysis = analyzeRemoteStagingTailRows({
+      durableLineNumber: remoteStaging.durableLineNumber,
+      headLineNumber: resumedHeadLineNumber,
+      tailLineNumbers: tailRows.map((row) => row.r),
+    });
+
+    if (!tailAnalysis.success) {
+      listLogger.info(
+        "Discarding staging because persisted tail is invalid ({reason})",
+        { reason: tailAnalysis.reason },
+      );
+      await this.discardRemoteStaging(listId);
+      return;
+    }
+
+    const mutableStagingSummary: WritableDeep<StaticListSummary> =
+      structuredClone(
+        extractSummaryFromMetadata(context.metadata, "remoteStaging"),
+      );
+
+    for (const tailRow of tailRows) {
+      const interpretedRow = interpretStoredRow(listId, tailRow, "remote");
+      if (interpretedRow.interpretation.success) {
+        context.definitionInfo.definition.adjustSummary(
+          mutableStagingSummary,
+          interpretedRow.interpretation.item,
+          1,
+        );
+      }
+    }
+
+    if (tailRows.length > 0) {
+      await this.persistMetadata(
+        listId,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
+        {
+          ...this.getCurrentMetadata(listId),
+          remoteStaging: {
+            ...remoteStaging,
+            durableLineNumber: resumedHeadLineNumber,
+            summary: structuredClone(mutableStagingSummary),
+            updatedAt: isoDateTimeSchema.parse(Date.now()),
+          },
+        } as StaticListMetadata,
+      );
+
+      listLogger.info(
+        "Recovered staging summary tail for {repairedLineCount} row(s) before resume",
+        {
+          repairedLineCount: tailAnalysis.repairedLineCount,
+        },
+      );
+    }
+
+    listLogger.info("Resuming staging from line {resumedHeadLineNumber}", {
+      resumedHeadLineNumber,
+    });
+
+    return {
+      activeInstance: context.metadata.remoteActiveInstance,
+      mutableStagingSummary,
+      resumedHeadLineNumber,
+      startedAtIso: remoteStaging.startedAt,
+      targetInstance,
+      targetTable,
+    };
+  }
+
   /**
    * Initialization is where we reconcile persisted metadata with the actual
    * databases on disk.
@@ -412,20 +696,49 @@ export class StaticListsService {
       await metadataStore.setValue(metadata);
     }
 
-    const readableMetadata = metadata;
+    const inactiveRemoteInstance = pickAnotherRemoteInstance(
+      metadata.remoteActiveInstance,
+    );
+    const inactiveRemoteTable = await databases.getRemoteRows(
+      inactiveRemoteInstance,
+      { createIfMissing: false },
+    );
+    const remoteStagingRecovery = reconcileRemoteStagingMetadataWithRowsState(
+      metadata,
+      await this.getRemoteRowsState(inactiveRemoteTable),
+    );
+    metadata = remoteStagingRecovery.metadata;
 
-    if (readableMetadata.remoteStaging) {
-      listLogger.warn(
-        "Abandoned remote staging detected, clearing inactive store",
-      );
+    switch (remoteStagingRecovery.recovery) {
+      case "missing": {
+        listLogger.warn(
+          "Remote staging metadata exists but the inactive remote database is missing, clearing staging metadata",
+        );
+        await metadataStore.setValue(metadata);
+        break;
+      }
 
-      await databases.deleteRemoteDatabase(
-        pickAnotherRemoteInstance(readableMetadata.remoteActiveInstance),
-      );
+      case "empty": {
+        listLogger.warn(
+          "Inactive remote database is empty, clearing staging metadata and deleting the empty database",
+        );
+        await databases.deleteRemoteDatabase(inactiveRemoteInstance);
+        await metadataStore.setValue(metadata);
+        break;
+      }
 
-      metadata = omitRemoteStaging(readableMetadata);
+      case "orphaned": {
+        listLogger.warn(
+          "Inactive remote database exists without staging metadata, deleting orphaned staging rows",
+        );
+        await databases.deleteRemoteDatabase(inactiveRemoteInstance);
+        break;
+      }
 
-      await metadataStore.setValue(metadata);
+      case "present":
+      case undefined: {
+        break;
+      }
     }
 
     if (metadata.localUpdatedAt) {
@@ -1121,169 +1434,208 @@ export class StaticListsService {
       return { success: true, data: "updateNotNeeded" };
     }
 
-    const startedAt = Date.now();
-    const startedAtIso = isoDateTimeSchema.parse(startedAt);
-    const targetInstance = pickAnotherRemoteInstance(
-      context.metadata.remoteActiveInstance,
-    );
-    const activeInstance = context.metadata.remoteActiveInstance;
-    const targetDatabase =
-      await context.databases.resetRemoteDatabase(targetInstance);
-    const targetTable = targetDatabase.rows;
-    const mutableStagingSummary: WritableDeep<StaticListSummary> =
-      cloneEmptySummary(listId);
+    let shouldForceFreshRestart = false;
 
-    await this.persistMetadata(
-      listId,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
-      {
-        ...context.metadata,
-        remoteStaging: {
-          startedAt: startedAtIso,
-          updatedAt: startedAtIso,
-          upstreamInfo,
-          summary: structuredClone(mutableStagingSummary),
-        },
-      } as StaticListMetadata,
-    );
+    for (;;) {
+      const stagingSession = shouldForceFreshRestart
+        ? await this.createFreshRemoteStaging(listId, upstreamInfo)
+        : ((await this.tryResumeRemoteStaging(listId, upstreamInfo)) ??
+          (await this.createFreshRemoteStaging(listId, upstreamInfo)));
 
-    try {
-      const fetchResult = await fetchFromRemoteSystem({
-        aliasManager: this.aliasManagerForStaticApi,
-        urlSuffix: `/lists/${listId}.jsonl`,
-      });
+      const {
+        activeInstance,
+        mutableStagingSummary,
+        resumedHeadLineNumber,
+        startedAtIso,
+        targetInstance,
+        targetTable,
+      } = stagingSession;
 
-      if (!fetchResult.success) {
-        return {
-          success: false,
-          error: `Failed to fetch list from static API (reason: ${fetchResult.reason})`,
-        };
-      }
-
-      if (fetchResult.response.status !== 200) {
-        return {
-          success: false,
-          error: `Failed to fetch list from static API: ${fetchResult.response.status}`,
-        };
-      }
-
-      if (!fetchResult.response.body) {
-        return { success: false, error: "No response body from static API" };
-      }
-
-      let lineNumber = 0;
-      let storedBatchCount = 0;
-      let storedRowCount = 0;
-      let rowsToStore: StoredRemoteRow[] = [];
-
-      const flushBatch = async (shouldPersistStagingProgress: boolean) => {
-        if (rowsToStore.length === 0) {
-          return;
-        }
-
-        storedBatchCount += 1;
-        storedRowCount += rowsToStore.length;
-        await targetTable.bulkPut(rowsToStore);
-        rowsToStore = [];
-
-        if (!shouldPersistStagingProgress) {
-          return;
-        }
-
-        const currentMetadata = this.getCurrentMetadata(listId);
-        if (!currentMetadata.remoteStaging) {
-          return;
-        }
-
-        await this.persistMetadata(
-          listId,
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
-          {
-            ...currentMetadata,
-            remoteStaging: {
-              ...currentMetadata.remoteStaging,
-              updatedAt: isoDateTimeSchema.parse(Date.now()),
-              summary: structuredClone(mutableStagingSummary),
-            },
-          } as StaticListMetadata,
-        );
-      };
-
-      for await (const line of streamLines(fetchResult.response.body)) {
-        lineNumber += 1;
-        const storedRow = createStoredRemoteRow({
-          listId,
-          lineNumber,
-          sourceText: line,
+      try {
+        const fetchResult = await fetchFromRemoteSystem({
+          aliasManager: this.aliasManagerForStaticApi,
+          urlSuffix: `/lists/${listId}.jsonl`,
         });
 
-        rowsToStore.push(storedRow);
+        if (!fetchResult.success) {
+          return {
+            success: false,
+            error: `Failed to fetch list from static API (reason: ${fetchResult.reason})`,
+          };
+        }
 
-        const interpretedRow = interpretStoredRow(listId, storedRow, "remote");
-        if (interpretedRow.interpretation.success) {
-          context.definitionInfo.definition.adjustSummary(
-            mutableStagingSummary,
-            interpretedRow.interpretation.item,
-            1,
+        if (fetchResult.response.status !== 200) {
+          return {
+            success: false,
+            error: `Failed to fetch list from static API: ${fetchResult.response.status}`,
+          };
+        }
+
+        if (!fetchResult.response.body) {
+          return { success: false, error: "No response body from static API" };
+        }
+
+        let lineNumber = 0;
+        let storedBatchCount = 0;
+        let storedRowCount = 0;
+        let rowsToStore: StoredRemoteRow[] = [];
+        let restartFreshReason: string | undefined;
+
+        const flushBatch = async (shouldPersistStagingProgress: boolean) => {
+          if (rowsToStore.length === 0) {
+            return;
+          }
+
+          const durableLineNumber = rowsToStore.at(-1)?.r ?? 0;
+          storedBatchCount += 1;
+          storedRowCount += rowsToStore.length;
+          await targetTable.bulkPut(rowsToStore);
+          rowsToStore = [];
+
+          if (!shouldPersistStagingProgress) {
+            return;
+          }
+
+          const currentMetadata = this.getCurrentMetadata(listId);
+          if (!currentMetadata.remoteStaging) {
+            return;
+          }
+
+          await this.persistMetadata(
+            listId,
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
+            {
+              ...currentMetadata,
+              remoteStaging: {
+                ...currentMetadata.remoteStaging,
+                durableLineNumber,
+                updatedAt: isoDateTimeSchema.parse(Date.now()),
+                summary: structuredClone(mutableStagingSummary),
+              },
+            } as StaticListMetadata,
+          );
+        };
+
+        for await (const line of streamLines(fetchResult.response.body)) {
+          lineNumber += 1;
+
+          if (lineNumber <= resumedHeadLineNumber) {
+            if (
+              !shouldVerifyResumedLine({
+                durableLineNumber: resumedHeadLineNumber,
+                lineNumber,
+                stride: resumeVerificationStride,
+              })
+            ) {
+              continue;
+            }
+
+            const stagedRow = await targetTable
+              .where("r")
+              .equals(lineNumber)
+              .first();
+
+            if (!stagedRow) {
+              restartFreshReason = `Missing staged row at line ${lineNumber}`;
+              break;
+            }
+
+            if (stagedRow.t !== line) {
+              restartFreshReason = `Staged row content mismatch at line ${lineNumber}`;
+              break;
+            }
+
+            continue;
+          }
+
+          const storedRow = createStoredRemoteRow({
+            listId,
+            lineNumber,
+            sourceText: line,
+          });
+
+          rowsToStore.push(storedRow);
+
+          const interpretedRow = interpretStoredRow(
+            listId,
+            storedRow,
+            "remote",
+          );
+          if (interpretedRow.interpretation.success) {
+            context.definitionInfo.definition.adjustSummary(
+              mutableStagingSummary,
+              interpretedRow.interpretation.item,
+              1,
+            );
+          }
+
+          if (rowsToStore.length >= itemBatchSize) {
+            await flushBatch(true);
+          }
+        }
+
+        if (!restartFreshReason && lineNumber < resumedHeadLineNumber) {
+          restartFreshReason = `Remote list ended at line ${lineNumber} before staged prefix ${resumedHeadLineNumber}`;
+        }
+
+        if (
+          !restartFreshReason &&
+          resumedHeadLineNumber === upstreamInfo.itemCount &&
+          lineNumber !== resumedHeadLineNumber
+        ) {
+          restartFreshReason = `Remote list length changed during direct promotion verification (${lineNumber} !== ${resumedHeadLineNumber})`;
+        }
+
+        if (restartFreshReason) {
+          listLogger.warn(
+            "Selective resume verification failed, discarding staging and retrying fresh: {reason}",
+            { reason: restartFreshReason },
+          );
+          await this.discardRemoteStaging(listId);
+
+          if (shouldForceFreshRestart) {
+            return { success: false, error: restartFreshReason };
+          }
+
+          shouldForceFreshRestart = true;
+          continue;
+        }
+
+        await flushBatch(false);
+
+        await this.promoteRemoteStaging({
+          activeInstance,
+          listId,
+          startedAtIso,
+          summary: mutableStagingSummary,
+          targetInstance,
+          upstreamInfo,
+        });
+
+        if (resumedHeadLineNumber > 0 && storedRowCount === 0) {
+          listLogger.info(
+            "Verified and promoted completed staging without downloading new rows",
+          );
+        } else {
+          listLogger.info(
+            "Populated {storedRowCount} remote rows (batches: {storedBatchCount}, resumedFromLine: {resumedHeadLineNumber})",
+            {
+              resumedHeadLineNumber,
+              storedBatchCount,
+              storedRowCount,
+            },
           );
         }
 
-        if (rowsToStore.length >= itemBatchSize) {
-          await flushBatch(true);
-        }
-      }
-
-      await flushBatch(false);
-
-      const finishedAtIso = isoDateTimeSchema.parse(Date.now());
-      const finalMetadata = withUpdatedDerivedDataVersion(
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
-        {
-          ...this.getCurrentMetadata(listId),
-          remoteActiveInstance: targetInstance,
-          remoteActive: {
-            startedAt: startedAtIso,
-            updatedAt: finishedAtIso,
-            upstreamInfo,
-            summary: structuredClone(mutableStagingSummary),
-          },
-        } as StaticListMetadata,
-      );
-
-      if (shouldComputeDevSummaries(finalMetadata.combiningMode)) {
-        await this.persistMetadata(listId, omitRemoteStaging(finalMetadata), {
-          publish: false,
+        return { success: true, data: "updated" };
+      } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        listLogger.error("Unexpected error while populating: {error}", {
+          error: errorMessage,
         });
-        await this.recomputeDevSummaries(listId);
-      } else {
-        await this.persistMetadata(listId, omitRemoteStaging(finalMetadata));
+
+        return { success: false, error: errorMessage };
       }
-
-      await context.databases.deleteRemoteDatabase(activeInstance);
-
-      listLogger.info(
-        "Populated {storedRowCount} remote rows (batches: {storedBatchCount})",
-        {
-          storedBatchCount,
-          storedRowCount,
-        },
-      );
-
-      return { success: true, data: "updated" };
-    } catch (error) {
-      await context.databases.deleteRemoteDatabase(targetInstance);
-
-      const metadata = this.getCurrentMetadata(listId);
-      if (metadata.remoteStaging) {
-        await this.persistMetadata(listId, omitRemoteStaging(metadata));
-      }
-
-      const errorMessage = getErrorMessage(error);
-      listLogger.error("Unexpected error while populating: {error}", {
-        error: errorMessage,
-      });
-
-      return { success: false, error: errorMessage };
     }
   }
 
