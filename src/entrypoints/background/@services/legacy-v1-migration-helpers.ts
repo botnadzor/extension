@@ -71,6 +71,15 @@ type GlobalNotificationsMigrationState = Readonly<{
   welcomeMessageReadAt: IsoDateTime;
 }>;
 
+type LegacyCleanupStepResult = Readonly<{
+  removedArtifactCount: number;
+  success: boolean;
+}>;
+
+type IndexedDbFactoryWithDatabases = IDBFactory & {
+  databases: () => Promise<ReadonlyArray<{ name?: string }>>;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -167,6 +176,12 @@ function formatErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function canListIndexedDbDatabases(
+  indexedDbFactory: IDBFactory,
+): indexedDbFactory is IndexedDbFactoryWithDatabases {
+  return "databases" in indexedDbFactory;
+}
+
 async function getLocalStorageValues(
   keys: string | readonly string[],
 ): Promise<Record<string, unknown>> {
@@ -179,6 +194,13 @@ async function removeLocalStorageValues(
   keys: readonly string[],
 ): Promise<void> {
   await browser.storage.local.remove([...keys]);
+}
+
+function hasLocalStorageValue(
+  values: Record<string, unknown>,
+  key: string,
+): boolean {
+  return values[key] !== undefined;
 }
 
 async function clearAlarm(alarmName: string): Promise<boolean> {
@@ -384,45 +406,127 @@ export async function migrateGlobalNotificationsStateFromV1(): Promise<
   };
 }
 
-async function removeLegacyLocalStorageKeys(): Promise<boolean> {
+async function removeLegacyLocalStorageKeys(): Promise<LegacyCleanupStepResult> {
+  let currentValues: Record<string, unknown>;
   let remaining: Record<string, unknown>;
   try {
+    currentValues = await getLocalStorageValues([...legacyLocalStorageKeys]);
+    const presentKeys = legacyLocalStorageKeys.filter((key) =>
+      hasLocalStorageValue(currentValues, key),
+    );
+
+    if (presentKeys.length === 0) {
+      return {
+        removedArtifactCount: 0,
+        success: true,
+      };
+    }
+
     await removeLocalStorageValues(legacyLocalStorageKeys);
     remaining = await getLocalStorageValues([...legacyLocalStorageKeys]);
+
+    return {
+      removedArtifactCount: presentKeys.filter(
+        (key) => !hasLocalStorageValue(remaining, key),
+      ).length,
+      success: presentKeys.every(
+        (key) => !hasLocalStorageValue(remaining, key),
+      ),
+    };
   } catch (error) {
     logger.warn("Failed to remove legacy local storage keys: {error}", {
       error: formatErrorMessage(error),
     });
-    return false;
+    return {
+      removedArtifactCount: 0,
+      success: false,
+    };
   }
-
-  return legacyLocalStorageKeys.every((key) => !Object.hasOwn(remaining, key));
 }
 
-async function clearLegacyAlarms(): Promise<boolean> {
-  let alarms: unknown[];
+async function clearLegacyAlarms(): Promise<LegacyCleanupStepResult> {
+  let alarmsBefore: unknown[];
+  let alarmsAfter: unknown[];
   try {
-    await Promise.all(
-      legacyAlarmNames.map((alarmName) => clearAlarm(alarmName)),
-    );
-
-    alarms = await Promise.all(
+    alarmsBefore = await Promise.all(
       legacyAlarmNames.map((alarmName) => getAlarm(alarmName)),
     );
+
+    const presentAlarmNames = legacyAlarmNames.filter(
+      (alarmName, index) => alarmsBefore[index] !== undefined,
+    );
+
+    if (presentAlarmNames.length === 0) {
+      return {
+        removedArtifactCount: 0,
+        success: true,
+      };
+    }
+
+    await Promise.all(
+      presentAlarmNames.map((alarmName) => clearAlarm(alarmName)),
+    );
+
+    alarmsAfter = await Promise.all(
+      presentAlarmNames.map((alarmName) => getAlarm(alarmName)),
+    );
+
+    return {
+      removedArtifactCount: alarmsAfter.filter((alarm) => alarm === undefined)
+        .length,
+      success: alarmsAfter.every((alarm) => alarm === undefined),
+    };
   } catch (error) {
     logger.warn("Failed to clear legacy alarms: {error}", {
       error: formatErrorMessage(error),
     });
-    return false;
+    return {
+      removedArtifactCount: 0,
+      success: false,
+    };
   }
-
-  return alarms.every((alarm) => alarm === undefined);
 }
 
-async function deleteLegacyIndexedDb(): Promise<boolean> {
+async function hasLegacyIndexedDb(): Promise<boolean | undefined> {
+  if (typeof indexedDB === "undefined") {
+    return undefined;
+  }
+
+  if (!canListIndexedDbDatabases(indexedDB)) {
+    return undefined;
+  }
+
+  try {
+    const databases = await indexedDB.databases();
+    return databases.some((database) => database.name === legacyIndexedDbName);
+  } catch (error) {
+    logger.warn(
+      "Failed to list IndexedDB databases while checking for legacy DB {dbName}: {error}",
+      {
+        dbName: legacyIndexedDbName,
+        error: formatErrorMessage(error),
+      },
+    );
+    return undefined;
+  }
+}
+
+async function deleteLegacyIndexedDb(): Promise<LegacyCleanupStepResult> {
   if (typeof indexedDB === "undefined") {
     logger.warn("indexedDB is unavailable, skipping legacy DB cleanup");
-    return false;
+    return {
+      removedArtifactCount: 0,
+      success: false,
+    };
+  }
+
+  const hadLegacyDb = await hasLegacyIndexedDb();
+
+  if (hadLegacyDb === false) {
+    return {
+      removedArtifactCount: 0,
+      success: true,
+    };
   }
 
   // cspell:ignore IDBOpenDBRequest
@@ -434,7 +538,10 @@ async function deleteLegacyIndexedDb(): Promise<boolean> {
       dbName: legacyIndexedDbName,
       error: formatErrorMessage(error),
     });
-    return false;
+    return {
+      removedArtifactCount: 0,
+      success: false,
+    };
   }
 
   const { promise, resolve } = Promise.withResolvers<boolean>();
@@ -458,26 +565,45 @@ async function deleteLegacyIndexedDb(): Promise<boolean> {
     resolve(false);
   });
 
-  return await promise;
+  const success = await promise;
+
+  return {
+    removedArtifactCount: success && hadLegacyDb ? 1 : 0,
+    success,
+  };
 }
 
 export async function cleanupLegacyV1State(): Promise<void> {
-  const [localStorageRemoved, alarmsCleared, indexedDbDeleted] =
+  const [localStorageCleanup, alarmsCleanup, indexedDbCleanup] =
     await Promise.all([
       removeLegacyLocalStorageKeys(),
       clearLegacyAlarms(),
       deleteLegacyIndexedDb(),
     ]);
 
-  if (!localStorageRemoved || !alarmsCleared || !indexedDbDeleted) {
+  if (
+    !localStorageCleanup.success ||
+    !alarmsCleanup.success ||
+    !indexedDbCleanup.success
+  ) {
     logger.warn(
       "Legacy v1 cleanup remains incomplete (localStorageRemoved={localStorageRemoved}, alarmsCleared={alarmsCleared}, indexedDbDeleted={indexedDbDeleted})",
       {
-        localStorageRemoved,
-        alarmsCleared,
-        indexedDbDeleted,
+        localStorageRemoved: localStorageCleanup.success,
+        alarmsCleared: alarmsCleanup.success,
+        indexedDbDeleted: indexedDbCleanup.success,
       },
     );
+    return;
+  }
+
+  const removedArtifactCount =
+    localStorageCleanup.removedArtifactCount +
+    alarmsCleanup.removedArtifactCount +
+    indexedDbCleanup.removedArtifactCount;
+
+  if (removedArtifactCount === 0) {
+    logger.debug("Legacy v1 cleanup was not needed");
     return;
   }
 
