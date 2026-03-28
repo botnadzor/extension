@@ -39,6 +39,11 @@ import {
   type StaticListRowsDatabase,
 } from "./static-lists-service/list-database";
 import {
+  omitLocalUpdatedAt,
+  reconcileLocalMetadataWithRowsState,
+  type StaticListLocalRowsState,
+} from "./static-lists-service/local-metadata-helpers";
+import {
   createDefaultStaticListMetadata,
   extractSummaryFromMetadata,
   extractUpdatedAtFromMetadata,
@@ -146,16 +151,6 @@ function omitRemoteStaging<ListId extends StaticListId>(
   void remoteStagingOmitted;
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- removing an exact-optional property via rest is correct at runtime but TS loses that shape
   return metadataWithoutRemoteStaging as StaticListMetadata<ListId>;
-}
-
-function omitLocalUpdatedAt<ListId extends StaticListId>(
-  metadata: StaticListMetadata<ListId>,
-): StaticListMetadata<ListId> {
-  const { localUpdatedAt: localUpdatedAtOmitted, ...metadataWithoutLocal } =
-    metadata;
-  void localUpdatedAtOmitted;
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- removing an exact-optional property via rest is correct at runtime but TS loses that shape
-  return metadataWithoutLocal as StaticListMetadata<ListId>;
 }
 
 function omitRemoteActive<ListId extends StaticListId>(
@@ -437,16 +432,29 @@ export class StaticListsService {
       const localTable = await databases.getLocalRows({
         createIfMissing: false,
       });
-      if (!localTable || (await localTable.count()) === 0) {
-        listLogger.warn(
-          "Local database is missing or empty, clearing local metadata",
-        );
+      const localRowsState: StaticListLocalRowsState = localTable
+        ? (await localTable.count()) === 0
+          ? "empty"
+          : "present"
+        : "missing";
+      const localMetadataRecovery = reconcileLocalMetadataWithRowsState(
+        metadata,
+        localRowsState,
+      );
 
-        if (localTable) {
+      if (localMetadataRecovery.recovery) {
+        if (localMetadataRecovery.recovery === "empty") {
+          listLogger.warn(
+            "Local database exists but is empty, clearing local metadata",
+          );
           await databases.deleteLocalDatabase();
+        } else {
+          listLogger.debug(
+            "Local database is missing, clearing stale local metadata",
+          );
         }
 
-        metadata = omitLocalUpdatedAt(metadata);
+        metadata = localMetadataRecovery.metadata;
         await metadataStore.setValue(metadata);
       }
     }
@@ -615,6 +623,19 @@ export class StaticListsService {
   ): Promise<Table<StoredLocalRow, string> | undefined> {
     const localDatabase = await this.getLocalDatabase(listId, options);
     return localDatabase?.rows;
+  }
+
+  private async getLocalRowsState(
+    listId: StaticListId,
+  ): Promise<StaticListLocalRowsState> {
+    const localTable = await this.getLocalTable(listId, {
+      createIfMissing: false,
+    });
+    if (!localTable) {
+      return "missing";
+    }
+
+    return (await localTable.count()) === 0 ? "empty" : "present";
   }
 
   private async withLocalMutationLock<T>(
@@ -1014,8 +1035,25 @@ export class StaticListsService {
     listId: StaticListId,
     mode: StaticListCombiningMode,
   ): Promise<void> {
+    const listLogger = this.getListLogger(listId);
     const metadata = await this.getListMetadata(listId);
-    const updatedMetadata = { ...metadata, combiningMode: mode };
+    const localMetadataRecovery = reconcileLocalMetadataWithRowsState(
+      { ...metadata, combiningMode: mode },
+      await this.getLocalRowsState(listId),
+    );
+    const updatedMetadata = localMetadataRecovery.metadata;
+
+    if (localMetadataRecovery.recovery === "empty") {
+      listLogger.warn(
+        "Local database exists but is empty, clearing local metadata on mode change",
+      );
+      const context = await this.ensureListContext(listId);
+      await context.databases.deleteLocalDatabase();
+    } else if (localMetadataRecovery.recovery === "missing") {
+      listLogger.debug(
+        "Local database is missing, clearing stale local metadata on mode change",
+      );
+    }
 
     await this.persistMetadata(listId, updatedMetadata, {
       publish: !shouldComputeDevSummaries(mode),
@@ -1860,10 +1898,6 @@ export class StaticListsService {
     const slotName = this.resolveSlotName(listId, String(index));
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- declared indexes are limited to IDB-valid key domains for this API
     const lookupValue = value as IDBValidKey;
-    const localTable = await this.getLocalTable(listId, {
-      createIfMissing: false,
-    });
-    const activeRemoteTable = await this.getActiveRemoteTable(listId);
 
     function interpretTypedItem(
       storedRow: StoredLocalRow | StoredRemoteRow | undefined,
@@ -1883,6 +1917,21 @@ export class StaticListsService {
     }
 
     const metadata = await this.getListMetadata(listId);
+    if (metadata.combiningMode === "remoteOnly") {
+      const activeRemoteTable = await this.getActiveRemoteTable(listId);
+
+      return interpretTypedItem(
+        activeRemoteTable
+          ? await this.findRowInTable(activeRemoteTable, slotName, lookupValue)
+          : undefined,
+        "remote",
+      );
+    }
+
+    const localTable = await this.getLocalTable(listId, {
+      createIfMissing: false,
+    });
+
     if (metadata.combiningMode === "localOnly") {
       return interpretTypedItem(
         localTable
@@ -1892,14 +1941,7 @@ export class StaticListsService {
       );
     }
 
-    if (metadata.combiningMode === "remoteOnly") {
-      return interpretTypedItem(
-        activeRemoteTable
-          ? await this.findRowInTable(activeRemoteTable, slotName, lookupValue)
-          : undefined,
-        "remote",
-      );
-    }
+    const activeRemoteTable = await this.getActiveRemoteTable(listId);
 
     const localMatch = localTable
       ? await this.findRowInTable(localTable, slotName, lookupValue)
