@@ -49,6 +49,15 @@ vi.mock("../@service-helpers/store-with-schema", () => ({
 
       return Promise.resolve();
     },
+    clearValue: () => {
+      storageState.values.delete(name);
+
+      for (const callback of storageState.watchers.get(name) ?? []) {
+        callback(undefined);
+      }
+
+      return Promise.resolve();
+    },
     watch: (callback: (value: unknown) => void) => {
       const callbacks = storageState.watchers.get(name) ?? new Set();
       callbacks.add(callback);
