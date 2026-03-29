@@ -11,9 +11,9 @@ export default [
   // ---------------------------------------------------------------------------
 
   /**
-   * Follower (in a list of user cards) on desktop (React-based UI: tabs have outlines and shadows)
+   * Follower (user card tile) on desktop (React-based UI: tabs have outlines and shadows)
    * Examples:
-   * - https://vk.com/ria → followers
+   * - https://vk.com/ria → followers (needs login)
    */
   {
     id: "desktopDialogFollower",
@@ -104,13 +104,13 @@ export default [
 
   /**
    * Desktop reactions / likes list avatar tiles
-   * Followers (lists of user cards) on desktop (pre-React UI: tabs have border-bottom)
+   * Followers (user card tiles) on desktop (pre-React UI: tabs have border-bottom)
    *
    * Examples:
    * - https://vk.com/durov → click "followers"
    */
   {
-    id: "desktopPreReactDialogFollowers",
+    id: "desktopPreReactDialogFollower",
     variant: "account",
     appliesTo: "desktopVkWebsite",
     selector: "[id^='tb_'] .fans_fan_row",
@@ -204,6 +204,11 @@ export default [
     },
   },
 
+  /**
+   * Followers (list of user cards) on desktop (React-based UI: tabs have outlines and shadows)
+   * Examples:
+   * - https://vk.com/ria → followers (needs login)
+   */
   {
     id: "desktopDialogFollowers",
     variant: "accountList",
@@ -260,10 +265,73 @@ export default [
   },
 
   /*
+   * Desktop reactions dialog (Pre-React UI: list of user cards instead of a list)
+   * Examples:
+   * - post (logged out): https://vk.com/ria?w=likes%2Fwall-15755094_48295538
+   * - comment (logged out): https://vk.com/wall-173277106_4892265?w=likes%2Fwall_reply-173277106_4892462
+   * - followers (logged in): https://vk.com/durov → click "followers"
+   */
+  {
+    id: "desktopPreReactDialogReactions",
+    variant: "accountList",
+    appliesTo: "desktopVkWebsite",
+    // Excluding .ui_search to not match Subscriptions dialog - e.g. https://vk.com/id558910327 → click "subscriptions"
+    selector:
+      "#box_layer_wrap:has(.fans_rows):not(:has(.ui_search)),#wk_layer_wrap:has(.fans_rows)",
+    markup: {
+      data: {
+        accountList: ".fans_rows",
+        activeTab: ".ui_tab_sel",
+        loadMoreButton: false,
+      },
+      edits: [
+        {
+          selector: "",
+          style: {
+            "--bn-insertion-summary-height": "300px",
+            opacity: "1",
+            pointerEvents: "auto",
+          },
+        },
+        {
+          selector: ".tb_tabs_wrap",
+          style: {
+            height: "55px", // Ensure ui->summary does not push .fans_rows down by capping default height of the header
+          },
+        },
+        {
+          selector: "div:has(>.fans_rows)",
+          style: {
+            paddingTop: "var(--bn-insertion-summary-height)",
+          },
+        },
+      ],
+      ui: {
+        summary: {
+          selector: ".tb_tabs",
+          position: "after",
+          style: {
+            backgroundColor: "var(--bn-color-background)",
+            height: "var(--bn-insertion-summary-height)",
+            padding: "10px",
+            paddingLeft: "20px",
+            paddingRight: "20px",
+            zIndex: "1",
+          },
+        },
+        tableMeasurer: {
+          selector: ".not-working", // not working because scrolling is happening outside of the dialog
+          position: "append",
+        },
+      },
+    },
+  },
+
+  /*
    * Desktop reactions dialog
    * Examples:
-   * - post: https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892265%3Ftype%3Dpost
-   * - comment: https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
+   * - post (logged in): https://vk.com/wall-173277106_4892265?reply=4892462&w=likes%2Fwall-173277106_4892265
+   * - comment (logged in): https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
    */
   {
     id: "desktopDialogReactions",
@@ -318,13 +386,13 @@ export default [
   },
 
   /**
-   * Desktop reactions / likes list avatar tiles
+   * Desktop reaction (user card tile) in Pre-React UI reactions dialog
    * Examples:
    * - https://vk.com/ria?w=likes%2Fwall-15755094_48295538
    * - https://vk.com/ria?w=likes%2Fwall_reply-15755094_49579807
    */
   {
-    id: "desktopPreReactDialogReactions",
+    id: "desktopPreReactDialogReaction",
     variant: "account",
     appliesTo: "desktopVkWebsite",
     selector: "#wk_likes_content .fans_fan_row",
@@ -574,11 +642,11 @@ export default [
       },
       edits: [
         {
-          selector: ".PostHeader",
+          selector: "",
           style: { overflow: "visible", position: "relative" },
         },
         {
-          selector: ".PostHeader > *",
+          selector: ":scope > *",
           style: { overflow: "visible", position: "relative" },
         },
       ],
@@ -785,7 +853,10 @@ export default [
         },
         accountName: ".copy_post_header_info",
       },
-      edits: [{ selector: ":scope > *", style: { position: "relative" } }],
+      edits: [
+        { selector: "", style: { position: "relative" } },
+        { selector: ":scope > *", style: { position: "relative" } },
+      ],
       ui: {
         actionBar: {
           selector: ".copy_post_header_info",
@@ -1575,9 +1646,9 @@ export default [
           },
         ],
         affiliationBadge: {
-          selector: "[data-testid='comment-text']",
-          position: "before",
-          style: { top: "-3px", fontSize: "14px" },
+          selector: "[class*='vkitCommentBase__title'] > .vkuiFlex__host",
+          position: "append",
+          style: { top: "1px", fontSize: "14px" },
         },
         affiliationHighlight: {
           selector: "[data-testid='comment-avatar'] + *",
@@ -1646,7 +1717,7 @@ export default [
       data: {
         accountIdentifier: {
           selector: "",
-          reactProp: "GProvider:replyCommentId",
+          reactProp: "*:replyCommentId",
         },
         attachedItemCount: "[data-testid='comment-input-attachments']>*",
         newAttachmentButtonPresence: "[data-testid='show-attach-dropdown']",
