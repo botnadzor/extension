@@ -4,6 +4,7 @@ import { isoDateTimeSchema } from "../@primitives/temporal";
 import {
   staticListCombiningModeSchema,
   staticListRemoteInstanceSchema,
+  staticListRemoteUpdateIssueSchema,
   staticListUpstreamInfoSchema,
 } from "./static-list-helpers";
 import {
@@ -50,6 +51,7 @@ export const staticListMetadataSchema = z.readonly(
         }),
       ),
     ),
+    remoteUpdateIssue: z.exactOptional(staticListRemoteUpdateIssueSchema),
     localUpdatedAt: z.exactOptional(isoDateTimeSchema),
   }),
 );

@@ -29,6 +29,29 @@ export type StaticListUpstreamInfo = z.infer<
   typeof staticListUpstreamInfoSchema
 >;
 
+export const staticListRemoteUpdateIssueStageSchema = z.enum([
+  "createStaging",
+  "writeRows",
+  "promote",
+]);
+export type StaticListRemoteUpdateIssueStage = z.infer<
+  typeof staticListRemoteUpdateIssueStageSchema
+>;
+
+export const staticListRemoteUpdateIssueKindSchema = z.enum(["quotaExceeded"]);
+
+export const staticListRemoteUpdateIssueSchema = z.readonly(
+  z.object({
+    failedAt: isoDateTimeSchema,
+    kind: staticListRemoteUpdateIssueKindSchema,
+    stage: staticListRemoteUpdateIssueStageSchema,
+    upstreamInfo: staticListUpstreamInfoSchema,
+  }),
+);
+export type StaticListRemoteUpdateIssue = z.infer<
+  typeof staticListRemoteUpdateIssueSchema
+>;
+
 export const staticListRemoteInstanceSchema = z.enum(["a", "b"]);
 export type StaticListRemoteInstance = z.infer<
   typeof staticListRemoteInstanceSchema
