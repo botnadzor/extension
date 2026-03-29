@@ -117,6 +117,11 @@ export const useStaticListSummary = createPollableValueHook(
   { hookNameForDebugging: "useStaticListSummary", throttleInterval: 100 },
 ) as UseStaticListSummary;
 
+export const useStaticListsDataIssueState = createPollableValueHook(
+  (lastPollVersion) => staticListsService.pollDataIssueState(lastPollVersion),
+  { hookNameForDebugging: "useStaticListsDataIssueState" },
+);
+
 export const useUserConfig = createPollableValueHook(
   (lastPollVersion) => userConfigService.poll(lastPollVersion),
   { hookNameForDebugging: "useUserConfig" },

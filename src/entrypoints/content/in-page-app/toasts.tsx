@@ -6,6 +6,7 @@ import {
   useExtensionVersionInfo,
   useFilteredAnnouncements,
   useGlobalNotificationsState,
+  useStaticListsDataIssueState,
 } from "@/shared/@ui-helpers/data-hooks";
 import {
   notificationService,
@@ -16,6 +17,7 @@ import { useContentId } from "../content-id-context";
 import { ToastWithAnnouncement } from "./toasts/toast-with-announcement";
 import { ToastWithDataWarmup } from "./toasts/toast-with-data-warmup";
 import { ToastWithDeprecatedExtensionVersion } from "./toasts/toast-with-deprecated-extension-version";
+import { ToastWithStaticDataIssue } from "./toasts/toast-with-static-data-issue";
 import { ToastWithTriggeredNotification } from "./toasts/toast-with-triggered-notification";
 import { ToastWithWelcomeMessage } from "./toasts/toast-with-welcome-message";
 
@@ -39,6 +41,71 @@ const useTriggeredNotification = createPollableValueHook(
     notificationService.pollTriggeredNotification(lastPollVersion, contentId),
   { hookNameForDebugging: "useTriggeredNotification" },
 );
+
+function ToastsAfterTriggeredNotification({
+  announcements,
+  announcementReadAtByCreatedAt,
+  dataWarmupToastNeeded,
+  extensionVersionInfo,
+  onDataWarmupDone,
+  welcomeMessageReadAt,
+}: {
+  announcements: ReturnType<typeof useFilteredAnnouncements>;
+  announcementReadAtByCreatedAt: Record<string, string | undefined>;
+  dataWarmupToastNeeded: boolean;
+  extensionVersionInfo: ReturnType<typeof useExtensionVersionInfo>;
+  onDataWarmupDone: () => void;
+  welcomeMessageReadAt: string | undefined;
+}) {
+  const dataIssueState = useStaticListsDataIssueState();
+
+  if (dataIssueState.kind === "initialDataUnavailable") {
+    return <ToastWithStaticDataIssue />;
+  }
+
+  if (!welcomeMessageReadAt) {
+    return <ToastWithWelcomeMessage />;
+  }
+
+  if (dataWarmupToastNeeded) {
+    return (
+      <ToastWithDataWarmup
+        onDone={() => {
+          onDataWarmupDone();
+        }}
+      />
+    );
+  }
+
+  const announcementToShow = announcements
+    // Show older announcements first
+    .toSorted((a, b) => a.createdAt.localeCompare(b.createdAt))
+    .find(
+      ({ createdAt }) =>
+        !announcementReadAtByCreatedAt[createdAt] &&
+        createdAt > welcomeMessageReadAt,
+    );
+
+  if (announcementToShow) {
+    return (
+      <ToastWithAnnouncement
+        key={announcementToShow.createdAt}
+        {...announcementToShow}
+      />
+    );
+  }
+
+  if (extensionVersionInfo.deprecation) {
+    return (
+      <ToastWithDeprecatedExtensionVersion
+        {...extensionVersionInfo}
+        deprecation={extensionVersionInfo.deprecation}
+      />
+    );
+  }
+
+  return;
+}
 
 export function Toasts() {
   const announcements = useFilteredAnnouncements("toast");
@@ -93,54 +160,18 @@ export function Toasts() {
     );
   }
 
-  if (!welcomeMessageReadAt) {
-    return (
-      <React.Suspense>
-        <ToastWithWelcomeMessage />
-      </React.Suspense>
-    );
-  }
-
-  if (dataWarmupToastNeeded) {
-    return (
-      <React.Suspense>
-        <ToastWithDataWarmup
-          onDone={() => {
-            setDataWarmupToastNeeded(false);
-          }}
-        />
-      </React.Suspense>
-    );
-  }
-
-  const announcementToShow = announcements
-    // Show older announcements first
-    .toSorted((a, b) => a.createdAt.localeCompare(b.createdAt))
-    .find(
-      ({ createdAt }) =>
-        !announcementReadAtByCreatedAt[createdAt] &&
-        createdAt > welcomeMessageReadAt,
-    );
-
-  if (announcementToShow) {
-    return (
-      <ToastWithAnnouncement
-        key={announcementToShow.createdAt}
-        {...announcementToShow}
+  return (
+    <React.Suspense>
+      <ToastsAfterTriggeredNotification
+        announcements={announcements}
+        announcementReadAtByCreatedAt={announcementReadAtByCreatedAt}
+        dataWarmupToastNeeded={dataWarmupToastNeeded}
+        extensionVersionInfo={extensionVersionInfo}
+        onDataWarmupDone={() => {
+          setDataWarmupToastNeeded(false);
+        }}
+        welcomeMessageReadAt={welcomeMessageReadAt}
       />
-    );
-  }
-
-  if (extensionVersionInfo.deprecation) {
-    return (
-      <React.Suspense>
-        <ToastWithDeprecatedExtensionVersion
-          {...extensionVersionInfo}
-          deprecation={extensionVersionInfo.deprecation}
-        />
-      </React.Suspense>
-    );
-  }
-
-  return;
+    </React.Suspense>
+  );
 }

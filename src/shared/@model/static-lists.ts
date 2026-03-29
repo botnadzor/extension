@@ -46,6 +46,11 @@ export type StaticListItem<ListId extends StaticListId = StaticListId> =
 export type StaticListSummary<ListId extends StaticListId = StaticListId> =
   ListId extends StaticListId ? StaticListSummaryByListId[ListId] : never;
 
+export type StaticListsDataIssueState =
+  | { kind: "none" }
+  | { kind: "initialDataUnavailable" }
+  | { kind: "updatesBlockedButExistingDataUsable" };
+
 export type { AccountListItem } from "./static-lists/=accounts";
 export type { AnnouncementListItem } from "./static-lists/=announcements";
 export type { InsertionListItem } from "./static-lists/=insertions";

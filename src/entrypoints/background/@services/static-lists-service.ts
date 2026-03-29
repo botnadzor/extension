@@ -8,6 +8,8 @@ import type {
   StaticListCombiningMode,
   StaticListItemOrigin,
   StaticListRemoteInstance,
+  StaticListRemoteUpdateIssue,
+  StaticListRemoteUpdateIssueStage,
   StaticListUpstreamInfo,
 } from "@/shared/@model/static-list-helpers";
 import type { StaticListMetadata } from "@/shared/@model/static-list-metadata";
@@ -16,6 +18,7 @@ import {
   type StaticListId,
   staticListIds,
   type StaticListItem,
+  type StaticListsDataIssueState,
   type StaticListSummary,
 } from "@/shared/@model/static-lists";
 import {
@@ -31,6 +34,7 @@ import {
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import { fetchFromRemoteSystem } from "../@service-helpers/fetch-from-remote-system";
 import type { RootConfigService } from "./root-config-service";
+import { deriveStaticListsDataIssueState } from "./static-lists-service/data-issue-state";
 import {
   getStaticListDefinitionInfo,
   type StaticListDefinitionInfo,
@@ -61,6 +65,7 @@ import {
   shouldVerifyResumedLine,
   type StaticListRemoteRowsState,
 } from "./static-lists-service/remote-metadata-helpers";
+import { isQuotaExceededRemoteUpdateError } from "./static-lists-service/remote-update-issue-helpers";
 import {
   createStoredRemoteRow,
   prepareUnvalidatedLocalRow,
@@ -117,6 +122,12 @@ type RemoteStagingSession = {
   startedAtIso: IsoDateTime;
   targetInstance: StaticListRemoteInstance;
   targetTable: Table<StoredRemoteRow, number>;
+};
+
+type PopulateRemoteListOptions = {
+  allowBlockedRetry?: boolean;
+  deleteActiveCache?: boolean;
+  forcePopulate?: boolean;
 };
 
 async function* streamLines(
@@ -179,6 +190,18 @@ function omitRemoteActive<ListId extends StaticListId>(
   void remoteActiveOmitted;
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- removing an exact-optional property via rest is correct at runtime but TS loses that shape
   return metadataWithoutRemoteActive as StaticListMetadata<ListId>;
+}
+
+function omitRemoteUpdateIssue<ListId extends StaticListId>(
+  metadata: StaticListMetadata<ListId>,
+): StaticListMetadata<ListId> {
+  const {
+    remoteUpdateIssue: remoteUpdateIssueOmitted,
+    ...metadataWithoutRemoteUpdateIssue
+  } = metadata;
+  void remoteUpdateIssueOmitted;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- removing an exact-optional property via rest is correct at runtime but TS loses that shape
+  return metadataWithoutRemoteUpdateIssue as StaticListMetadata<ListId>;
 }
 
 function sortLocalRows(rows: StoredLocalRow[]): StoredLocalRow[] {
@@ -281,6 +304,7 @@ export class StaticListsService {
   private readonly pollableRemoteStagingSummaryByListId: Readonly<
     Record<StaticListId, Pollable<StaticListSummary | undefined>>
   >;
+  private readonly pollableDataIssueState: Pollable<StaticListsDataIssueState>;
   private readonly pollableListUpdatedAtByListId: Readonly<
     Record<StaticListId, Pollable<IsoDateTime | undefined>>
   >;
@@ -335,6 +359,10 @@ export class StaticListsService {
     this.pollableListUpdatedAtByListId =
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the constructor fully populates each per-list pollable map before freezing it onto readonly fields
       pollableListUpdatedAtByListId as typeof this.pollableListUpdatedAtByListId;
+
+    this.pollableDataIssueState = new Pollable<StaticListsDataIssueState>({
+      kind: "none",
+    });
   }
 
   [Symbol.dispose](): void {
@@ -615,6 +643,70 @@ export class StaticListsService {
     };
   }
 
+  private async recordRemoteUpdateIssue({
+    error,
+    listId,
+    stage,
+    upstreamInfo,
+  }: {
+    error: unknown;
+    listId: StaticListId;
+    stage: StaticListRemoteUpdateIssueStage;
+    upstreamInfo: StaticListUpstreamInfo;
+  }): Promise<boolean> {
+    if (!isQuotaExceededRemoteUpdateError(error)) {
+      return false;
+    }
+
+    const issue: StaticListRemoteUpdateIssue = {
+      failedAt: isoDateTimeSchema.parse(Date.now()),
+      kind: "quotaExceeded",
+      stage,
+      upstreamInfo,
+    };
+
+    const context = await this.ensureListContext(listId);
+    await context.databases.deleteRemoteDatabase(
+      pickAnotherRemoteInstance(context.metadata.remoteActiveInstance),
+    );
+
+    await this.persistMetadata(
+      listId,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id while preserving the current list-specific metadata shape
+      {
+        ...omitRemoteStaging(context.metadata),
+        remoteUpdateIssue: issue,
+      } as StaticListMetadata,
+    );
+
+    return true;
+  }
+
+  private async prepareBlockedRemoteUpdateRetry(
+    listId: StaticListId,
+    options?: { deleteActiveCache?: boolean },
+  ): Promise<void> {
+    const context = await this.ensureListContext(listId);
+    let nextMetadata = omitRemoteUpdateIssue(
+      omitRemoteStaging(context.metadata),
+    );
+
+    if (context.metadata.remoteStaging) {
+      await context.databases.deleteRemoteDatabase(
+        pickAnotherRemoteInstance(context.metadata.remoteActiveInstance),
+      );
+    }
+
+    if (options?.deleteActiveCache && context.metadata.remoteActive) {
+      await context.databases.deleteRemoteDatabase(
+        context.metadata.remoteActiveInstance,
+      );
+      nextMetadata = omitRemoteActive(nextMetadata);
+    }
+
+    await this.persistMetadata(listId, nextMetadata);
+  }
+
   /**
    * Initialization is where we reconcile persisted metadata with the actual
    * databases on disk.
@@ -876,6 +968,13 @@ export class StaticListsService {
     );
     this.pollableListUpdatedAtByListId[listId].setValue(
       extractUpdatedAtFromMetadata(metadata),
+    );
+    this.pollableDataIssueState.setValue(
+      deriveStaticListsDataIssueState(
+        [...this.contextByListId.values()].map(
+          ({ metadata: currentMetadata }) => currentMetadata,
+        ),
+      ),
     );
 
     if (metadata.combiningMode === "remoteOnly") {
@@ -1284,6 +1383,20 @@ export class StaticListsService {
     return result.value;
   }
 
+  public async pollDataIssueState(
+    lastPollVersion: PollVersion | undefined,
+  ): Promise<PollResult<StaticListsDataIssueState>> {
+    await Promise.all(
+      staticListIds.map(async (listId) => this.ensureListContext(listId)),
+    );
+    return await this.pollableDataIssueState.poll(lastPollVersion);
+  }
+
+  public async getDataIssueState(): Promise<StaticListsDataIssueState> {
+    const result = await this.pollDataIssueState(undefined);
+    return result.value;
+  }
+
   public async getRemoteListSummary<ListId extends StaticListId>(
     listId: ListId,
   ): Promise<StaticListSummary<ListId>> {
@@ -1413,20 +1526,33 @@ export class StaticListsService {
     );
   }
 
-  private async populateListIfOutdatedInternal(
+  private async populateRemoteList(
     listId: StaticListId,
     toleranceInMinutes: number | undefined,
+    options?: PopulateRemoteListOptions,
   ): Promise<PopulateFromUrlIfOutdatedResult> {
     const listLogger = this.getListLogger(listId);
     const context = await this.ensureListContext(listId);
     const rootConfig = await this.rootConfigService.get();
     const upstreamInfo =
       rootConfig.remoteSystemLookup.staticApi.listLookup[listId];
+    const metadata = this.getCurrentMetadata(listId);
 
     if (
+      metadata.remoteUpdateIssue?.kind === "quotaExceeded" &&
+      !options?.allowBlockedRetry
+    ) {
+      listLogger.info(
+        "Skipping automatic remote update because quota-blocked state is active",
+      );
+      return { success: true, data: "updateNotNeeded" };
+    }
+
+    if (
+      !options?.forcePopulate &&
       !this.needsRemoteUpdate({
         listId,
-        metadata: context.metadata,
+        metadata,
         toleranceInMinutes,
         upstreamGeneratedAt: upstreamInfo.generatedAt,
       })
@@ -1434,24 +1560,33 @@ export class StaticListsService {
       return { success: true, data: "updateNotNeeded" };
     }
 
+    if (options?.allowBlockedRetry) {
+      await this.prepareBlockedRemoteUpdateRetry(
+        listId,
+        options.deleteActiveCache ? { deleteActiveCache: true } : undefined,
+      );
+    }
+
     let shouldForceFreshRestart = false;
+    let currentStage: StaticListRemoteUpdateIssueStage = "createStaging";
 
     for (;;) {
-      const stagingSession = shouldForceFreshRestart
-        ? await this.createFreshRemoteStaging(listId, upstreamInfo)
-        : ((await this.tryResumeRemoteStaging(listId, upstreamInfo)) ??
-          (await this.createFreshRemoteStaging(listId, upstreamInfo)));
-
-      const {
-        activeInstance,
-        mutableStagingSummary,
-        resumedHeadLineNumber,
-        startedAtIso,
-        targetInstance,
-        targetTable,
-      } = stagingSession;
-
       try {
+        currentStage = "createStaging";
+        const stagingSession = shouldForceFreshRestart
+          ? await this.createFreshRemoteStaging(listId, upstreamInfo)
+          : ((await this.tryResumeRemoteStaging(listId, upstreamInfo)) ??
+            (await this.createFreshRemoteStaging(listId, upstreamInfo)));
+
+        const {
+          activeInstance,
+          mutableStagingSummary,
+          resumedHeadLineNumber,
+          startedAtIso,
+          targetInstance,
+          targetTable,
+        } = stagingSession;
+
         const fetchResult = await fetchFromRemoteSystem({
           aliasManager: this.aliasManagerForStaticApi,
           urlSuffix: `/lists/${listId}.jsonl`,
@@ -1486,6 +1621,7 @@ export class StaticListsService {
             return;
           }
 
+          currentStage = "writeRows";
           const durableLineNumber = rowsToStore.at(-1)?.r ?? 0;
           storedBatchCount += 1;
           storedRowCount += rowsToStore.length;
@@ -1602,6 +1738,7 @@ export class StaticListsService {
         }
 
         await flushBatch(false);
+        currentStage = "promote";
 
         await this.promoteRemoteStaging({
           activeInstance,
@@ -1630,6 +1767,23 @@ export class StaticListsService {
         return { success: true, data: "updated" };
       } catch (error) {
         const errorMessage = getErrorMessage(error);
+
+        if (
+          await this.recordRemoteUpdateIssue({
+            error,
+            listId,
+            stage: currentStage,
+            upstreamInfo,
+          })
+        ) {
+          listLogger.error(
+            "Remote update is paused because storage quota was exceeded during {stage}: {error}",
+            { error: errorMessage, stage: currentStage },
+          );
+
+          return { success: false, error: errorMessage };
+        }
+
         listLogger.error("Unexpected error while populating: {error}", {
           error: errorMessage,
         });
@@ -1639,18 +1793,20 @@ export class StaticListsService {
     }
   }
 
-  public async populateListIfOutdated(
+  private async runRemotePopulateWithDeduping(
     listId: StaticListId,
     toleranceInMinutes: number | undefined,
+    options?: PopulateRemoteListOptions,
   ): Promise<PopulateFromUrlIfOutdatedResult> {
     const existingPromise = this.updatePromiseByListId.get(listId);
     if (existingPromise) {
       return await existingPromise;
     }
 
-    const updatePromise = this.populateListIfOutdatedInternal(
+    const updatePromise = this.populateRemoteList(
       listId,
       toleranceInMinutes,
+      options,
     ).finally(() => {
       this.updatePromiseByListId.delete(listId);
     });
@@ -1659,12 +1815,19 @@ export class StaticListsService {
     return await updatePromise;
   }
 
+  public async populateListIfOutdated(
+    listId: StaticListId,
+    toleranceInMinutes: number | undefined,
+  ): Promise<PopulateFromUrlIfOutdatedResult> {
+    return await this.runRemotePopulateWithDeduping(listId, toleranceInMinutes);
+  }
+
   public updateIfNeeded(payload?: {
     listIds?: StaticListId[] | undefined;
     toleranceInMinutes?: number | undefined;
   }): void {
     for (const listId of payload?.listIds ?? staticListIds) {
-      void this.populateListIfOutdated(
+      void this.runRemotePopulateWithDeduping(
         listId,
         payload?.toleranceInMinutes,
       ).catch((error: unknown) => {
@@ -1676,6 +1839,31 @@ export class StaticListsService {
         );
       });
     }
+  }
+
+  public async retryBlockedRemoteUpdates(payload?: {
+    deleteActiveCache?: boolean;
+  }): Promise<void> {
+    await Promise.all(
+      staticListIds.map(async (listId) => this.ensureListContext(listId)),
+    );
+
+    await Promise.all(
+      staticListIds.map(async (listId) => {
+        const metadata = this.getCurrentMetadata(listId);
+        if (metadata.remoteUpdateIssue?.kind !== "quotaExceeded") {
+          return;
+        }
+
+        await this.runRemotePopulateWithDeduping(listId, undefined, {
+          allowBlockedRetry: true,
+          deleteActiveCache:
+            payload?.deleteActiveCache === true &&
+            Boolean(metadata.remoteActive),
+          forcePopulate: true,
+        });
+      }),
+    );
   }
 
   private prepareLocalRow(

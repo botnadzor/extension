@@ -13,6 +13,7 @@ import { loggingService } from "@/shared/proxy-services";
 import { ActiveTab } from "./app/active-tab";
 import { Header } from "./app/header";
 import { Sidebar } from "./app/sidebar";
+import { StaticDataIssueBanner } from "./app/static-data-issue-banner";
 
 const logger = getPopupLogger();
 
@@ -55,6 +56,9 @@ function startPopupApp() {
         <TooltipProvider>
           <div className="absolute inset-0 flex flex-col">
             <Header />
+            <React.Suspense>
+              <StaticDataIssueBanner />
+            </React.Suspense>
             <div className="flex flex-1 overflow-hidden">
               <Sidebar />
               <ActiveTab />
