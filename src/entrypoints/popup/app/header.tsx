@@ -54,8 +54,8 @@ function AccountListMetadata() {
 
   return (
     <>
-      Список аккаунтов от{" "}
-      {formatDateTime(accountsMetadata.remoteActive.upstreamInfo.generatedAt)}
+      Список аккаунтов обновлён:{" "}
+      {formatDateTime(accountsMetadata.remoteActive.updatedAt)}
     </>
   );
 }
