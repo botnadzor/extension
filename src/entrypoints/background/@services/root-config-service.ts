@@ -1,4 +1,5 @@
 import { delay } from "es-toolkit";
+import { z } from "zod/mini";
 
 import { getBackgroundLogger } from "@/shared/@logging/categories";
 import {
@@ -13,9 +14,11 @@ import {
   type PollVersion,
 } from "@/shared/@pollable/core";
 import type { SemverRange } from "@/shared/@primitives/semver";
+import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import { fetchFromRemoteSystem } from "../@service-helpers/fetch-from-remote-system";
+import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
 
 const logger = getBackgroundLogger(["root-config-service"]);
 
@@ -24,14 +27,27 @@ const minRefetchIntervalAfterSuccessInMs = 30 * 60 * 1000;
 const minRetryIntervalAfterFailureInMs = 10 * 1000;
 const maxRetryCount = 3;
 
+const persistedRootConfigStateSchema = z.readonly(
+  z.object({
+    rootConfig: rootConfigSchema,
+    fetchedAt: isoDateTimeSchema,
+  }),
+);
+
+const rootConfigStore = defineStoreWithSchema(
+  "local:root-config-cache",
+  persistedRootConfigStateSchema,
+);
+
 export class RootConfigService {
-  private aliasManagerForStaticApi: AliasManager;
+  private readonly aliasManagerForStaticApi: AliasManager;
 
-  private state: "idle" | "fetching";
-  private lastFetchAttempt: { success: boolean; fetchedAt: number } | undefined;
+  private lastSuccessfulFetchAt: number | undefined;
 
+  private readonly hydrateFromStorePromise: Promise<void>;
   private pollableRootConfig: Pollable<RootConfig>;
   private pollableExtensionVersionRange: Pollable<SemverRange>;
+  private updateIfNeededPromise: Promise<void> | undefined;
 
   constructor({
     aliasManagerForStaticApi,
@@ -43,7 +59,7 @@ export class RootConfigService {
     this.pollableExtensionVersionRange = new Pollable(
       rootConfigSeed.extensionVersionRange,
     );
-    this.state = "idle";
+    this.hydrateFromStorePromise = this.hydrateFromStore();
   }
 
   async get(): Promise<RootConfig> {
@@ -59,12 +75,6 @@ export class RootConfigService {
     return this.pollableRootConfig.poll(lastPollVersion);
   }
 
-  private async waitForIdle(): Promise<void> {
-    while (this.state !== "idle") {
-      await delay(100);
-    }
-  }
-
   async getExtensionVersionRange(): Promise<SemverRange> {
     const result = await this.pollExtensionVersionRange(undefined);
     return result.value;
@@ -73,33 +83,81 @@ export class RootConfigService {
   async pollExtensionVersionRange(
     lastPollVersion: PollVersion | undefined,
   ): Promise<PollResult<SemverRange>> {
+    await this.hydrateFromStorePromise;
     return this.pollableExtensionVersionRange.poll(lastPollVersion);
   }
 
   private async updateIfNeeded(): Promise<void> {
-    await this.waitForIdle();
+    await this.hydrateFromStorePromise;
 
+    this.updateIfNeededPromise ??= this.doUpdateIfNeeded().finally(() => {
+      this.updateIfNeededPromise = undefined;
+    });
+
+    await this.updateIfNeededPromise;
+  }
+
+  private applyPersistedRootConfigState(
+    persistedState: z.infer<typeof persistedRootConfigStateSchema>,
+  ): void {
+    this.pollableRootConfig.setValue(persistedState.rootConfig);
+    this.pollableExtensionVersionRange.setValue(
+      persistedState.rootConfig.extensionVersionRange,
+    );
+    this.lastSuccessfulFetchAt = new Date(persistedState.fetchedAt).getTime();
+  }
+
+  private async hydrateFromStore(): Promise<void> {
+    try {
+      const persistedState = await rootConfigStore.getValue();
+      if (!persistedState) {
+        return;
+      }
+
+      this.applyPersistedRootConfigState(persistedState);
+
+      logger.debug("Hydrated root config from store: {rootConfig}", {
+        rootConfig: persistedState.rootConfig,
+      });
+    } catch (error) {
+      logger.error("Failed to hydrate root config from store: {error}", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async persistRootConfig(rootConfig: RootConfig): Promise<void> {
+    const persistedState = {
+      rootConfig,
+      fetchedAt: isoDateTimeSchema.parse(Date.now()),
+    };
+
+    this.applyPersistedRootConfigState(persistedState);
+
+    try {
+      await rootConfigStore.setValue(persistedState);
+    } catch (error) {
+      logger.error("Failed to persist root config: {error}", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async doUpdateIfNeeded(): Promise<void> {
     const now = Date.now();
 
     if (
-      this.lastFetchAttempt &&
-      now - this.lastFetchAttempt.fetchedAt < minRefetchIntervalAfterSuccessInMs
+      this.lastSuccessfulFetchAt !== undefined &&
+      now - this.lastSuccessfulFetchAt < minRefetchIntervalAfterSuccessInMs
     ) {
       logger.debug(
         "Root config update is not needed (it was fetched {elapsedTime} seconds ago)",
         {
-          elapsedTime: Math.floor(
-            (now - this.lastFetchAttempt.fetchedAt) / 1000,
-          ),
+          elapsedTime: Math.floor((now - this.lastSuccessfulFetchAt) / 1000),
         },
       );
       return;
     }
-
-    // Prevent multiple parallel fetches on startup
-    this.lastFetchAttempt ??= { success: false, fetchedAt: now };
-
-    this.state = "fetching";
 
     for (let attempt = 0; attempt < maxRetryCount; attempt++) {
       if (attempt > 0) {
@@ -125,8 +183,6 @@ export class RootConfigService {
           continue;
         }
 
-        this.lastFetchAttempt = { success: false, fetchedAt: Date.now() };
-        this.state = "idle";
         return;
       }
 
@@ -158,8 +214,6 @@ export class RootConfigService {
             },
           );
 
-          this.lastFetchAttempt = { success: false, fetchedAt: Date.now() };
-          this.state = "idle";
           return;
         }
 
@@ -167,17 +221,10 @@ export class RootConfigService {
           continue;
         }
 
-        this.lastFetchAttempt = { success: false, fetchedAt: Date.now() };
-        this.state = "idle";
         return;
       }
 
-      this.pollableRootConfig.setValue(parseResult.data);
-      this.pollableExtensionVersionRange.setValue(
-        parseResult.data.extensionVersionRange,
-      );
-      this.lastFetchAttempt = { success: true, fetchedAt: Date.now() };
-      this.state = "idle";
+      await this.persistRootConfig(parseResult.data);
 
       logger.debug("Root config updated: {rootConfig}", {
         rootConfig: parseResult.data,
