@@ -156,7 +156,7 @@ export class CollectingService {
     void (async () => {
       let lastPollVersion: PollVersion | undefined;
       while (!this.disposed) {
-        const result = await staticListsService.pollListMetadata(
+        const result = await staticListsService.pollListUpdatedAt(
           lastPollVersion,
           "walls",
         );
