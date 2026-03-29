@@ -1,4 +1,5 @@
 import { delay } from "es-toolkit";
+import { z } from "zod/mini";
 
 import { getBackgroundLogger } from "@/shared/@logging/categories";
 import {
@@ -7,6 +8,7 @@ import {
   authInputSchema,
   type AuthStatus,
   type PermissionLookup,
+  permissionLookupSchema,
 } from "@/shared/@model/auth";
 import {
   Pollable,
@@ -41,10 +43,60 @@ const authInputStore = defineStoreWithSchema(
   { migrateDataFromV1: migrateAuthInputFromV1 },
 );
 
+const minRefetchIntervalAfterAuthCheckInMs = 5 * 60 * 1000;
+
 const defaultAuthInput: AuthInput = {
   accessCode: "",
   accessCodeEnteredAt: isoDateTimeSchema.parse(new Date(0)),
 };
+
+const persistedValidAuthStatusSchema = z.readonly(
+  z.object({
+    state: z.literal("valid"),
+    accessLevel: z.number(),
+    expiresAt: z.exactOptional(isoDateTimeSchema),
+    pointCount: z.number(),
+    permissionLookup: permissionLookupSchema,
+  }),
+);
+
+const persistedInvalidAuthStatusSchema = z.readonly(
+  z.object({
+    state: z.literal("invalid"),
+    accessCode: z.string(),
+    accessCodeEnteredAt: isoDateTimeSchema,
+    accessCodeRecognized: z.boolean(),
+    errorMessage: z.string(),
+  }),
+);
+
+const persistedAuthStatusSchema = z.union([
+  persistedInvalidAuthStatusSchema,
+  persistedValidAuthStatusSchema,
+]);
+
+const persistedAuthStateSchema = z.readonly(
+  z.object({
+    authInput: authInputSchema,
+    authStatus: persistedAuthStatusSchema,
+    checkedAt: isoDateTimeSchema,
+  }),
+);
+
+type PersistedAuthStatus = z.infer<typeof persistedAuthStatusSchema>;
+type PersistedAuthState = z.infer<typeof persistedAuthStateSchema>;
+
+const authStateStore = defineStoreWithSchema(
+  "local:auth-state-cache",
+  persistedAuthStateSchema,
+);
+
+function isSameAuthInput(left: AuthInput, right: AuthInput): boolean {
+  return (
+    left.accessCode === right.accessCode &&
+    left.accessCodeEnteredAt === right.accessCodeEnteredAt
+  );
+}
 
 function isProblemOutcome(
   value: unknown,
@@ -66,13 +118,16 @@ function hasBody(value: unknown): value is { body: unknown } {
 }
 
 export class AuthService {
-  private aliasManagerForDynamicApi: AliasManager;
+  private readonly aliasManagerForDynamicApi: AliasManager;
   private disposed = false;
+  private initialized = false;
 
   private pollableAuthInput: Pollable<AuthInput | undefined>;
   private pollableAuthStatus: Pollable<AuthStatus>;
   private pollableAuthCheck: Pollable<AuthCheck>;
+  private persistedAuthState: PersistedAuthState | undefined;
 
+  private readonly initializePromise: Promise<void>;
   private readonly storeWriteThrottleInMs = 1000;
 
   constructor({
@@ -86,8 +141,8 @@ export class AuthService {
     this.pollableAuthStatus = new Pollable<AuthStatus>({ state: "unknown" });
     this.pollableAuthCheck = new Pollable<AuthCheck>({ state: "idle" });
 
-    void this.checkAuth();
     void this.startSyncingAuthInputWithStore();
+    this.initializePromise = this.initialize();
   }
 
   [Symbol.dispose](): void {
@@ -126,6 +181,28 @@ export class AuthService {
     return result.value;
   }
 
+  private async initialize(): Promise<void> {
+    await this.waitUntilAuthInputReady();
+
+    const authInput = await this.getAuthInput();
+    await this.hydratePersistedAuthState(authInput);
+
+    if (this.shouldReusePersistedAuthState(authInput)) {
+      const persistedAuthState = this.persistedAuthState;
+      if (persistedAuthState) {
+        this.pollableAuthStatus.setValue(persistedAuthState.authStatus);
+        logger.debug("Hydrated auth state from cache: {authStatus}", {
+          authStatus: persistedAuthState.authStatus,
+        });
+      }
+      this.initialized = true;
+      return;
+    }
+
+    await this.checkAuthAfterInitialization({ force: false });
+    this.initialized = true;
+  }
+
   // TODO: Remove this method after the v1 -> v2 upgrade window closes.
   async waitUntilAuthInputReady(): Promise<void> {
     await this.pollAuthInput(undefined);
@@ -152,7 +229,130 @@ export class AuthService {
   }
 
   async checkAuth(): Promise<void> {
+    await this.initializePromise;
+    await this.checkAuthAfterInitialization({ force: true });
+  }
+
+  private shouldReusePersistedAuthState(authInput: AuthInput): boolean {
+    if (!this.persistedAuthState) {
+      return false;
+    }
+
+    if (!isSameAuthInput(this.persistedAuthState.authInput, authInput)) {
+      return false;
+    }
+
+    const now = Date.now();
+
+    if (
+      now - new Date(this.persistedAuthState.checkedAt).getTime() >=
+      minRefetchIntervalAfterAuthCheckInMs
+    ) {
+      return false;
+    }
+
+    if (
+      this.persistedAuthState.authStatus.state === "valid" &&
+      this.persistedAuthState.authStatus.expiresAt &&
+      new Date(this.persistedAuthState.authStatus.expiresAt).getTime() <= now
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private async hydratePersistedAuthState(authInput: AuthInput): Promise<void> {
+    try {
+      this.persistedAuthState = await authStateStore.getValue();
+    } catch (error) {
+      logger.error("Failed to hydrate auth state cache: {error}", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      this.persistedAuthState = undefined;
+      return;
+    }
+
+    if (!this.shouldReusePersistedAuthState(authInput)) {
+      return;
+    }
+  }
+
+  private async persistAuthState(state: PersistedAuthState): Promise<void> {
+    this.persistedAuthState = state;
+
+    try {
+      await authStateStore.setValue(state);
+    } catch (error) {
+      logger.error("Failed to persist auth state cache: {error}", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async clearPersistedAuthState(): Promise<void> {
+    this.persistedAuthState = undefined;
+
+    try {
+      await authStateStore.clearValue();
+    } catch (error) {
+      logger.error("Failed to clear auth state cache: {error}", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async persistAuthStatusAfterCheck(
+    authInput: AuthInput,
+    authStatus: PersistedAuthStatus,
+  ): Promise<void> {
+    await this.persistAuthState({
+      authInput,
+      authStatus,
+      checkedAt: isoDateTimeSchema.parse(Date.now()),
+    });
+  }
+
+  private async applyAuthStatusAfterCheck(
+    authInput: AuthInput,
+    authStatus: AuthStatus,
+  ): Promise<void> {
+    this.pollableAuthStatus.setValue(authStatus);
+
+    if (authStatus.state === "empty" || authStatus.state === "unknown") {
+      if (authStatus.state === "empty") {
+        await this.clearPersistedAuthState();
+      }
+      return;
+    }
+
+    await this.persistAuthStatusAfterCheck(authInput, authStatus);
+  }
+
+  private async checkAuthAfterInitialization({
+    force,
+  }: {
+    force: boolean;
+  }): Promise<void> {
     if (this.getAuthCheck().state === "ongoing") {
+      return;
+    }
+
+    const authInput = await this.getAuthInput();
+
+    if (!force && this.shouldReusePersistedAuthState(authInput)) {
+      const persistedAuthState = this.persistedAuthState;
+      if (persistedAuthState) {
+        this.pollableAuthStatus.setValue(persistedAuthState.authStatus);
+      }
+      return;
+    }
+
+    if (authInput.accessCode.length === 0) {
+      await this.applyAuthStatusAfterCheck(authInput, {
+        state: "empty",
+        ...authInput,
+      });
       return;
     }
 
@@ -161,57 +361,95 @@ export class AuthService {
       startedAt: isoDateTimeSchema.parse(new Date()),
     });
 
-    const authInput = await this.getAuthInput();
+    const checkStartedAt = Date.now();
+    const shouldEnsureCheckDurationIsVisible =
+      this.getAuthStatus().state === "valid";
+
+    const outcome = await this.fetchFromDynamicApiWithAccessCode("getMe");
+
+    let currentAuthInput = await this.getAuthInput();
+
+    if (!isSameAuthInput(currentAuthInput, authInput)) {
+      logger.info(
+        "Discarding auth check result because auth input changed during the request",
+      );
+
+      this.pollableAuthCheck.setValue({ state: "idle" });
+      void this.checkAuth();
+      return;
+    }
+
+    const remainingVisibleDurationInMs = checkStartedAt + 500 - Date.now();
+
+    if (
+      shouldEnsureCheckDurationIsVisible &&
+      remainingVisibleDurationInMs > 0
+    ) {
+      await delay(remainingVisibleDurationInMs);
+      currentAuthInput = await this.getAuthInput();
+    }
 
     let newAuthStatus: AuthStatus;
 
-    if (authInput.accessCode.length === 0) {
+    if (!outcome.problem) {
+      newAuthStatus = omitUndefined({
+        state: "valid" as const,
+        accessLevel: outcome.accessLevel,
+        expiresAt: outcome.expiresAt,
+        pointCount: outcome.pointCount,
+        permissionLookup: outcome.permissionLookup,
+      });
+    } else if (outcome.type === "bn:ext:invalid-access-code") {
       newAuthStatus = {
-        state: "empty",
-        ...authInput,
+        state: "invalid",
+        accessCode: authInput.accessCode,
+        accessCodeEnteredAt: authInput.accessCodeEnteredAt,
+        accessCodeRecognized: outcome.accessCodeRecognized ?? false,
+        errorMessage: outcome.description,
       };
     } else {
-      const [outcome] = await Promise.all([
-        this.fetchFromDynamicApiWithAccessCode("getMe"),
-        this.getAuthStatus().state === "valid" ? delay(500) : undefined, // Ensure check duration is visible to the user (if it's too fast, it's hard to notice that something is happening)
-      ]);
-
-      if (!outcome.problem) {
-        newAuthStatus = omitUndefined({
-          state: "valid" as const,
-          accessLevel: outcome.accessLevel,
-          expiresAt: outcome.expiresAt,
-          pointCount: outcome.pointCount,
-          permissionLookup: outcome.permissionLookup,
-        });
-      } else if (outcome.type === "bn:ext:invalid-access-code") {
-        newAuthStatus = {
-          state: "invalid",
-          accessCode: authInput.accessCode,
-          accessCodeEnteredAt: authInput.accessCodeEnteredAt,
-          accessCodeRecognized: outcome.accessCodeRecognized ?? false,
-          errorMessage: outcome.description,
-        };
-      } else {
-        newAuthStatus = {
-          state: "unknown",
-          ...authInput,
-        };
-      }
+      newAuthStatus = {
+        state: "unknown",
+        ...authInput,
+      };
     }
 
-    this.pollableAuthStatus.setValue(newAuthStatus);
+    if (!isSameAuthInput(currentAuthInput, authInput)) {
+      logger.info(
+        "Discarding auth check result because auth input changed during the request",
+      );
+
+      this.pollableAuthCheck.setValue({ state: "idle" });
+      void this.checkAuth();
+      return;
+    }
+
     this.pollableAuthCheck.setValue({ state: "idle" });
+    await this.applyAuthStatusAfterCheck(authInput, newAuthStatus);
   }
 
   setAccessCode(accessCode: string): void {
+    void this.setAccessCodeAndRecheck(accessCode);
+  }
+
+  private async setAccessCodeAndRecheck(accessCode: string): Promise<void> {
+    const wasInitialized = this.initialized;
+
     this.pollableAuthInput.setValue({
       accessCode: accessCode
         .slice(0, 1000) // mitigate accidental pastes of large strings
         .trim(),
       accessCodeEnteredAt: isoDateTimeSchema.parse(new Date()),
     });
-    void this.checkAuth();
+
+    await this.clearPersistedAuthState();
+
+    if (!wasInitialized) {
+      return;
+    }
+
+    await this.initializePromise;
+    await this.checkAuthAfterInitialization({ force: true });
   }
 
   public async fetchFromDynamicApiWithAccessCode<
@@ -300,7 +538,10 @@ export class AuthService {
       return;
     }
 
-    this.pollableAuthStatus.setValue({ ...authStatus, permissionLookup });
+    const newAuthStatus = { ...authStatus, permissionLookup };
+
+    this.pollableAuthStatus.setValue(newAuthStatus);
+    void this.persistPatchedValidAuthStatus(newAuthStatus);
 
     logger.debug("Patched permission lookup to {permissionLookup}", {
       permissionLookup,
@@ -317,8 +558,30 @@ export class AuthService {
       return;
     }
 
-    this.pollableAuthStatus.setValue({ ...authStatus, pointCount });
+    const newAuthStatus = { ...authStatus, pointCount };
+
+    this.pollableAuthStatus.setValue(newAuthStatus);
+    void this.persistPatchedValidAuthStatus(newAuthStatus);
 
     logger.debug("Patched point count to {pointCount}", { pointCount });
+  }
+
+  private async persistPatchedValidAuthStatus(
+    authStatus: PersistedAuthStatus & { state: "valid" },
+  ): Promise<void> {
+    const authInput = await this.getAuthInput();
+    const persistedAuthState = this.persistedAuthState;
+
+    if (
+      persistedAuthState?.authStatus.state !== "valid" ||
+      !isSameAuthInput(persistedAuthState.authInput, authInput)
+    ) {
+      return;
+    }
+
+    await this.persistAuthState({
+      ...persistedAuthState,
+      authStatus,
+    });
   }
 }

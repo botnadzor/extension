@@ -20,6 +20,7 @@ function patchNameIfNeeded(name: StorageItemKey): StorageItemKey {
 export type StoreWithSchema<T extends z.ZodMiniType<JsonValue | undefined>> = {
   getValue: () => Promise<z.infer<T> | undefined>;
   setValue: (value: z.infer<T>) => Promise<void>;
+  clearValue: () => Promise<void>;
   watch: (callback: (value: z.infer<T>) => void) => () => void;
 };
 
@@ -101,6 +102,8 @@ export function defineStoreWithSchema<T extends z.ZodMiniType<JsonValue>>(
     },
 
     setValue: (value) => storageItem.setValue(value),
+
+    clearValue: () => storageItem.setValue(undefined),
 
     watch: (callback) =>
       storageItem.watch((value) => {
