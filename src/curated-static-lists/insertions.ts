@@ -1098,7 +1098,7 @@ export default [
     variant: "account",
     appliesTo: "desktopAndMobileVkWebsite",
     selector:
-      "[data-testid='post-footer-author'], [class*='vkitShowMoreText__text'] > a[class*='vkitTextClamp__root'], .wi_date[class*='PostHeader__description']",
+      "[data-testid='post-footer-author'], [class*='vkitFeedShowMoreText__text'] > a[class*='vkitTextClamp__root'], [class*='vkitShowMoreText__text'] > a[class*='vkitTextClamp__root'], .wi_date[class*='PostHeader__description']",
     markup: {
       data: {
         // No avatar available
