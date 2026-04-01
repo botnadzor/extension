@@ -96,7 +96,7 @@ export function createLoggingServiceSink(
   }
 
   return Object.assign(sink, {
-    [Symbol.dispose]: async () => {
+    [Symbol.dispose]: () => {
       disposed = true;
 
       if (flushTimer) {
@@ -104,7 +104,7 @@ export function createLoggingServiceSink(
         flushTimer = undefined;
       }
 
-      await flush();
+      void flush();
     },
   });
 }
