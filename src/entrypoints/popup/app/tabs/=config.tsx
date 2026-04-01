@@ -39,6 +39,9 @@ function ColorOverridePicker({
   }) => void;
   tagId: TagId;
 }) {
+  const hexInputRef = React.useRef<HTMLInputElement>(null);
+  const hadColorPickerChangeRef = React.useRef(false);
+  const wasCustomColorModeOnColorPickerOpenRef = React.useRef(false);
   const [inputValue, setInputValue] = React.useState(colorOverride ?? "");
 
   const [oldOverride, setOldOverride] = React.useState(colorOverride);
@@ -56,6 +59,8 @@ function ColorOverridePicker({
   function onColorPick(event: React.ChangeEvent<HTMLInputElement>) {
     const rawColor = event.target.value;
     const colorResult = hexColorSchema.safeParse(rawColor);
+
+    hadColorPickerChangeRef.current = colorResult.success;
 
     onOverrideChange({
       tagId,
@@ -76,39 +81,87 @@ function ColorOverridePicker({
     setOldOverride(newColorOverride);
   }
 
+  function focusHexInput() {
+    const input = hexInputRef.current;
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+    input.select();
+  }
+
+  function handleColorInputBlur() {
+    const shouldFocusHexInput =
+      wasCustomColorModeOnColorPickerOpenRef.current ||
+      hadColorPickerChangeRef.current;
+
+    wasCustomColorModeOnColorPickerOpenRef.current = false;
+    hadColorPickerChangeRef.current = false;
+
+    if (!shouldFocusHexInput) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      focusHexInput();
+    });
+  }
+
+  function handleColorInputFocus() {
+    wasCustomColorModeOnColorPickerOpenRef.current =
+      colorOverride !== undefined;
+    hadColorPickerChangeRef.current = false;
+  }
+
   return (
     <div className="flex flex-none shrink items-center gap-1.5">
-      <input
-        type="color"
-        value={colorPickerValue}
-        className={cn(
-          `
-            relative inline-flex size-4 flex-none overflow-hidden rounded-full
-            border p-0 u-ring
-            [&::-moz-color-swatch]:absolute [&::-moz-color-swatch]:inset-0
-            [&::-moz-color-swatch]:size-full [&::-moz-color-swatch]:rounded-full
-            [&::-moz-color-swatch]:border-none [&::-moz-color-swatch]:p-0
-            [&::-moz-color-swatch-wrapper]:absolute
-            [&::-moz-color-swatch-wrapper]:inset-0
-            [&::-moz-color-swatch-wrapper]:size-full
-            [&::-moz-color-swatch-wrapper]:p-0
-            [&::-webkit-color-swatch]:absolute [&::-webkit-color-swatch]:inset-0
-            [&::-webkit-color-swatch]:size-full
-            [&::-webkit-color-swatch]:rounded-full
-            [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:p-0
-            [&::-webkit-color-swatch-wrapper]:absolute
-            [&::-webkit-color-swatch-wrapper]:inset-0
-            [&::-webkit-color-swatch-wrapper]:size-full
-            [&::-webkit-color-swatch-wrapper]:p-0
-          `,
-          colorPickerValue === defaultColor
-            ? "border-input"
-            : "border-foreground",
-        )}
-        onChange={onColorPick}
-      />
+      {import.meta.env.BROWSER === "firefox" ? (
+        // Firefox closes the extension popup when its native color picker opens
+        // so we fall back to the hex field there and keep the native picker in Chromium.
+        <button
+          type="button"
+          aria-label="Focus hex color input"
+          className={cn(
+            "inline-flex size-4 flex-none rounded-full border u-ring",
+            colorPickerValue === defaultColor
+              ? "border-input"
+              : "border-foreground",
+          )}
+          onClick={focusHexInput}
+          style={{ backgroundColor: colorPickerValue }}
+        />
+      ) : (
+        <input
+          type="color"
+          value={colorPickerValue}
+          className={cn(
+            `
+              relative inline-flex size-4 flex-none overflow-hidden rounded-full
+              border p-0 u-ring
+              [&::-webkit-color-swatch]:absolute
+              [&::-webkit-color-swatch]:inset-0
+              [&::-webkit-color-swatch]:size-full
+              [&::-webkit-color-swatch]:rounded-full
+              [&::-webkit-color-swatch]:border-none
+              [&::-webkit-color-swatch]:p-0
+              [&::-webkit-color-swatch-wrapper]:absolute
+              [&::-webkit-color-swatch-wrapper]:inset-0
+              [&::-webkit-color-swatch-wrapper]:size-full
+              [&::-webkit-color-swatch-wrapper]:p-0
+            `,
+            colorPickerValue === defaultColor
+              ? "border-input"
+              : "border-foreground",
+          )}
+          onBlur={handleColorInputBlur}
+          onChange={onColorPick}
+          onFocus={handleColorInputFocus}
+        />
+      )}
 
       <input
+        ref={hexInputRef}
         className="
           w-15.5 rounded-xs p-px font-mono placeholder-muted-foreground u-ring
           focus:placeholder-muted-foreground/30
@@ -117,6 +170,9 @@ function ColorOverridePicker({
           setInputValue(event.target.value);
         }}
         onBlur={submitColorOverride}
+        onFocus={(event) => {
+          event.currentTarget.select();
+        }}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             submitColorOverride();
