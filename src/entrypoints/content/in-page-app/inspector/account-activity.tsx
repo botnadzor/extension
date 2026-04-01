@@ -27,6 +27,7 @@ import {
 import { createMessage, formatInt } from "@/shared/formatting";
 import { cn } from "@/shared/tailwindcss-helpers";
 
+import { ChunkedAccordionRows } from "./account-activity/chunked-content";
 import { OptionalMark } from "./optional-mark";
 import { Placeholder } from "./placeholder";
 
@@ -318,6 +319,75 @@ function calculateLikeSummary(likes: readonly LikeToBot[] | undefined) {
   return { likeCount, botCount };
 }
 
+function CommentRowChunk({
+  items,
+  offset,
+}: {
+  items: readonly Comment[];
+  offset: number;
+}) {
+  return items.map((comment, index) => (
+    // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
+    <CommentRow key={offset + index} comment={comment} />
+  ));
+}
+
+function ReviewRowChunk({
+  items,
+  offset,
+}: {
+  items: readonly Comment[];
+  offset: number;
+}) {
+  return items.map((comment, index) => (
+    // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
+    <ReviewRow key={offset + index} comment={comment} />
+  ));
+}
+
+function LikeRowChunk({
+  items,
+  offset,
+}: {
+  items: readonly LikeToBot[];
+  offset: number;
+}) {
+  return items.map((like, index) => (
+    // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
+    <LikeRow key={offset + index} like={like} />
+  ));
+}
+
+function ChunkedCommentRows({ comments }: { comments: readonly Comment[] }) {
+  return (
+    <ChunkedAccordionRows
+      items={comments}
+      gridClassName="grid grid-cols-[auto_auto_1fr] items-center gap-2"
+      chunkRenderer={CommentRowChunk}
+    />
+  );
+}
+
+function ChunkedReviewRows({ reviews }: { reviews: readonly Comment[] }) {
+  return (
+    <ChunkedAccordionRows
+      items={reviews}
+      gridClassName="grid grid-cols-[auto_auto_1fr] items-center gap-2"
+      chunkRenderer={ReviewRowChunk}
+    />
+  );
+}
+
+function ChunkedLikeRows({ likes }: { likes: readonly LikeToBot[] }) {
+  return (
+    <ChunkedAccordionRows
+      items={likes}
+      gridClassName="grid gap-2 pr-2.5 grid-cols-[auto_1fr]"
+      chunkRenderer={LikeRowChunk}
+    />
+  );
+}
+
 export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
   const accountInspection = useAccountInspection(vkDomain);
   const authStatus = useAuthStatus();
@@ -384,11 +454,8 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
                   </span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr] items-center gap-2">
-                {legacyData.comments?.map((comment, index) => (
-                  // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
-                  <CommentRow key={index} comment={comment} />
-                ))}
+              <AccordionContent childClassName="px-0">
+                <ChunkedCommentRows comments={legacyData.comments ?? []} />
               </AccordionContent>
             </AccordionItem>
           )}
@@ -405,11 +472,8 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
                   </span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent childClassName="pr-2.5 grid gap-2 grid-cols-[auto_1fr]">
-                {legacyData.likes?.map((like, index) => (
-                  // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
-                  <LikeRow key={index} like={like} />
-                ))}
+              <AccordionContent childClassName="px-0">
+                <ChunkedLikeRows likes={legacyData.likes ?? []} />
               </AccordionContent>
             </AccordionItem>
           )}
@@ -426,11 +490,8 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
                   </span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr] items-center gap-2">
-                {legacyData.reviews?.map((comment, index) => (
-                  // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
-                  <ReviewRow key={index} comment={comment} />
-                ))}
+              <AccordionContent childClassName="px-0">
+                <ChunkedReviewRows reviews={legacyData.reviews ?? []} />
               </AccordionContent>
             </AccordionItem>
           )}
@@ -449,11 +510,10 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
                     </span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent childClassName="px-0 grid grid-cols-[auto_auto_1fr] items-center gap-2">
-                  {legacyData.comments_advanced?.map((comment, index) => (
-                    // eslint-disable-next-line @eslint-react/no-array-index-key -- stable data from API for a given account
-                    <CommentRow key={index} comment={comment} />
-                  ))}
+                <AccordionContent childClassName="px-0">
+                  <ChunkedCommentRows
+                    comments={legacyData.comments_advanced ?? []}
+                  />
                 </AccordionContent>
               </AccordionItem>
             )}
