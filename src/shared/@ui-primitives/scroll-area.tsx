@@ -57,7 +57,9 @@ function ScrollArea({
           transition-[color,box-shadow]
         "
       >
-        {children}
+        <ScrollAreaPrimitive.Content data-slot="scroll-area-content">
+          {children}
+        </ScrollAreaPrimitive.Content>
       </ScrollAreaPrimitive.Viewport>
       {scrollBar ?? <ScrollBar />}
       <ScrollAreaPrimitive.Corner />

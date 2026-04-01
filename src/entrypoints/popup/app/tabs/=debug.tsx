@@ -611,7 +611,7 @@ export function DebugTabBody() {
   const normalizedFilter = deferredFilter.trim().toLowerCase();
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2 px-3 pt-2.5">
         <LowestLogLevelSelect
           lowestLogLevel={lowestLogLevel}
