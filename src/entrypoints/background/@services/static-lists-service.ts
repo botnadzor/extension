@@ -34,6 +34,7 @@ import {
 import type { AliasManager } from "../@service-helpers/alias-manager";
 import { fetchFromRemoteSystem } from "../@service-helpers/fetch-from-remote-system";
 import type { RootConfigService } from "./root-config-service";
+import { withBackgroundHeartbeat } from "./static-lists-service/background-heartbeat";
 import { deriveStaticListsDataIssueState } from "./static-lists-service/data-issue-state";
 import {
   getStaticListDefinitionInfo,
@@ -1567,230 +1568,240 @@ export class StaticListsService {
       );
     }
 
-    let shouldForceFreshRestart = false;
-    let currentStage: StaticListRemoteUpdateIssueStage = "createStaging";
+    return await withBackgroundHeartbeat(async () => {
+      // This update path can spend minutes streaming and check-pointing very
+      // large resumable lists. We wrap only this bounded task in a documented
+      // MV3-style heartbeat so the background is less likely to be culled mid-
+      // transfer. The staging logic remains resumable without this helper, so
+      // this is strictly an optimization, not a correctness requirement.
+      let shouldForceFreshRestart = false;
+      let currentStage: StaticListRemoteUpdateIssueStage = "createStaging";
 
-    for (;;) {
-      try {
-        currentStage = "createStaging";
-        const stagingSession = shouldForceFreshRestart
-          ? await this.createFreshRemoteStaging(listId, upstreamInfo)
-          : ((await this.tryResumeRemoteStaging(listId, upstreamInfo)) ??
-            (await this.createFreshRemoteStaging(listId, upstreamInfo)));
+      for (;;) {
+        try {
+          currentStage = "createStaging";
+          const stagingSession = shouldForceFreshRestart
+            ? await this.createFreshRemoteStaging(listId, upstreamInfo)
+            : ((await this.tryResumeRemoteStaging(listId, upstreamInfo)) ??
+              (await this.createFreshRemoteStaging(listId, upstreamInfo)));
 
-        const {
-          activeInstance,
-          mutableStagingSummary,
-          resumedHeadLineNumber,
-          startedAtIso,
-          targetInstance,
-          targetTable,
-        } = stagingSession;
+          const {
+            activeInstance,
+            mutableStagingSummary,
+            resumedHeadLineNumber,
+            startedAtIso,
+            targetInstance,
+            targetTable,
+          } = stagingSession;
 
-        const fetchResult = await fetchFromRemoteSystem({
-          aliasManager: this.aliasManagerForStaticApi,
-          urlSuffix: `/lists/${listId}.jsonl`,
-        });
+          const fetchResult = await fetchFromRemoteSystem({
+            aliasManager: this.aliasManagerForStaticApi,
+            urlSuffix: `/lists/${listId}.jsonl`,
+          });
 
-        if (!fetchResult.success) {
-          return {
-            success: false,
-            error: `Failed to fetch list from static API (reason: ${fetchResult.reason})`,
+          if (!fetchResult.success) {
+            return {
+              success: false,
+              error: `Failed to fetch list from static API (reason: ${fetchResult.reason})`,
+            };
+          }
+
+          if (fetchResult.response.status !== 200) {
+            return {
+              success: false,
+              error: `Failed to fetch list from static API: ${fetchResult.response.status}`,
+            };
+          }
+
+          if (!fetchResult.response.body) {
+            return {
+              success: false,
+              error: "No response body from static API",
+            };
+          }
+
+          let lineNumber = 0;
+          let storedBatchCount = 0;
+          let storedRowCount = 0;
+          let rowsToStore: StoredRemoteRow[] = [];
+          let restartFreshReason: string | undefined;
+
+          const flushBatch = async (shouldPersistStagingProgress: boolean) => {
+            if (rowsToStore.length === 0) {
+              return;
+            }
+
+            currentStage = "writeRows";
+            const durableLineNumber = rowsToStore.at(-1)?.r ?? 0;
+            storedBatchCount += 1;
+            storedRowCount += rowsToStore.length;
+            await targetTable.bulkPut(rowsToStore);
+            rowsToStore = [];
+
+            if (!shouldPersistStagingProgress) {
+              return;
+            }
+
+            const currentMetadata = this.getCurrentMetadata(listId);
+            if (!currentMetadata.remoteStaging) {
+              return;
+            }
+
+            await this.persistMetadata(
+              listId,
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
+              {
+                ...currentMetadata,
+                remoteStaging: {
+                  ...currentMetadata.remoteStaging,
+                  durableLineNumber,
+                  updatedAt: isoDateTimeSchema.parse(Date.now()),
+                  summary: structuredClone(mutableStagingSummary),
+                },
+              } as StaticListMetadata,
+            );
           };
-        }
 
-        if (fetchResult.response.status !== 200) {
-          return {
-            success: false,
-            error: `Failed to fetch list from static API: ${fetchResult.response.status}`,
-          };
-        }
+          for await (const line of streamLines(fetchResult.response.body)) {
+            lineNumber += 1;
 
-        if (!fetchResult.response.body) {
-          return { success: false, error: "No response body from static API" };
-        }
+            if (lineNumber <= resumedHeadLineNumber) {
+              if (
+                !shouldVerifyResumedLine({
+                  durableLineNumber: resumedHeadLineNumber,
+                  lineNumber,
+                  stride: resumeVerificationStride,
+                })
+              ) {
+                continue;
+              }
 
-        let lineNumber = 0;
-        let storedBatchCount = 0;
-        let storedRowCount = 0;
-        let rowsToStore: StoredRemoteRow[] = [];
-        let restartFreshReason: string | undefined;
+              const stagedRow = await targetTable
+                .where("r")
+                .equals(lineNumber)
+                .first();
 
-        const flushBatch = async (shouldPersistStagingProgress: boolean) => {
-          if (rowsToStore.length === 0) {
-            return;
-          }
+              if (!stagedRow) {
+                restartFreshReason = `Missing staged row at line ${lineNumber}`;
+                break;
+              }
 
-          currentStage = "writeRows";
-          const durableLineNumber = rowsToStore.at(-1)?.r ?? 0;
-          storedBatchCount += 1;
-          storedRowCount += rowsToStore.length;
-          await targetTable.bulkPut(rowsToStore);
-          rowsToStore = [];
+              if (stagedRow.t !== line) {
+                restartFreshReason = `Staged row content mismatch at line ${lineNumber}`;
+                break;
+              }
 
-          if (!shouldPersistStagingProgress) {
-            return;
-          }
-
-          const currentMetadata = this.getCurrentMetadata(listId);
-          if (!currentMetadata.remoteStaging) {
-            return;
-          }
-
-          await this.persistMetadata(
-            listId,
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
-            {
-              ...currentMetadata,
-              remoteStaging: {
-                ...currentMetadata.remoteStaging,
-                durableLineNumber,
-                updatedAt: isoDateTimeSchema.parse(Date.now()),
-                summary: structuredClone(mutableStagingSummary),
-              },
-            } as StaticListMetadata,
-          );
-        };
-
-        for await (const line of streamLines(fetchResult.response.body)) {
-          lineNumber += 1;
-
-          if (lineNumber <= resumedHeadLineNumber) {
-            if (
-              !shouldVerifyResumedLine({
-                durableLineNumber: resumedHeadLineNumber,
-                lineNumber,
-                stride: resumeVerificationStride,
-              })
-            ) {
               continue;
             }
 
-            const stagedRow = await targetTable
-              .where("r")
-              .equals(lineNumber)
-              .first();
+            const storedRow = createStoredRemoteRow({
+              listId,
+              lineNumber,
+              sourceText: line,
+            });
 
-            if (!stagedRow) {
-              restartFreshReason = `Missing staged row at line ${lineNumber}`;
-              break;
+            rowsToStore.push(storedRow);
+
+            const interpretedRow = interpretStoredRow(
+              listId,
+              storedRow,
+              "remote",
+            );
+            if (interpretedRow.interpretation.success) {
+              context.definitionInfo.definition.adjustSummary(
+                mutableStagingSummary,
+                interpretedRow.interpretation.item,
+                1,
+              );
             }
 
-            if (stagedRow.t !== line) {
-              restartFreshReason = `Staged row content mismatch at line ${lineNumber}`;
-              break;
+            if (rowsToStore.length >= itemBatchSize) {
+              await flushBatch(true);
+            }
+          }
+
+          if (!restartFreshReason && lineNumber < resumedHeadLineNumber) {
+            restartFreshReason = `Remote list ended at line ${lineNumber} before staged prefix ${resumedHeadLineNumber}`;
+          }
+
+          if (
+            !restartFreshReason &&
+            resumedHeadLineNumber === upstreamInfo.itemCount &&
+            lineNumber !== resumedHeadLineNumber
+          ) {
+            restartFreshReason = `Remote list length changed during direct promotion verification (${lineNumber} !== ${resumedHeadLineNumber})`;
+          }
+
+          if (restartFreshReason) {
+            listLogger.warn(
+              "Selective resume verification failed, discarding staging and retrying fresh: {reason}",
+              { reason: restartFreshReason },
+            );
+            await this.discardRemoteStaging(listId);
+
+            if (shouldForceFreshRestart) {
+              return { success: false, error: restartFreshReason };
             }
 
+            shouldForceFreshRestart = true;
             continue;
           }
 
-          const storedRow = createStoredRemoteRow({
+          await flushBatch(false);
+          currentStage = "promote";
+
+          await this.promoteRemoteStaging({
+            activeInstance,
             listId,
-            lineNumber,
-            sourceText: line,
+            startedAtIso,
+            summary: mutableStagingSummary,
+            targetInstance,
+            upstreamInfo,
           });
 
-          rowsToStore.push(storedRow);
-
-          const interpretedRow = interpretStoredRow(
-            listId,
-            storedRow,
-            "remote",
-          );
-          if (interpretedRow.interpretation.success) {
-            context.definitionInfo.definition.adjustSummary(
-              mutableStagingSummary,
-              interpretedRow.interpretation.item,
-              1,
+          if (resumedHeadLineNumber > 0 && storedRowCount === 0) {
+            listLogger.info(
+              "Verified and promoted completed staging without downloading new rows",
+            );
+          } else {
+            listLogger.info(
+              "Populated {storedRowCount} remote rows (batches: {storedBatchCount}, resumedFromLine: {resumedHeadLineNumber})",
+              {
+                resumedHeadLineNumber,
+                storedBatchCount,
+                storedRowCount,
+              },
             );
           }
 
-          if (rowsToStore.length >= itemBatchSize) {
-            await flushBatch(true);
-          }
-        }
+          return { success: true, data: "updated" };
+        } catch (error) {
+          const errorMessage = getErrorMessage(error);
 
-        if (!restartFreshReason && lineNumber < resumedHeadLineNumber) {
-          restartFreshReason = `Remote list ended at line ${lineNumber} before staged prefix ${resumedHeadLineNumber}`;
-        }
+          if (
+            await this.recordRemoteUpdateIssue({
+              error,
+              listId,
+              stage: currentStage,
+              upstreamInfo,
+            })
+          ) {
+            listLogger.error(
+              "Remote update is paused because storage quota was exceeded during {stage}: {error}",
+              { error: errorMessage, stage: currentStage },
+            );
 
-        if (
-          !restartFreshReason &&
-          resumedHeadLineNumber === upstreamInfo.itemCount &&
-          lineNumber !== resumedHeadLineNumber
-        ) {
-          restartFreshReason = `Remote list length changed during direct promotion verification (${lineNumber} !== ${resumedHeadLineNumber})`;
-        }
-
-        if (restartFreshReason) {
-          listLogger.warn(
-            "Selective resume verification failed, discarding staging and retrying fresh: {reason}",
-            { reason: restartFreshReason },
-          );
-          await this.discardRemoteStaging(listId);
-
-          if (shouldForceFreshRestart) {
-            return { success: false, error: restartFreshReason };
+            return { success: false, error: errorMessage };
           }
 
-          shouldForceFreshRestart = true;
-          continue;
-        }
-
-        await flushBatch(false);
-        currentStage = "promote";
-
-        await this.promoteRemoteStaging({
-          activeInstance,
-          listId,
-          startedAtIso,
-          summary: mutableStagingSummary,
-          targetInstance,
-          upstreamInfo,
-        });
-
-        if (resumedHeadLineNumber > 0 && storedRowCount === 0) {
-          listLogger.info(
-            "Verified and promoted completed staging without downloading new rows",
-          );
-        } else {
-          listLogger.info(
-            "Populated {storedRowCount} remote rows (batches: {storedBatchCount}, resumedFromLine: {resumedHeadLineNumber})",
-            {
-              resumedHeadLineNumber,
-              storedBatchCount,
-              storedRowCount,
-            },
-          );
-        }
-
-        return { success: true, data: "updated" };
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-
-        if (
-          await this.recordRemoteUpdateIssue({
-            error,
-            listId,
-            stage: currentStage,
-            upstreamInfo,
-          })
-        ) {
-          listLogger.error(
-            "Remote update is paused because storage quota was exceeded during {stage}: {error}",
-            { error: errorMessage, stage: currentStage },
-          );
+          listLogger.error("Unexpected error while populating: {error}", {
+            error: errorMessage,
+          });
 
           return { success: false, error: errorMessage };
         }
-
-        listLogger.error("Unexpected error while populating: {error}", {
-          error: errorMessage,
-        });
-
-        return { success: false, error: errorMessage };
       }
-    }
+    });
   }
 
   private async runRemotePopulateWithDeduping(
