@@ -1,6 +1,7 @@
 import type * as React from "react";
 
 import type { PopupTab } from "@/shared/@model/popup";
+import { cn } from "@/shared/tailwindcss-helpers";
 
 import { AccessTabBody } from "./tabs/=access";
 import { AnnouncementsTabBody } from "./tabs/=announcements";
@@ -10,6 +11,7 @@ import { StatsTabBody } from "./tabs/=stats";
 
 type PopupTabDefinition = {
   Body: React.ComponentType;
+  scrollAreaClassName?: string | undefined;
   tabLabel: React.ReactNode;
   TabWrapper?: React.ComponentType<{
     active: boolean;
@@ -36,6 +38,11 @@ export const popupTabDefinitionLookup: Record<PopupTab, PopupTabDefinition> = {
   },
   debug: {
     Body: DebugTabBody,
+    scrollAreaClassName: cn(`
+      **:data-[slot=scroll-area-content]:flex
+      **:data-[slot=scroll-area-content]:min-h-full
+      **:data-[slot=scroll-area-content]:flex-col
+    `),
     tabLabel: "Отладка",
     TabWrapper: DebugTabWrapper,
   },
