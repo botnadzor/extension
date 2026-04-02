@@ -11,18 +11,9 @@ import {
 
 const batchSize = 100;
 const flushInterval = 200;
-const defaultDisposalSymbols = {
-  asyncDispose: Symbol.asyncDispose,
-  dispose: Symbol.dispose,
-} as const;
 
 type LoggingServiceRegistrar = Readonly<{
   registerRecords: (records: SerializedLogRecord[]) => void | Promise<void>;
-}>;
-
-type DisposalSymbols = Readonly<{
-  asyncDispose: symbol;
-  dispose: symbol;
 }>;
 
 function serializeLogRecord(record: LogRecord): SerializedLogRecord {
@@ -52,10 +43,11 @@ function serializeLogRecord(record: LogRecord): SerializedLogRecord {
  * the popup crash there. At that point the sync dispose hook below can be
  * restored unconditionally.
  */
-export function shouldAttachDisposeSymbolToFunctionSink(
-  symbols: DisposalSymbols = defaultDisposalSymbols,
-): boolean {
-  return symbols.dispose !== symbols.asyncDispose;
+export function shouldAttachDisposeSymbolToFunctionSink(): boolean {
+  const disposeSymbol: symbol = Symbol.dispose;
+  const asyncDisposeSymbol: symbol = Symbol.asyncDispose;
+
+  return disposeSymbol !== asyncDisposeSymbol;
 }
 
 export function createLoggingServiceSink(
@@ -132,7 +124,7 @@ export function createLoggingServiceSink(
   }
 
   return Object.assign(sink, {
-    [defaultDisposalSymbols.dispose]: () => {
+    [Symbol.dispose]: () => {
       disposed = true;
 
       if (flushTimer) {
