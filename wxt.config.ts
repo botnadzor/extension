@@ -153,9 +153,10 @@ export default defineConfig({
   },
 
   zip: {
-    // These files are renamed in "zip:done" hook
+    // These files are renamed in "zip:done" hook.
+    // Keep `zipSources` unset: WXT creates source archives for Firefox by default,
+    // which matches our browser matrix and keeps a single shared sources archive.
     artifactTemplate: "botnadzor-for-{{browser}}-latest.zip",
-    sourcesTemplate: "botnadzor-for-{{browser}}-latest.sources.zip",
-    zipSources: true,
+    sourcesTemplate: "botnadzor-sources-latest.zip",
   },
 });
