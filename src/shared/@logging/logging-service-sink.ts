@@ -52,7 +52,7 @@ export function shouldAttachDisposeSymbolToFunctionSink(): boolean {
 
 export function createLoggingServiceSink(
   loggingService: LoggingServiceRegistrar,
-): Sink {
+): Sink | (Sink & Disposable) {
   const buffer: SerializedLogRecord[] = [];
   const maxBufferSize = batchSize * 2;
   let disposed = false;
