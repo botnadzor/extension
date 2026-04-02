@@ -48,6 +48,8 @@ describe("setupLogging", () => {
       value: vi.fn(),
     });
 
-    expect(() => setupLogging(new LoggingService())).not.toThrow();
+    expect(() => {
+      setupLogging(new LoggingService());
+    }).not.toThrow();
   });
 });
