@@ -8,6 +8,9 @@ patchedDependencies:
   '@base-ui/react':
     hash: 17e65075b1e1e2785e17216940a5594a1e9cb675603d5801098893f2db0e6515
     path: patches/@base-ui__react.patch
+  '@logtape/logtape':
+    hash: 88b1e9ca40726ab1966c368d60917b02b5a6f0ccd987e8152c55726af6922714
+    path: patches/@logtape__logtape.patch
   lodash:
     hash: 3988be7bdab0757690c4da375c7bea87fa35b3a284f60c7a43503856b9f6af96
     path: patches/lodash.patch
@@ -21,7 +24,7 @@ importers:
         version: 1.3.0(patch_hash=17e65075b1e1e2785e17216940a5594a1e9cb675603d5801098893f2db0e6515)(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@logtape/logtape':
         specifier: 2.0.5
-        version: 2.0.5
+        version: 2.0.5(patch_hash=88b1e9ca40726ab1966c368d60917b02b5a6f0ccd987e8152c55726af6922714)
       '@orpc/client':
         specifier: 1.13.13
         version: 1.13.13
@@ -5665,7 +5668,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@logtape/logtape@2.0.5': {}
+  '@logtape/logtape@2.0.5(patch_hash=88b1e9ca40726ab1966c368d60917b02b5a6f0ccd987e8152c55726af6922714)': {}
 
   '@lukeed/csprng@1.1.0': {}
 

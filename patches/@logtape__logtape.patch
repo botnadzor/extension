@@ -1,0 +1,46 @@
+diff --git a/dist/config.cjs b/dist/config.cjs
+--- a/dist/config.cjs
++++ b/dist/config.cjs
+@@ -161,15 +161,15 @@ function configureInternal(config, allowAsync) {
+ 	}
+ 	require_logger.LoggerImpl.getLogger().contextLocalStorage = config.contextLocalStorage;
+ 	for (const sink of Object.values(config.sinks)) {
+-		if (Symbol.asyncDispose in sink) if (allowAsync) asyncDisposables.add(sink);
++		if (Object.prototype.hasOwnProperty.call(sink, Symbol.asyncDispose)) if (allowAsync) asyncDisposables.add(sink);
+ 		else throw new ConfigError("Async disposables cannot be used with configureSync().");
+-		if (Symbol.dispose in sink) disposables.add(sink);
++		if (Object.prototype.hasOwnProperty.call(sink, Symbol.dispose)) disposables.add(sink);
+ 	}
+ 	for (const filter of Object.values(config.filters ?? {})) {
+ 		if (filter == null || typeof filter === "string") continue;
+-		if (Symbol.asyncDispose in filter) if (allowAsync) asyncDisposables.add(filter);
++		if (Object.prototype.hasOwnProperty.call(filter, Symbol.asyncDispose)) if (allowAsync) asyncDisposables.add(filter);
+ 		else throw new ConfigError("Async disposables cannot be used with configureSync().");
+-		if (Symbol.dispose in filter) disposables.add(filter);
++		if (Object.prototype.hasOwnProperty.call(filter, Symbol.dispose)) disposables.add(filter);
+ 	}
+ 	registerDisposeHook(allowAsync);
+ 	const meta = require_logger.LoggerImpl.getLogger(["logtape", "meta"]);
+diff --git a/dist/config.js b/dist/config.js
+--- a/dist/config.js
++++ b/dist/config.js
+@@ -161,15 +161,15 @@ function configureInternal(config, allowAsync) {
+ 	}
+ 	LoggerImpl.getLogger().contextLocalStorage = config.contextLocalStorage;
+ 	for (const sink of Object.values(config.sinks)) {
+-		if (Symbol.asyncDispose in sink) if (allowAsync) asyncDisposables.add(sink);
++		if (Object.prototype.hasOwnProperty.call(sink, Symbol.asyncDispose)) if (allowAsync) asyncDisposables.add(sink);
+ 		else throw new ConfigError("Async disposables cannot be used with configureSync().");
+-		if (Symbol.dispose in sink) disposables.add(sink);
++		if (Object.prototype.hasOwnProperty.call(sink, Symbol.dispose)) disposables.add(sink);
+ 	}
+ 	for (const filter of Object.values(config.filters ?? {})) {
+ 		if (filter == null || typeof filter === "string") continue;
+-		if (Symbol.asyncDispose in filter) if (allowAsync) asyncDisposables.add(filter);
++		if (Object.prototype.hasOwnProperty.call(filter, Symbol.asyncDispose)) if (allowAsync) asyncDisposables.add(filter);
+ 		else throw new ConfigError("Async disposables cannot be used with configureSync().");
+-		if (Symbol.dispose in filter) disposables.add(filter);
++		if (Object.prototype.hasOwnProperty.call(filter, Symbol.dispose)) disposables.add(filter);
+ 	}
+ 	registerDisposeHook(allowAsync);
+ 	const meta = LoggerImpl.getLogger(["logtape", "meta"]);
