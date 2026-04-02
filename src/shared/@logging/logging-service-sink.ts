@@ -11,9 +11,18 @@ import {
 
 const batchSize = 100;
 const flushInterval = 200;
+const defaultDisposalSymbols = {
+  asyncDispose: Symbol.asyncDispose,
+  dispose: Symbol.dispose,
+} as const;
 
 type LoggingServiceRegistrar = Readonly<{
   registerRecords: (records: SerializedLogRecord[]) => void | Promise<void>;
+}>;
+
+type DisposalSymbols = Readonly<{
+  asyncDispose: symbol;
+  dispose: symbol;
 }>;
 
 function serializeLogRecord(record: LogRecord): SerializedLogRecord {
@@ -26,9 +35,15 @@ function serializeLogRecord(record: LogRecord): SerializedLogRecord {
   ];
 }
 
+export function shouldAttachDisposeSymbolToFunctionSink(
+  symbols: DisposalSymbols = defaultDisposalSymbols,
+): boolean {
+  return symbols.dispose !== symbols.asyncDispose;
+}
+
 export function createLoggingServiceSink(
   loggingService: LoggingServiceRegistrar,
-): Sink & Disposable {
+): Sink {
   const buffer: SerializedLogRecord[] = [];
   const maxBufferSize = batchSize * 2;
   let disposed = false;
@@ -95,8 +110,12 @@ export function createLoggingServiceSink(
     startFlushTimer();
   }
 
+  if (!shouldAttachDisposeSymbolToFunctionSink()) {
+    return sink;
+  }
+
   return Object.assign(sink, {
-    [Symbol.dispose]: () => {
+    [defaultDisposalSymbols.dispose]: () => {
       disposed = true;
 
       if (flushTimer) {
