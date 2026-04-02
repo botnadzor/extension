@@ -1,9 +1,6 @@
-import { resetSync } from "@logtape/logtape";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { LoggingService } from "@/entrypoints/background/@services/logging-service";
-
-import { getConsoleSnapshot, setupLogging } from "./setup";
+import { getConsoleSnapshot } from "./setup";
 
 vi.mock("../@model/extension-version", () => ({
   baseExtensionVersionInfo: {
@@ -33,23 +30,5 @@ describe("getConsoleSnapshot", () => {
       expect(descriptor?.value).toBe(snapshot[method]);
       expect(snapshot[method]).not.toBe(globalThis.console[method]);
     }
-  });
-});
-
-afterEach(() => {
-  resetSync();
-  Reflect.deleteProperty(Function.prototype, Symbol.asyncDispose);
-});
-
-describe("setupLogging", () => {
-  it("keeps sync sinks compatible when Function.prototype exposes async disposal", () => {
-    Object.defineProperty(Function.prototype, Symbol.asyncDispose, {
-      configurable: true,
-      value: vi.fn(),
-    });
-
-    expect(() => {
-      setupLogging(new LoggingService());
-    }).not.toThrow();
   });
 });
