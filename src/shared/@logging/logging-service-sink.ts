@@ -26,9 +26,33 @@ function serializeLogRecord(record: LogRecord): SerializedLogRecord {
   ];
 }
 
+/**
+ * Firefox ESR 140.x misreports explicit resource management symbols in some
+ * extension realms: `Symbol.dispose === Symbol.asyncDispose`.
+ *
+ * Our logging sink is a function object. When we attach `[Symbol.dispose]` to
+ * that function in the affected runtime, Firefox also exposes the same property
+ * through `[Symbol.asyncDispose]`. LogTape then treats this otherwise sync sink
+ * as async-disposable and `configureSync()` throws during popup startup.
+ *
+ * This guard keeps the workaround narrowly targeted to the broken runtime
+ * behavior instead of browser-version sniffing.
+ *
+ * Remove this once Firefox ESR ships distinct `Symbol.dispose` and
+ * `Symbol.asyncDispose` values in extension contexts and we no longer reproduce
+ * the popup crash there. At that point the sync dispose hook below can be
+ * restored unconditionally.
+ */
+export function shouldAttachDisposeSymbolToFunctionSink(): boolean {
+  const disposeSymbol: symbol = Symbol.dispose;
+  const asyncDisposeSymbol: symbol = Symbol.asyncDispose;
+
+  return disposeSymbol !== asyncDisposeSymbol;
+}
+
 export function createLoggingServiceSink(
   loggingService: LoggingServiceRegistrar,
-): Sink & Disposable {
+): Sink | (Sink & Disposable) {
   const buffer: SerializedLogRecord[] = [];
   const maxBufferSize = batchSize * 2;
   let disposed = false;
@@ -93,6 +117,10 @@ export function createLoggingServiceSink(
     }
 
     startFlushTimer();
+  }
+
+  if (!shouldAttachDisposeSymbolToFunctionSink()) {
+    return sink;
   }
 
   return Object.assign(sink, {
