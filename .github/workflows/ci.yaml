@@ -83,22 +83,18 @@ jobs:
             echo "retention_days=${{ env.ARTIFACT_RETENTION_DAYS_MAIN }}" >> $GITHUB_OUTPUT
           fi
 
-          CHROME_FILE=$(ls -t dist/botnadzor-for-chrome-*.zip | grep -v sources | head -1)
+          CHROME_FILE=$(ls -t dist/botnadzor-for-chrome-*.zip | head -1)
           echo "chrome_file=$CHROME_FILE" >> $GITHUB_OUTPUT
           echo "chrome_name=$(basename "$CHROME_FILE" .zip)" >> $GITHUB_OUTPUT
 
-          FIREFOX_FILE=$(ls -t dist/botnadzor-for-firefox-*.zip | grep -v sources | head -1)
+          FIREFOX_FILE=$(ls -t dist/botnadzor-for-firefox-*.zip | head -1)
           echo "firefox_file=$FIREFOX_FILE" >> $GITHUB_OUTPUT
           echo "firefox_name=$(basename "$FIREFOX_FILE" .zip)" >> $GITHUB_OUTPUT
 
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            CHROME_SOURCES_FILE=$(ls -t dist/botnadzor-for-chrome-*.sources.zip | head -1)
-            echo "chrome_sources_file=$CHROME_SOURCES_FILE" >> $GITHUB_OUTPUT
-            echo "chrome_sources_name=$(basename "$CHROME_SOURCES_FILE" .zip)" >> $GITHUB_OUTPUT
-
-            FIREFOX_SOURCES_FILE=$(ls -t dist/botnadzor-for-firefox-*.sources.zip | head -1)
-            echo "firefox_sources_file=$FIREFOX_SOURCES_FILE" >> $GITHUB_OUTPUT
-            echo "firefox_sources_name=$(basename "$FIREFOX_SOURCES_FILE" .zip)" >> $GITHUB_OUTPUT
+            SOURCES_FILE=$(ls -t dist/botnadzor-sources-*.zip | head -1)
+            echo "sources_file=$SOURCES_FILE" >> $GITHUB_OUTPUT
+            echo "sources_name=$(basename "$SOURCES_FILE" .zip)" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload extension as artifact for Chrome
@@ -117,21 +113,12 @@ jobs:
           archive: false
           retention-days: ${{ steps.config.outputs.retention_days }}
 
-      - name: Upload extension sources as artifact for Chrome
+      - name: Upload extension sources as artifact
         if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: ${{ steps.config.outputs.chrome_sources_name }}
-          path: ${{ steps.config.outputs.chrome_sources_file }}
-          archive: false
-          retention-days: ${{ steps.config.outputs.retention_days }}
-
-      - name: Upload extension sources as artifact for Firefox
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: ${{ steps.config.outputs.firefox_sources_name }}
-          path: ${{ steps.config.outputs.firefox_sources_file }}
+          name: ${{ steps.config.outputs.sources_name }}
+          path: ${{ steps.config.outputs.sources_file }}
           archive: false
           retention-days: ${{ steps.config.outputs.retention_days }}
 
