@@ -216,8 +216,8 @@ importers:
         specifier: 3.0.2
         version: 3.0.2(prettier@3.8.1)
       prettier-plugin-sh:
-        specifier: 0.18.0
-        version: 0.18.0(prettier@3.8.1)
+        specifier: 0.18.1
+        version: 0.18.1(prettier@3.8.1)
       tailwindcss:
         specifier: 4.2.2
         version: 4.2.2
@@ -1422,8 +1422,8 @@ packages:
     resolution: {integrity: sha512-h104Kh26rR8tm+a3Qkc5S4VLYint3FE48as7+/5oCEcKR2idC/pF1G6AhIXKI+eHPJa/3J9i5z0Al47IeGHPkA==}
     engines: {node: '>=12'}
 
-  '@reteps/dockerfmt@0.3.6':
-    resolution: {integrity: sha512-Tb5wIMvBf/nLejTQ61krK644/CEMB/cpiaIFXqGApfGqO3GwcR3qnI0DbmkFVCl2OyEp8LnLX3EkucoL0+tbFg==}
+  '@reteps/dockerfmt@0.5.2':
+    resolution: {integrity: sha512-Hbr7yen4fP5TxGM54ucXa4o5NwWXatJ6Bd9I8gp0PValYbI4Rug2Gu+rVv7K7o/efQc3F5ctqWJz47rYaa8zBw==}
     engines: {node: ^v12.20.0 || ^14.13.0 || >=16.0.0}
 
   '@rolldown/binding-android-arm64@1.0.0-rc.15':
@@ -3983,8 +3983,8 @@ packages:
       prettier:
         optional: true
 
-  prettier-plugin-sh@0.18.0:
-    resolution: {integrity: sha512-cW1XL27FOJQ/qGHOW6IHwdCiNWQsAgK+feA8V6+xUTaH0cD3Mh+tFAtBvEEWvuY6hTDzRV943Fzeii+qMOh7nQ==}
+  prettier-plugin-sh@0.18.1:
+    resolution: {integrity: sha512-uZmU22wBMevjh3rmCatNQqiEer2+5KLa0xYCBX6zQQUQkcNzVL+s6FbPKK6ZSUNUbQk6jMAcQHrYPvuL2W6ihQ==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       prettier: ^3.6.0
@@ -5974,7 +5974,7 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-  '@reteps/dockerfmt@0.3.6': {}
+  '@reteps/dockerfmt@0.5.2': {}
 
   '@rolldown/binding-android-arm64@1.0.0-rc.15':
     optional: true
@@ -8814,9 +8814,9 @@ snapshots:
     optionalDependencies:
       prettier: 3.8.1
 
-  prettier-plugin-sh@0.18.0(prettier@3.8.1):
+  prettier-plugin-sh@0.18.1(prettier@3.8.1):
     dependencies:
-      '@reteps/dockerfmt': 0.3.6
+      '@reteps/dockerfmt': 0.5.2
       prettier: 3.8.1
       sh-syntax: 0.5.8
 
