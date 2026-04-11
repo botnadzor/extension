@@ -18,7 +18,7 @@ importers:
     dependencies:
       '@base-ui/react':
         specifier: 1.3.0
-        version: 1.3.0(patch_hash=17e65075b1e1e2785e17216940a5594a1e9cb675603d5801098893f2db0e6515)(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 1.3.0(patch_hash=17e65075b1e1e2785e17216940a5594a1e9cb675603d5801098893f2db0e6515)(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@logtape/logtape':
         specifier: 2.0.5
         version: 2.0.5
@@ -33,19 +33,19 @@ importers:
         version: 0.5.19(tailwindcss@4.2.2)
       '@visx/axis':
         specifier: 3.12.0
-        version: 3.12.0(react@19.2.4)
+        version: 3.12.0(react@19.2.5)
       '@visx/grid':
         specifier: 3.12.0
-        version: 3.12.0(react@19.2.4)
+        version: 3.12.0(react@19.2.5)
       '@visx/group':
         specifier: 3.12.0
-        version: 3.12.0(react@19.2.4)
+        version: 3.12.0(react@19.2.5)
       '@visx/scale':
         specifier: 3.12.0
         version: 3.12.0
       '@visx/shape':
         specifier: 3.12.0
-        version: 3.12.0(react@19.2.4)
+        version: 3.12.0(react@19.2.5)
       '@webext-core/proxy-service':
         specifier: 2.0.0
         version: 2.0.0(@webext-core/messaging@2.3.0)(webextension-polyfill@0.12.0)
@@ -72,22 +72,22 @@ importers:
         version: 11.3.3
       lucide-react:
         specifier: 1.7.0
-        version: 1.7.0(react@19.2.4)
+        version: 1.7.0(react@19.2.5)
       lucide-static:
         specifier: 1.7.0
         version: 1.7.0
       marked-react:
         specifier: 4.0.0
-        version: 4.0.0(react@19.2.4)
+        version: 4.0.0(react@19.2.5)
       nanoid:
         specifier: 5.1.7
         version: 5.1.7
       react:
-        specifier: 19.2.4
-        version: 19.2.4
+        specifier: 19.2.5
+        version: 19.2.5
       react-dom:
-        specifier: 19.2.4
-        version: 19.2.4(react@19.2.4)
+        specifier: 19.2.5
+        version: 19.2.5(react@19.2.5)
       semver:
         specifier: 7.7.4
         version: 7.7.4
@@ -4047,16 +4047,16 @@ packages:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
 
-  react-dom@19.2.4:
-    resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
+  react-dom@19.2.5:
+    resolution: {integrity: sha512-J5bAZz+DXMMwW/wV3xzKke59Af6CHY7G4uYLN1OvBcKEsWOs4pQExj86BBKamxl/Ik5bx9whOrvBlSDfWzgSag==}
     peerDependencies:
-      react: ^19.2.4
+      react: ^19.2.5
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
-  react@19.2.4:
-    resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
+  react@19.2.5:
+    resolution: {integrity: sha512-llUJLzz1zTUBrskt2pwZgLq59AemifIftw4aB7JxOqf1HY2FDaGDxgwpAPVzHU1kdWabH7FauP4i1oEeer2WCA==}
     engines: {node: '>=0.10.0'}
 
   read-package-json-fast@4.0.0:
@@ -5013,27 +5013,27 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@base-ui/react@1.3.0(patch_hash=17e65075b1e1e2785e17216940a5594a1e9cb675603d5801098893f2db0e6515)(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@base-ui/react@1.3.0(patch_hash=17e65075b1e1e2785e17216940a5594a1e9cb675603d5801098893f2db0e6515)(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@babel/runtime': 7.29.2
-      '@base-ui/utils': 0.2.6(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@floating-ui/react-dom': 2.1.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@base-ui/utils': 0.2.6(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@floating-ui/react-dom': 2.1.8(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@floating-ui/utils': 0.2.11
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
       tabbable: 6.4.0
-      use-sync-external-store: 1.6.0(react@19.2.4)
+      use-sync-external-store: 1.6.0(react@19.2.5)
     optionalDependencies:
       '@types/react': 19.2.14
 
-  '@base-ui/utils@0.2.6(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@base-ui/utils@0.2.6(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@babel/runtime': 7.29.2
       '@floating-ui/utils': 0.2.11
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
       reselect: 5.1.1
-      use-sync-external-store: 1.6.0(react@19.2.4)
+      use-sync-external-store: 1.6.0(react@19.2.5)
     optionalDependencies:
       '@types/react': 19.2.14
 
@@ -5503,11 +5503,11 @@ snapshots:
       '@floating-ui/core': 1.7.5
       '@floating-ui/utils': 0.2.11
 
-  '@floating-ui/react-dom@2.1.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@floating-ui/react-dom@2.1.8(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@floating-ui/dom': 1.7.6
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
 
   '@floating-ui/utils@0.2.11': {}
 
@@ -6372,41 +6372,41 @@ snapshots:
     dependencies:
       valibot: 1.3.1(typescript@6.0.2)
 
-  '@visx/axis@3.12.0(react@19.2.4)':
+  '@visx/axis@3.12.0(react@19.2.5)':
     dependencies:
       '@types/react': 19.2.14
-      '@visx/group': 3.12.0(react@19.2.4)
+      '@visx/group': 3.12.0(react@19.2.5)
       '@visx/point': 3.12.0
       '@visx/scale': 3.12.0
-      '@visx/shape': 3.12.0(react@19.2.4)
-      '@visx/text': 3.12.0(react@19.2.4)
+      '@visx/shape': 3.12.0(react@19.2.5)
+      '@visx/text': 3.12.0(react@19.2.5)
       classnames: 2.5.1
       prop-types: 15.8.1
-      react: 19.2.4
+      react: 19.2.5
 
   '@visx/curve@3.12.0':
     dependencies:
       '@types/d3-shape': 1.3.12
       d3-shape: 1.3.7
 
-  '@visx/grid@3.12.0(react@19.2.4)':
+  '@visx/grid@3.12.0(react@19.2.5)':
     dependencies:
       '@types/react': 19.2.14
       '@visx/curve': 3.12.0
-      '@visx/group': 3.12.0(react@19.2.4)
+      '@visx/group': 3.12.0(react@19.2.5)
       '@visx/point': 3.12.0
       '@visx/scale': 3.12.0
-      '@visx/shape': 3.12.0(react@19.2.4)
+      '@visx/shape': 3.12.0(react@19.2.5)
       classnames: 2.5.1
       prop-types: 15.8.1
-      react: 19.2.4
+      react: 19.2.5
 
-  '@visx/group@3.12.0(react@19.2.4)':
+  '@visx/group@3.12.0(react@19.2.5)':
     dependencies:
       '@types/react': 19.2.14
       classnames: 2.5.1
       prop-types: 15.8.1
-      react: 19.2.4
+      react: 19.2.5
 
   '@visx/point@3.12.0': {}
 
@@ -6414,30 +6414,30 @@ snapshots:
     dependencies:
       '@visx/vendor': 3.12.0
 
-  '@visx/shape@3.12.0(react@19.2.4)':
+  '@visx/shape@3.12.0(react@19.2.5)':
     dependencies:
       '@types/d3-path': 1.0.11
       '@types/d3-shape': 1.3.12
       '@types/lodash': 4.17.24
       '@types/react': 19.2.14
       '@visx/curve': 3.12.0
-      '@visx/group': 3.12.0(react@19.2.4)
+      '@visx/group': 3.12.0(react@19.2.5)
       '@visx/scale': 3.12.0
       classnames: 2.5.1
       d3-path: 1.0.9
       d3-shape: 1.3.7
       lodash: 4.18.1(patch_hash=3988be7bdab0757690c4da375c7bea87fa35b3a284f60c7a43503856b9f6af96)
       prop-types: 15.8.1
-      react: 19.2.4
+      react: 19.2.5
 
-  '@visx/text@3.12.0(react@19.2.4)':
+  '@visx/text@3.12.0(react@19.2.5)':
     dependencies:
       '@types/lodash': 4.17.24
       '@types/react': 19.2.14
       classnames: 2.5.1
       lodash: 4.18.1(patch_hash=3988be7bdab0757690c4da375c7bea87fa35b3a284f60c7a43503856b9f6af96)
       prop-types: 15.8.1
-      react: 19.2.4
+      react: 19.2.5
       reduce-css-calc: 1.3.0
 
   '@visx/vendor@3.12.0':
@@ -8428,9 +8428,9 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@1.7.0(react@19.2.4):
+  lucide-react@1.7.0(react@19.2.5):
     dependencies:
-      react: 19.2.4
+      react: 19.2.5
 
   lucide-static@1.7.0: {}
 
@@ -8448,11 +8448,11 @@ snapshots:
 
   many-keys-map@3.0.3: {}
 
-  marked-react@4.0.0(react@19.2.4):
+  marked-react@4.0.0(react@19.2.5):
     dependencies:
       html-entities: 2.6.0
       marked: 17.0.6
-      react: 19.2.4
+      react: 19.2.5
 
   marked@17.0.6: {}
 
@@ -8881,14 +8881,14 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-dom@19.2.4(react@19.2.4):
+  react-dom@19.2.5(react@19.2.5):
     dependencies:
-      react: 19.2.4
+      react: 19.2.5
       scheduler: 0.27.0
 
   react-is@16.13.1: {}
 
-  react@19.2.4: {}
+  react@19.2.5: {}
 
   read-package-json-fast@4.0.0:
     dependencies:
@@ -9558,9 +9558,9 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  use-sync-external-store@1.6.0(react@19.2.4):
+  use-sync-external-store@1.6.0(react@19.2.5):
     dependencies:
-      react: 19.2.4
+      react: 19.2.5
 
   util-deprecate@1.0.2: {}
 
