@@ -88,7 +88,7 @@
     "@orpc/openapi": "1.13.14",
     "@orpc/openapi-client": "1.13.14",
     "@orpc/zod": "1.13.14",
-    "@rolldown/plugin-babel": "0.2.2",
+    "@rolldown/plugin-babel": "0.2.3",
     "@stylistic/eslint-plugin": "5.10.0",
     "@tailwindcss/vite": "4.2.2",
     "@tsconfig/node-ts": "23.6.4",
