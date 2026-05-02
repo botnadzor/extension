@@ -19,7 +19,7 @@
     },
     "staticApi": {
       "aliasLookup": {
-        "https://api.botnadzor.org/extension/static": {
+        "https://extension.botnadzor.org/static": {
           "role": "primary"
         },
         "https://botnadzor.github.io/extension-data": {},
