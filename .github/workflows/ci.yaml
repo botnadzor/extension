@@ -98,7 +98,7 @@ jobs:
           fi
 
       - name: Upload extension as artifact for Chrome
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.config.outputs.chrome_name }}
           path: ${{ steps.config.outputs.chrome_file }}
@@ -106,7 +106,7 @@ jobs:
           retention-days: ${{ steps.config.outputs.retention_days }}
 
       - name: Upload extension as artifact for Firefox
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.config.outputs.firefox_name }}
           path: ${{ steps.config.outputs.firefox_file }}
@@ -115,7 +115,7 @@ jobs:
 
       - name: Upload extension sources as artifact
         if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.config.outputs.sources_name }}
           path: ${{ steps.config.outputs.sources_file }}
@@ -124,7 +124,7 @@ jobs:
 
       - name: Upload original zips for release
         if: startsWith(github.ref, 'refs/tags/v') && github.ref_name >= 'v0' && github.ref_name < 'va'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-zips
           path: dist/*.zip
