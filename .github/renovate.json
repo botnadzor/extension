@@ -61,6 +61,15 @@
       "matchUpdateTypes": ["lockFileMaintenance"],
       "matchManagers": ["npm"],
       "schedule": ["before 05:00 on Monday"]
+    },
+    {
+      "autoApprove": true,
+      "automerge": true,
+      "dependencyDashboardApproval": false,
+      "enabled": true,
+      "matchManagers": ["github-actions"],
+      "minimumReleaseAge": "1 day",
+      "schedule": ["after 21:00 on Friday", "every weekend"]
     }
   ]
 }
