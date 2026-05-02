@@ -157,7 +157,7 @@ jobs:
         run: pnpm install
 
       - name: Load CSpell cache
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           key: cspell-${{ github.run_id }}
           path: node_modules/.cache/cspell
@@ -218,7 +218,7 @@ jobs:
 
       - name: Load Prettier cache
         if: ${{ success() || failure() }}
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           key: prettier-${{ github.run_id }}
           path: node_modules/.cache/prettier
