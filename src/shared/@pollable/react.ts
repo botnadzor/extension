@@ -5,6 +5,7 @@ import * as React from "react";
 import type { JsonValue } from "type-fest";
 
 import { useEntrypointLogger } from "../@logging/react";
+import { isBackgroundGone } from "../background-availability";
 import type { PollResult, PollVersion } from "./core";
 
 type UsePollableValue<
@@ -106,53 +107,64 @@ export function createPollableValueHook<
     latestRecord = { ...latestRecord, watcherId };
     payloadKeyRecordMap.set(payloadKey, latestRecord);
 
-    for (;;) {
-      if (throttleInterval && throttleInterval > 0) {
-        await delay(throttleInterval);
-      }
+    try {
+      for (;;) {
+        if (isBackgroundGone()) {
+          break;
+        }
 
-      const { version: lastPollVersion } = await latestRecord.pollResult;
-      const newPollResult = await poll(lastPollVersion, latestRecord.payload);
+        if (throttleInterval && throttleInterval > 0) {
+          await delay(throttleInterval);
+        }
 
-      latestRecord = payloadKeyRecordMap.get(payloadKey);
-      if (latestRecord?.watcherId !== watcherId) {
-        break;
-      }
+        const { version: lastPollVersion } = await latestRecord.pollResult;
+        const newPollResult = await poll(lastPollVersion, latestRecord.payload);
 
-      latestRecord = { ...latestRecord, pollResult: newPollResult };
-      payloadKeyRecordMap.set(payloadKey, latestRecord);
+        latestRecord = payloadKeyRecordMap.get(payloadKey);
+        if (latestRecord?.watcherId !== watcherId) {
+          break;
+        }
 
-      for (const setter of latestRecord.setters) {
-        setter((oldValue) =>
-          isEqual(oldValue, newPollResult.value)
-            ? oldValue
-            : newPollResult.value,
-        );
-      }
+        latestRecord = { ...latestRecord, pollResult: newPollResult };
+        payloadKeyRecordMap.set(payloadKey, latestRecord);
 
-      const newValueDebugLogPayload = formatNewValueDebugLog
-        ? formatNewValueDebugLog({
+        for (const setter of latestRecord.setters) {
+          setter((oldValue) =>
+            isEqual(oldValue, newPollResult.value)
+              ? oldValue
+              : newPollResult.value,
+          );
+        }
+
+        const newValueDebugLogPayload = formatNewValueDebugLog
+          ? formatNewValueDebugLog({
+              lastPollVersion,
+              newPollResult,
+              setterCount: latestRecord.setters.length,
+              watcherId,
+            })
+          : {
+              message:
+                "Received new value {newValue} (version {lastPollVersion} -> {newPollVersion}), notified {setterCount} component(s) in watcher {watcherId}",
+              properties: {
+                newValue: newPollResult.value,
+              },
+            };
+
+        if (newValueDebugLogPayload !== undefined) {
+          logger.debug(newValueDebugLogPayload.message, {
             lastPollVersion,
-            newPollResult,
+            newPollVersion: newPollResult.version,
             setterCount: latestRecord.setters.length,
             watcherId,
-          })
-        : {
-            message:
-              "Received new value {newValue} (version {lastPollVersion} -> {newPollVersion}), notified {setterCount} component(s) in watcher {watcherId}",
-            properties: {
-              newValue: newPollResult.value,
-            },
-          };
-
-      if (newValueDebugLogPayload !== undefined) {
-        logger.debug(newValueDebugLogPayload.message, {
-          lastPollVersion,
-          newPollVersion: newPollResult.version,
-          setterCount: latestRecord.setters.length,
-          watcherId,
-          ...newValueDebugLogPayload.properties,
-        });
+            ...newValueDebugLogPayload.properties,
+          });
+        }
+      }
+    } catch (error: unknown) {
+      if (!isBackgroundGone(error)) {
+        // eslint-disable-next-line no-restricted-syntax -- service calls are only expected to throw when background is gone; re-throwing unknown defects
+        throw error;
       }
     }
 

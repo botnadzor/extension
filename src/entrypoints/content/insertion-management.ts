@@ -3,6 +3,7 @@ import { isEqual } from "es-toolkit";
 
 import type { InsertionConfig } from "@/shared/@model/insertion-configs";
 import type { ContentId } from "@/shared/@primitives/misc";
+import { backgroundAbortSignal } from "@/shared/background-availability";
 import { dxConfigService, staticListsService } from "@/shared/proxy-services";
 
 import type { DerivedPageInfo } from "./derived-page-info";
@@ -130,9 +131,13 @@ export async function startManagingInsertions({
     },
   });
 
-  window.addEventListener("beforeunload", () => {
+  function teardown() {
     mutationObserver.disconnect();
     stopPolling();
     unmountAllInsertions(instanceMap);
-  });
+    style.remove();
+  }
+
+  backgroundAbortSignal.addEventListener("abort", teardown);
+  window.addEventListener("beforeunload", teardown);
 }

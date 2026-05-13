@@ -10,6 +10,7 @@ import type {
 } from "../@model/static-lists";
 import { createPollableValueHook } from "../@pollable/react";
 import type { VkDomain } from "../@primitives/vk";
+import { isBackgroundGone } from "../background-availability";
 import {
   authService,
   dxConfigService,
@@ -161,6 +162,10 @@ export function useStaticListsAutoUpdate(payload?: {
     void staticListsService.updateIfNeeded(stablePayload);
 
     const interval = setInterval(() => {
+      if (isBackgroundGone()) {
+        clearInterval(interval);
+        return;
+      }
       void staticListsService.updateIfNeeded(stablePayload);
     }, 60 * 1000);
 
