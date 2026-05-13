@@ -48,6 +48,9 @@ export class FrontendService {
 
     this.availabilityCheckTimestamp = Date.now();
 
+    // Without reset, a fallback alias marked "available" after a brief primary hiccup stays selected until SW restart
+    this.aliasManagerForFrontend.resetStatuses();
+
     let aliasToUse: AliasToUse | undefined;
     while ((aliasToUse = this.aliasManagerForFrontend.findAliasToUse())) {
       const fetchResult = await fetchFromAlias({
