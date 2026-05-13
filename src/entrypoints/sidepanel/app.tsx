@@ -9,6 +9,7 @@ import { EntrypointLoggerProvider } from "@/shared/@logging/react";
 import { setupLogging } from "@/shared/@logging/setup";
 import { LogoLink } from "@/shared/@ui-primitives/logo";
 import { TooltipProvider } from "@/shared/@ui-primitives/tooltip";
+import { setBackgroundAvailabilityCheck } from "@/shared/background-availability";
 import { loggingService } from "@/shared/proxy-services";
 
 import { SidepanelMain } from "./app/main";
@@ -18,6 +19,8 @@ const logger = getSidepanelLogger();
 function startSidepanelApp() {
   setupLogging(loggingService);
   setupGlobalCatchAllLogging({ logger });
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- browser.runtime.id becomes nullish when extension context is invalidated
+  setBackgroundAvailabilityCheck(() => Boolean(browser.runtime?.id));
 
   window.addEventListener(
     "pagehide",

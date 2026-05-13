@@ -5,6 +5,7 @@ import type { InsertionConfig } from "@/shared/@model/insertion-configs";
 import type { StaticListItem } from "@/shared/@model/static-lists";
 import type { PollVersion } from "@/shared/@pollable/core";
 import type { ContentId } from "@/shared/@primitives/misc";
+import { isBackgroundGone } from "@/shared/background-availability";
 import {
   dxConfigService,
   extensionVersionService,
@@ -181,23 +182,34 @@ export function startGlobalRerenderPolling({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic use of any entry
   async function watch(thingToPoll: ThingToPoll<any>) {
-    const initial = await thingToPoll.poll(undefined);
-    let lastPollVersion = initial.version;
+    try {
+      const initial = await thingToPoll.poll(undefined);
+      let lastPollVersion = initial.version;
 
-    for (;;) {
-      const result = await thingToPoll.poll(lastPollVersion);
+      for (;;) {
+        if (isBackgroundGone()) {
+          break;
+        }
 
-      if (disposed) {
-        break;
+        const result = await thingToPoll.poll(lastPollVersion);
+
+        if (disposed || isBackgroundGone()) {
+          break;
+        }
+
+        if (result.version !== lastPollVersion) {
+          logger.debug(`${thingToPoll.id} changed, refreshing insertions`);
+          thingToPoll.onVersionChange?.(result.value);
+          triggerRefreshAndMount();
+        }
+
+        lastPollVersion = result.version;
       }
-
-      if (result.version !== lastPollVersion) {
-        logger.debug(`${thingToPoll.id} changed, refreshing insertions`);
-        thingToPoll.onVersionChange?.(result.value);
-        triggerRefreshAndMount();
+    } catch (error: unknown) {
+      if (!isBackgroundGone(error) && !disposed) {
+        // eslint-disable-next-line no-restricted-syntax -- service calls are only expected to throw when background is gone; re-throwing unknown defects
+        throw error;
       }
-
-      lastPollVersion = result.version;
     }
   }
 

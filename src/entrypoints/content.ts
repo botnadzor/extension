@@ -4,6 +4,7 @@ import { getContentLogger } from "@/shared/@logging/categories";
 import { setupGlobalCatchAllLogging } from "@/shared/@logging/global-catch-all";
 import { setupLogging } from "@/shared/@logging/setup";
 import { type ContentId, contentIdSchema } from "@/shared/@primitives/misc";
+import { setBackgroundAvailabilityCheck } from "@/shared/background-availability";
 import { loggingService } from "@/shared/proxy-services";
 import { browser, defineContentScript, getAppConfig } from "#imports";
 
@@ -62,6 +63,7 @@ export default defineContentScript({
 
     const { contentId, contentLogger } = setupContentId();
     setupGlobalCatchAllLogging({ logger: contentLogger });
+    setBackgroundAvailabilityCheck(() => !ctx.isInvalid);
 
     contentLogger.debug(
       "Loading content script with content id {contentId} for {url}",
