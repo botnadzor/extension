@@ -68,7 +68,7 @@
     "es-toolkit": "1.45.1",
     "immer": "11.1.7",
     "intl-messageformat": "11.2.4",
-    "jsonrepair": "3.13.3",
+    "jsonrepair": "3.14.0",
     "lru-cache": "11.3.6",
     "lucide-react": "1.7.0",
     "lucide-static": "1.7.0",
