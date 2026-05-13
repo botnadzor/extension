@@ -19,6 +19,8 @@ const ignoredGlobalRuntimeErrorPatterns = [
   // Browser-generated noise from page-level ResizeObserver churn can spam logs
   // without indicating an extension defect, so we suppress it centrally here.
   /^ResizeObserver loop completed with undelivered notifications\.$/u,
+  /Extension context invalidated/u,
+  /message channel closed before a response was received/u,
 ] as const;
 
 type WrappedConsoleMethod = (typeof wrappedConsoleMethods)[number];
@@ -180,13 +182,14 @@ function forwardConsoleCall({
   });
 }
 
+/** @returns `true` if the event was suppressed (caller should `preventDefault`) */
 function forwardErrorEvent({
   event,
   runtimeLogger,
 }: {
   event: Event;
   runtimeLogger: Logger;
-}): void {
+}): boolean {
   const error = getEventValue(event, "error");
   const colno = getEventValue(event, "colno");
   const filename = getEventValue(event, "filename");
@@ -194,7 +197,7 @@ function forwardErrorEvent({
   const message = getErrorMessage(event);
 
   if (shouldIgnoreGlobalRuntimeMessage(message)) {
-    return;
+    return true;
   }
 
   logWithLevel({
@@ -211,20 +214,23 @@ function forwardErrorEvent({
       message,
     },
   });
+
+  return false;
 }
 
+/** @returns `true` if the event was suppressed (caller should `preventDefault`) */
 function forwardUnhandledRejection({
   event,
   runtimeLogger,
 }: {
   event: Event;
   runtimeLogger: Logger;
-}): void {
+}): boolean {
   const reason = getEventValue(event, "reason");
   const message = getUnhandledRejectionMessage(event);
 
   if (shouldIgnoreGlobalRuntimeMessage(message)) {
-    return;
+    return true;
   }
 
   logWithLevel({
@@ -236,6 +242,8 @@ function forwardUnhandledRejection({
       ...(reason === undefined ? {} : { reason }),
     },
   });
+
+  return false;
 }
 
 /**
@@ -280,6 +288,9 @@ export function setupGlobalCatchAllLogging({
     return;
   }
 
+  // preventDefault() on suppressed events stops the browser from printing
+  // "Uncaught" / "Uncaught (in promise)" lines to the console for errors
+  // we intentionally ignore (e.g. "Extension context invalidated").
   globalThis.addEventListener("error", (event) => {
     if (state.isForwarding) {
       return;
@@ -287,7 +298,9 @@ export function setupGlobalCatchAllLogging({
 
     state.isForwarding = true;
     try {
-      forwardErrorEvent({ event, runtimeLogger });
+      if (forwardErrorEvent({ event, runtimeLogger })) {
+        event.preventDefault();
+      }
     } finally {
       state.isForwarding = false;
     }
@@ -300,7 +313,9 @@ export function setupGlobalCatchAllLogging({
 
     state.isForwarding = true;
     try {
-      forwardUnhandledRejection({ event, runtimeLogger });
+      if (forwardUnhandledRejection({ event, runtimeLogger })) {
+        event.preventDefault();
+      }
     } finally {
       state.isForwarding = false;
     }
