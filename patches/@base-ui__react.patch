@@ -1,10 +1,10 @@
-diff --git a/esm/utils/useAnimationsFinished.js b/esm/utils/useAnimationsFinished.js
-index 67a4a155a559e681be3048a533a58201c1085508..d3e1809ca93b98b28b8fd90e23e812b08cf90f96 100644
---- a/esm/utils/useAnimationsFinished.js
-+++ b/esm/utils/useAnimationsFinished.js
+diff --git a/esm/internals/useAnimationsFinished.js b/esm/internals/useAnimationsFinished.js
+index c5b43c81020dcf11f32b64835fd37e06d9c49d13..1702d7e25c44f427eca49ac4cda03a2ea774b891 100644
+--- a/esm/internals/useAnimationsFinished.js
++++ b/esm/internals/useAnimationsFinished.js
 @@ -5,6 +5,52 @@ import { useAnimationFrame } from '@base-ui/utils/useAnimationFrame';
  import { useStableCallback } from '@base-ui/utils/useStableCallback';
- import { resolveRef } from "./resolveRef.js";
+ import { resolveRef } from "../utils/resolveRef.js";
  import { TransitionStatusDataAttributes } from "./stateAttributesMapping.js";
 +const FINISH_FALLBACK_BUFFER_MS = 50;
 +function parseTimeValues(values) {
@@ -55,10 +55,13 @@ index 67a4a155a559e681be3048a533a58201c1085508..d3e1809ca93b98b28b8fd90e23e812b0
  
  /**
   * Executes a function once all animations have finished on the provided element.
-@@ -24,16 +70,43 @@ export function useAnimationsFinished(elementOrRef, waitForStartingStyleRemoved
+@@ -24,37 +70,68 @@ export function useAnimationsFinished(elementOrRef, waitForStartingStyleRemoved
     */
    signal = null) => {
      frame.cancel();
+-    const element = resolveRef(elementOrRef);
+-    if (element == null) {
+-      return;
 +    let fallbackTimeout = null;
 +    let finished = false;
 +    function clearFallbackTimeout() {
@@ -66,12 +69,13 @@ index 67a4a155a559e681be3048a533a58201c1085508..d3e1809ca93b98b28b8fd90e23e812b0
 +        clearTimeout(fallbackTimeout);
 +        fallbackTimeout = null;
 +      }
-+    }
-     function done() {
+     }
+-    const resolvedElement = element;
+     const done = () => {
        // Synchronously flush the unmounting of the component so that the browser doesn't
        // paint: https://github.com/mui/base-ui/issues/979
        ReactDOM.flushSync(fnToExecute);
-     }
+     };
 +    function finish() {
 +      if (signal?.aborted || finished) {
 +        return;
@@ -80,8 +84,8 @@ index 67a4a155a559e681be3048a533a58201c1085508..d3e1809ca93b98b28b8fd90e23e812b0
 +      clearFallbackTimeout();
 +      done();
 +    }
-     const element = resolveRef(elementOrRef);
-     if (element == null) {
++    const element = resolveRef(elementOrRef);
++    if (element == null) {
 +      // In production builds we observed `useOpenChangeComplete()` sometimes scheduling
 +      // this callback after the ref had already been cleared, especially inside the
 +      // shadow-root content script UI. Returning early leaves the component stuck in the
@@ -90,58 +94,58 @@ index 67a4a155a559e681be3048a533a58201c1085508..d3e1809ca93b98b28b8fd90e23e812b0
 +      // to wait on, the close transition is effectively complete, so we must run the
 +      // completion callback immediately instead of bailing out.
 +      fnToExecute();
-       return;
-     }
-     const resolvedElement = element;
++      return;
++    }
++    const resolvedElement = element;
 +    signal?.addEventListener('abort', clearFallbackTimeout, {
 +      once: true
 +    });
      if (typeof resolvedElement.getAnimations !== 'function' || globalThis.BASE_UI_ANIMATIONS_DISABLED) {
        fnToExecute();
-     } else {
-@@ -63,22 +136,26 @@ export function useAnimationsFinished(elementOrRef, waitForStartingStyleRemoved
-         });
-       }
-       function exec() {
--        Promise.all(resolvedElement.getAnimations().map(anim => anim.finished)).then(() => {
--          if (signal?.aborted) {
--            return;
--          }
+       return;
+     }
+     function exec() {
+-      Promise.all(resolvedElement.getAnimations().map(animation => animation.finished)).then(() => {
+-        if (!signal?.aborted) {
 -          done();
-+        clearFallbackTimeout();
-+        const animations = resolvedElement.getAnimations();
-+        const fallbackDelay = getFinishFallbackDelay(resolvedElement);
-+        if (animations.length === 0 && fallbackDelay === 0) {
-+          finish();
-+          return;
-+        }
-+        fallbackTimeout = setTimeout(finish, fallbackDelay + (fallbackDelay > 0 ? FINISH_FALLBACK_BUFFER_MS : 0));
-+        Promise.all(animations.map(anim => anim.finished)).then(() => {
-+          finish();
-         }).catch(() => {
-           const currentAnimations = resolvedElement.getAnimations();
-           if (treatAbortedAsFinished) {
--            if (signal?.aborted) {
--              return;
--            }
+-        }
++      clearFallbackTimeout();
++      const animations = resolvedElement.getAnimations();
++      const fallbackDelay = getFinishFallbackDelay(resolvedElement);
++      if (animations.length === 0 && fallbackDelay === 0) {
++        finish();
++        return;
++      }
++      fallbackTimeout = setTimeout(finish, fallbackDelay + (fallbackDelay > 0 ? FINISH_FALLBACK_BUFFER_MS : 0));
++      Promise.all(animations.map(animation => animation.finished)).then(() => {
++        finish();
+       }).catch(() => {
+-        if (treatAbortedAsFinished) {
+-          if (!signal?.aborted) {
 -            done();
-+            finish();
-           } else if (currentAnimations.length > 0 && currentAnimations.some(anim => anim.pending || anim.playState !== 'finished')) {
-             // Sometimes animations can be aborted because a property they depend on changes while the animation plays.
-             // In such cases, we need to re-check if any new animations have started.
-             exec();
-+          } else {
-+            finish();
-           }
-         });
-       }
-diff --git a/utils/useAnimationsFinished.js b/utils/useAnimationsFinished.js
-index ade27417445ee373c4497fa96762692abe1e2317..ed5b9c70791935024c219efa0b91924407ff9e07 100644
---- a/utils/useAnimationsFinished.js
-+++ b/utils/useAnimationsFinished.js
+-          }
+-          return;
+-        }
+         const currentAnimations = resolvedElement.getAnimations();
+-        if (!signal?.aborted && currentAnimations.length > 0 && currentAnimations.some(animation => animation.pending || animation.playState !== 'finished')) {
++        if (treatAbortedAsFinished) {
++          finish();
++        } else if (currentAnimations.length > 0 && currentAnimations.some(animation => animation.pending || animation.playState !== 'finished')) {
+           // Sometimes animations can be aborted because a property they depend on changes while the animation plays.
+           // In such cases, we need to re-check if any new animations have started.
+           exec();
++        } else {
++          finish();
+         }
+       });
+     }
+diff --git a/internals/useAnimationsFinished.js b/internals/useAnimationsFinished.js
+index ae6a433b5647f1b2ef4bbfb1a880cb55378b8d3c..e639755d55fe70102c633d2fe37e6937d4b6077e 100644
+--- a/internals/useAnimationsFinished.js
++++ b/internals/useAnimationsFinished.js
 @@ -11,6 +11,52 @@ var _useAnimationFrame = require("@base-ui/utils/useAnimationFrame");
  var _useStableCallback = require("@base-ui/utils/useStableCallback");
- var _resolveRef = require("./resolveRef");
+ var _resolveRef = require("../utils/resolveRef");
  var _stateAttributesMapping = require("./stateAttributesMapping");
 +const FINISH_FALLBACK_BUFFER_MS = 50;
 +function parseTimeValues(values) {
@@ -192,10 +196,13 @@ index ade27417445ee373c4497fa96762692abe1e2317..ed5b9c70791935024c219efa0b919244
  /**
   * Executes a function once all animations have finished on the provided element.
   * @param elementOrRef - The element to watch for animations.
-@@ -29,16 +75,43 @@ function useAnimationsFinished(elementOrRef, waitForStartingStyleRemoved = false
+@@ -29,37 +75,68 @@ function useAnimationsFinished(elementOrRef, waitForStartingStyleRemoved = false
     */
    signal = null) => {
      frame.cancel();
+-    const element = (0, _resolveRef.resolveRef)(elementOrRef);
+-    if (element == null) {
+-      return;
 +    let fallbackTimeout = null;
 +    let finished = false;
 +    function clearFallbackTimeout() {
@@ -203,12 +210,13 @@ index ade27417445ee373c4497fa96762692abe1e2317..ed5b9c70791935024c219efa0b919244
 +        clearTimeout(fallbackTimeout);
 +        fallbackTimeout = null;
 +      }
-+    }
-     function done() {
+     }
+-    const resolvedElement = element;
+     const done = () => {
        // Synchronously flush the unmounting of the component so that the browser doesn't
        // paint: https://github.com/mui/base-ui/issues/979
        ReactDOM.flushSync(fnToExecute);
-     }
+     };
 +    function finish() {
 +      if (signal?.aborted || finished) {
 +        return;
@@ -217,8 +225,8 @@ index ade27417445ee373c4497fa96762692abe1e2317..ed5b9c70791935024c219efa0b919244
 +      clearFallbackTimeout();
 +      done();
 +    }
-     const element = (0, _resolveRef.resolveRef)(elementOrRef);
-     if (element == null) {
++    const element = (0, _resolveRef.resolveRef)(elementOrRef);
++    if (element == null) {
 +      // In production builds we observed `useOpenChangeComplete()` sometimes scheduling
 +      // this callback after the ref had already been cleared, especially inside the
 +      // shadow-root content script UI. Returning early leaves the component stuck in the
@@ -227,48 +235,48 @@ index ade27417445ee373c4497fa96762692abe1e2317..ed5b9c70791935024c219efa0b919244
 +      // to wait on, the close transition is effectively complete, so we must run the
 +      // completion callback immediately instead of bailing out.
 +      fnToExecute();
-       return;
-     }
-     const resolvedElement = element;
++      return;
++    }
++    const resolvedElement = element;
 +    signal?.addEventListener('abort', clearFallbackTimeout, {
 +      once: true
 +    });
      if (typeof resolvedElement.getAnimations !== 'function' || globalThis.BASE_UI_ANIMATIONS_DISABLED) {
        fnToExecute();
-     } else {
-@@ -68,22 +141,26 @@ function useAnimationsFinished(elementOrRef, waitForStartingStyleRemoved = false
-         });
-       }
-       function exec() {
--        Promise.all(resolvedElement.getAnimations().map(anim => anim.finished)).then(() => {
--          if (signal?.aborted) {
--            return;
--          }
+       return;
+     }
+     function exec() {
+-      Promise.all(resolvedElement.getAnimations().map(animation => animation.finished)).then(() => {
+-        if (!signal?.aborted) {
 -          done();
-+        clearFallbackTimeout();
-+        const animations = resolvedElement.getAnimations();
-+        const fallbackDelay = getFinishFallbackDelay(resolvedElement);
-+        if (animations.length === 0 && fallbackDelay === 0) {
-+          finish();
-+          return;
-+        }
-+        fallbackTimeout = setTimeout(finish, fallbackDelay + (fallbackDelay > 0 ? FINISH_FALLBACK_BUFFER_MS : 0));
-+        Promise.all(animations.map(anim => anim.finished)).then(() => {
-+          finish();
-         }).catch(() => {
-           const currentAnimations = resolvedElement.getAnimations();
-           if (treatAbortedAsFinished) {
--            if (signal?.aborted) {
--              return;
--            }
+-        }
++      clearFallbackTimeout();
++      const animations = resolvedElement.getAnimations();
++      const fallbackDelay = getFinishFallbackDelay(resolvedElement);
++      if (animations.length === 0 && fallbackDelay === 0) {
++        finish();
++        return;
++      }
++      fallbackTimeout = setTimeout(finish, fallbackDelay + (fallbackDelay > 0 ? FINISH_FALLBACK_BUFFER_MS : 0));
++      Promise.all(animations.map(animation => animation.finished)).then(() => {
++        finish();
+       }).catch(() => {
+-        if (treatAbortedAsFinished) {
+-          if (!signal?.aborted) {
 -            done();
-+            finish();
-           } else if (currentAnimations.length > 0 && currentAnimations.some(anim => anim.pending || anim.playState !== 'finished')) {
-             // Sometimes animations can be aborted because a property they depend on changes while the animation plays.
-             // In such cases, we need to re-check if any new animations have started.
-             exec();
-+          } else {
-+            finish();
-           }
-         });
-       }
+-          }
+-          return;
+-        }
+         const currentAnimations = resolvedElement.getAnimations();
+-        if (!signal?.aborted && currentAnimations.length > 0 && currentAnimations.some(animation => animation.pending || animation.playState !== 'finished')) {
++        if (treatAbortedAsFinished) {
++          finish();
++        } else if (currentAnimations.length > 0 && currentAnimations.some(animation => animation.pending || animation.playState !== 'finished')) {
+           // Sometimes animations can be aborted because a property they depend on changes while the animation plays.
+           // In such cases, we need to re-check if any new animations have started.
+           exec();
++        } else {
++          finish();
+         }
+       });
+     }
