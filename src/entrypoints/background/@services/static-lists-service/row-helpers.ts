@@ -1,9 +1,6 @@
 import { nanoid } from "nanoid";
 
-import type {
-  StaticListId,
-  StaticListItem,
-} from "@/shared/@model/static-lists";
+import type { StaticListId } from "@/shared/@model/static-lists";
 import { isoDateTimeSchema } from "@/shared/@primitives/temporal";
 
 import { getStaticListDefinitionInfo } from "./definition-helpers";
@@ -127,8 +124,7 @@ export function prepareValidatedLocalRow({
   }
 
   const jsonlItem = definition.serializeInterpretedItemAsJsonl(
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the parsed item was validated against this list definition's interpreted schema above
-    interpretedItemResult.data as StaticListItem,
+    interpretedItemResult.data,
   );
 
   const jsonlItemResult = definition.jsonlItemSchema.safeParse(jsonlItem);

@@ -38,14 +38,12 @@ for (const listId of staticListIds) {
       definition.logicalPrimaryKey as StaticListIndexDefinition<unknown>,
   };
 
-  const secondaryIndexSlots = (definition.secondaryIndexes ?? []).map(
-    (secondaryIndex, index) => ({
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime slot names are generated from the secondary index position
-      slotName: `s${index + 1}` as StoredRowIndexSlotName,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime definition registry intentionally erases per-list generics into shared slot metadata
-      definition: secondaryIndex as StaticListIndexDefinition<unknown>,
-    }),
-  );
+  const secondaryIndexSlots = (
+    definition.secondaryIndexes ?? []
+  ).map<StaticListIndexSlotDefinition>((secondaryIndex, index) => ({
+    slotName: `s${index + 1}`,
+    definition: secondaryIndex,
+  }));
 
   const allIndexSlots = [logicalPrimaryKeySlot, ...secondaryIndexSlots];
   const publicIndexNameToSlotNameEntries = allIndexSlots.map((indexSlot) => [
