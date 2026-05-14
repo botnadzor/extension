@@ -173,7 +173,6 @@ export function createPollableValueHook<
     });
   }
 
-  // eslint-disable-next-line @eslint-react/component-hook-factories -- this utility intentionally creates reusable hooks from shared pollers
   function usePollableValue(payload: Payload): Value {
     const entrypointLogger = useEntrypointLogger();
 
@@ -251,7 +250,7 @@ export function createPollableValueHook<
         logger.debug("Removed setter from record in cleanup");
 
         if (updatedRecordInCleanup.setters.length === 0) {
-          // eslint-disable-next-line @eslint-react/web-api/no-leaked-timeout -- timeout is created during component cleanup
+          // eslint-disable-next-line @eslint-react/web-api-no-leaked-timeout -- timeout is created during component cleanup
           setTimeout(
             () => {
               const initialRecordInTimeout =
