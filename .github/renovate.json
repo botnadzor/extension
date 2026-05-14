@@ -9,7 +9,8 @@
   ],
   "lockFileMaintenance": { "enabled": true },
   "postUpdateOptions": ["pnpmDedupe"],
-  "prConcurrentLimit": 1,
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 1,
   "rangeStrategy": "pin",
   "timezone": "Etc/UTC",
   "packageRules": [
