@@ -41,10 +41,8 @@ export function tryInterpretSummaryItemDelta<ListId extends StaticListId>(
   }
 
   getStaticListDefinitionInfo(listId).definition.adjustSummary(
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- definition selection and summary/item shapes are correlated by list id at runtime
-    mutableSummary as never,
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- same list-specific correlation as above
-    interpretedRow.interpretation.item as never,
+    mutableSummary,
+    interpretedRow.interpretation.item,
     delta,
   );
 }

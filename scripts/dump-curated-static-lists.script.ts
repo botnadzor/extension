@@ -75,8 +75,7 @@ async function main() {
           `${tsFile} item ${index}: validation failed: ${messages}`,
         );
       }
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safeParse result is a validated object
-      interpretedItems.push(parseResult.data as Record<string, unknown>);
+      interpretedItems.push(parseResult.data);
     }
 
     const jsonlLines: string[] = [];

@@ -671,14 +671,10 @@ export class StaticListsService {
       pickAnotherRemoteInstance(context.metadata.remoteActiveInstance),
     );
 
-    await this.persistMetadata(
-      listId,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id while preserving the current list-specific metadata shape
-      {
-        ...omitRemoteStaging(context.metadata),
-        remoteUpdateIssue: issue,
-      } as StaticListMetadata,
-    );
+    await this.persistMetadata(listId, {
+      ...omitRemoteStaging(context.metadata),
+      remoteUpdateIssue: issue,
+    });
 
     return true;
   }
@@ -2324,8 +2320,8 @@ export class StaticListsService {
 
         shadowedRemoteRowKeysByLogicalPrimaryKey.set(
           remoteRow.p,
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Dexie primaryKeys() is untyped to the queried index slot, but this query returns remote row primary keys
-          shadowedRemotePrimaryKeys as IDBValidKey[],
+
+          shadowedRemotePrimaryKeys,
         );
       }
     }
