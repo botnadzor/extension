@@ -93,6 +93,7 @@ const itemBatchSize = 1000;
 const maxGetItemsCount = 10_000;
 const defaultLocalRowLimit = 1000;
 const resumeVerificationStride = 1000;
+const maxStreamRetries = 2;
 
 type PopulateFromUrlIfOutdatedResult =
   | {
@@ -1571,11 +1572,14 @@ export class StaticListsService {
       // transfer. The staging logic remains resumable without this helper, so
       // this is strictly an optimization, not a correctness requirement.
       let shouldForceFreshRestart = false;
+      let streamRetryCount = 0;
       let currentStage: StaticListRemoteUpdateIssueStage = "createStaging";
+      let lastFetchedAliasBaseUrl: string | undefined;
 
       for (;;) {
         try {
           currentStage = "createStaging";
+          lastFetchedAliasBaseUrl = undefined;
           const stagingSession = shouldForceFreshRestart
             ? await this.createFreshRemoteStaging(listId, upstreamInfo)
             : ((await this.tryResumeRemoteStaging(listId, upstreamInfo)) ??
@@ -1601,6 +1605,8 @@ export class StaticListsService {
               error: `Failed to fetch list from static API (reason: ${fetchResult.reason})`,
             };
           }
+
+          lastFetchedAliasBaseUrl = fetchResult.aliasBaseUrl;
 
           if (fetchResult.response.status !== 200) {
             return {
@@ -1716,6 +1722,34 @@ export class StaticListsService {
             }
           }
 
+          if (!restartFreshReason && lineNumber < upstreamInfo.itemCount) {
+            await flushBatch(true);
+            this.aliasManagerForStaticApi.markAliasAsUnavailable(
+              lastFetchedAliasBaseUrl,
+              "connectionFailed",
+            );
+            streamRetryCount += 1;
+
+            listLogger.warn(
+              "Stream ended at line {lineNumber}, expected {expectedLineCount} — marking alias unavailable (attempt {streamRetryCount}/{maxStreamRetries})",
+              {
+                expectedLineCount: upstreamInfo.itemCount,
+                lineNumber,
+                maxStreamRetries,
+                streamRetryCount,
+              },
+            );
+
+            if (streamRetryCount > maxStreamRetries) {
+              return {
+                success: false,
+                error: `Stream truncated at line ${lineNumber} of ${upstreamInfo.itemCount} after ${streamRetryCount} attempt(s)`,
+              };
+            }
+
+            continue;
+          }
+
           if (!restartFreshReason && lineNumber < resumedHeadLineNumber) {
             restartFreshReason = `Remote list ended at line ${lineNumber} before staged prefix ${resumedHeadLineNumber}`;
           }
@@ -1788,6 +1822,27 @@ export class StaticListsService {
             );
 
             return { success: false, error: errorMessage };
+          }
+
+          if (lastFetchedAliasBaseUrl) {
+            this.aliasManagerForStaticApi.markAliasAsUnavailable(
+              lastFetchedAliasBaseUrl,
+              "connectionFailed",
+            );
+            streamRetryCount += 1;
+
+            if (streamRetryCount <= maxStreamRetries) {
+              listLogger.warn(
+                "Error during {stage}, marking alias unavailable and retrying (attempt {streamRetryCount}/{maxStreamRetries}): {error}",
+                {
+                  error: errorMessage,
+                  maxStreamRetries,
+                  stage: currentStage,
+                  streamRetryCount,
+                },
+              );
+              continue;
+            }
           }
 
           listLogger.error("Unexpected error while populating: {error}", {
