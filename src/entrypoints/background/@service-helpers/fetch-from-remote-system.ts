@@ -44,6 +44,7 @@ export async function fetchFromRemoteSystem({
   | {
       success: true;
       response: Response;
+      aliasBaseUrl: string;
     }
   | {
       success: false;
@@ -63,7 +64,7 @@ export async function fetchFromRemoteSystem({
 
     if (fetchResult.success) {
       aliasManager.markAliasAsAvailable(aliasToUse.baseUrl);
-      return fetchResult;
+      return { ...fetchResult, aliasBaseUrl: aliasToUse.baseUrl };
     }
 
     aliasManager.markAliasAsUnavailable(aliasToUse.baseUrl, fetchResult.reason);
