@@ -117,8 +117,8 @@ _В том числе **TOR Browser**_
 
 ### Требования
 
-- [Node.js 24](https://nodejs.org/en/download) (точная версия указана в `.tool-versions`, но подойдёт любая версия ≥ 24.0)
-- [pnpm 10](https://pnpm.io/installation) (точная версия указана в `package.json` → `packageManager`, но подойдёт любая версия ≥ 10.0)
+- [Node.js](https://nodejs.org/en/download) 24 или 26 (точная версия указана в `.tool-versions`, но подойдёт любая версия ≥ 24.0)
+- [pnpm](https://pnpm.io/installation) 10 или 11 (точная версия указана в `package.json` → `packageManager`, но подойдёт любая версия ≥ 10.0)
 
 ### Установка зависимостей
 
