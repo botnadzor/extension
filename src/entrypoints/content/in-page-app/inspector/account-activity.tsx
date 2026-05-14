@@ -429,7 +429,7 @@ export function AccountActivity({ vkDomain }: { vkDomain: VkDomain }) {
 
   return (
     <ScrollArea
-      scrollBar={<ScrollBar className="mt-1.5 h-[calc(100%---spacing(2))]" />}
+      scrollBar={<ScrollBar className="mt-1.5 h-[calc(100%-(--spacing(2)))]" />}
       className={cn(
         "absolute!", // overriding position:relative in ScrollArea's inline style
         "inset-0",
