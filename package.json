@@ -131,5 +131,5 @@
     "wxt": "0.20.25",
     "yaml": "2.8.3"
   },
-  "packageManager": "pnpm@10.33.0"
+  "packageManager": "pnpm@10.33.4"
 }
