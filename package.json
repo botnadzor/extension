@@ -129,7 +129,7 @@
     "typescript-eslint": "8.59.3",
     "vitest": "4.1.6",
     "wxt": "0.20.26",
-    "yaml": "2.8.3"
+    "yaml": "2.9.0"
   },
   "packageManager": "pnpm@10.33.4"
 }
