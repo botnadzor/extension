@@ -12,14 +12,8 @@ const config: KnipConfig = {
     "src/entrypoints/react-fiber-bridge-main-world.ts",
     "src/entrypoints/sidepanel/app.tsx",
     "src/shared/@ui-primitives/*.tsx", // shadcn components may contain unused exports
-    "wxt.config.ts",
   ],
   ignoreExportsUsedInFile: true,
-  ignoreDependencies: [
-    // https://github.com/webpro-nl/knip/issues/1140
-    "@wxt-dev/auto-icons",
-    "@wxt-dev/module-react",
-  ],
   paths: {
     "#imports": [".wxt/types/imports-module.d.ts"],
   },
