@@ -94,6 +94,14 @@ const maxGetItemsCount = 10_000;
 const defaultLocalRowLimit = 1000;
 const resumeVerificationStride = 1000;
 const maxStreamRetries = 2;
+const failedUpdateBaseBackoffMs = 2 * 60 * 1000;
+const failedUpdateMaxBackoffMs = 60 * 60 * 1000;
+
+type FailedUpdateState = {
+  consecutiveFailures: number;
+  lastFailedAt: number;
+  forGeneratedAt: IsoDateTime;
+};
 
 type PopulateFromUrlIfOutdatedResult =
   | {
@@ -286,6 +294,11 @@ export class StaticListsService {
   private readonly localMutationTailByListId = new Map<
     StaticListId,
     Promise<void>
+  >();
+
+  private readonly failedUpdateStateByListId = new Map<
+    StaticListId,
+    FailedUpdateState
   >();
 
   private readonly localSummaryByListId = new Map<
@@ -1492,6 +1505,43 @@ export class StaticListsService {
     this.publishListState(listId);
   }
 
+  private isInFailedUpdateBackoff(
+    listId: StaticListId,
+    upstreamGeneratedAt: IsoDateTime,
+  ): boolean {
+    const state = this.failedUpdateStateByListId.get(listId);
+    if (!state) {
+      return false;
+    }
+
+    if (state.forGeneratedAt !== upstreamGeneratedAt) {
+      this.failedUpdateStateByListId.delete(listId);
+      return false;
+    }
+
+    const backoffMs = Math.min(
+      failedUpdateBaseBackoffMs * 2 ** (state.consecutiveFailures - 1),
+      failedUpdateMaxBackoffMs,
+    );
+
+    return Date.now() - state.lastFailedAt < backoffMs;
+  }
+
+  private recordFailedUpdate(
+    listId: StaticListId,
+    upstreamGeneratedAt: IsoDateTime,
+  ): void {
+    const existing = this.failedUpdateStateByListId.get(listId);
+    this.failedUpdateStateByListId.set(listId, {
+      consecutiveFailures:
+        existing?.forGeneratedAt === upstreamGeneratedAt
+          ? existing.consecutiveFailures + 1
+          : 1,
+      lastFailedAt: Date.now(),
+      forGeneratedAt: upstreamGeneratedAt,
+    });
+  }
+
   private needsRemoteUpdate({
     metadata,
     upstreamGeneratedAt,
@@ -1558,6 +1608,17 @@ export class StaticListsService {
       return { success: true, data: "updateNotNeeded" };
     }
 
+    if (
+      !options?.forcePopulate &&
+      !options?.allowBlockedRetry &&
+      this.isInFailedUpdateBackoff(listId, upstreamInfo.generatedAt)
+    ) {
+      listLogger.debug(
+        "Skipping remote update because previous attempt failed recently (backing off)",
+      );
+      return { success: true, data: "updateNotNeeded" };
+    }
+
     if (options?.allowBlockedRetry) {
       await this.prepareBlockedRemoteUpdateRetry(
         listId,
@@ -1565,294 +1626,305 @@ export class StaticListsService {
       );
     }
 
-    return await withBackgroundHeartbeat(async () => {
-      // This update path can spend minutes streaming and check-pointing very
-      // large resumable lists. We wrap only this bounded task in a documented
-      // MV3-style heartbeat so the background is less likely to be culled mid-
-      // transfer. The staging logic remains resumable without this helper, so
-      // this is strictly an optimization, not a correctness requirement.
-      let shouldForceFreshRestart = false;
-      let streamRetryCount = 0;
-      let currentStage: StaticListRemoteUpdateIssueStage = "createStaging";
-      let lastFetchedAliasBaseUrl: string | undefined;
+    const result: PopulateFromUrlIfOutdatedResult =
+      await withBackgroundHeartbeat(async () => {
+        // This update path can spend minutes streaming and check-pointing very
+        // large resumable lists. We wrap only this bounded task in a documented
+        // MV3-style heartbeat so the background is less likely to be culled mid-
+        // transfer. The staging logic remains resumable without this helper, so
+        // this is strictly an optimization, not a correctness requirement.
+        let shouldForceFreshRestart = false;
+        let streamRetryCount = 0;
+        let currentStage: StaticListRemoteUpdateIssueStage = "createStaging";
+        let lastFetchedAliasBaseUrl: string | undefined;
 
-      for (;;) {
-        try {
-          currentStage = "createStaging";
-          lastFetchedAliasBaseUrl = undefined;
-          const stagingSession = shouldForceFreshRestart
-            ? await this.createFreshRemoteStaging(listId, upstreamInfo)
-            : ((await this.tryResumeRemoteStaging(listId, upstreamInfo)) ??
-              (await this.createFreshRemoteStaging(listId, upstreamInfo)));
+        for (;;) {
+          try {
+            currentStage = "createStaging";
+            lastFetchedAliasBaseUrl = undefined;
+            const stagingSession = shouldForceFreshRestart
+              ? await this.createFreshRemoteStaging(listId, upstreamInfo)
+              : ((await this.tryResumeRemoteStaging(listId, upstreamInfo)) ??
+                (await this.createFreshRemoteStaging(listId, upstreamInfo)));
 
-          const {
-            activeInstance,
-            mutableStagingSummary,
-            resumedHeadLineNumber,
-            startedAtIso,
-            targetInstance,
-            targetTable,
-          } = stagingSession;
+            const {
+              activeInstance,
+              mutableStagingSummary,
+              resumedHeadLineNumber,
+              startedAtIso,
+              targetInstance,
+              targetTable,
+            } = stagingSession;
 
-          const fetchResult = await fetchFromRemoteSystem({
-            aliasManager: this.aliasManagerForStaticApi,
-            urlSuffix: `/lists/${listId}.jsonl`,
-          });
-
-          if (!fetchResult.success) {
-            return {
-              success: false,
-              error: `Failed to fetch list from static API (reason: ${fetchResult.reason})`,
-            };
-          }
-
-          lastFetchedAliasBaseUrl = fetchResult.aliasBaseUrl;
-
-          if (fetchResult.response.status !== 200) {
-            return {
-              success: false,
-              error: `Failed to fetch list from static API: ${fetchResult.response.status}`,
-            };
-          }
-
-          if (!fetchResult.response.body) {
-            return {
-              success: false,
-              error: "No response body from static API",
-            };
-          }
-
-          let lineNumber = 0;
-          let storedBatchCount = 0;
-          let storedRowCount = 0;
-          let rowsToStore: StoredRemoteRow[] = [];
-          let restartFreshReason: string | undefined;
-
-          const flushBatch = async (shouldPersistStagingProgress: boolean) => {
-            if (rowsToStore.length === 0) {
-              return;
-            }
-
-            currentStage = "writeRows";
-            const durableLineNumber = rowsToStore.at(-1)?.r ?? 0;
-            storedBatchCount += 1;
-            storedRowCount += rowsToStore.length;
-            await targetTable.bulkPut(rowsToStore);
-            rowsToStore = [];
-
-            if (!shouldPersistStagingProgress) {
-              return;
-            }
-
-            const currentMetadata = this.getCurrentMetadata(listId);
-            if (!currentMetadata.remoteStaging) {
-              return;
-            }
-
-            await this.persistMetadata(
-              listId,
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
-              {
-                ...currentMetadata,
-                remoteStaging: {
-                  ...currentMetadata.remoteStaging,
-                  durableLineNumber,
-                  updatedAt: isoDateTimeSchema.parse(Date.now()),
-                  summary: structuredClone(mutableStagingSummary),
-                },
-              } as StaticListMetadata,
-            );
-          };
-
-          for await (const line of streamLines(fetchResult.response.body)) {
-            lineNumber += 1;
-
-            if (lineNumber <= resumedHeadLineNumber) {
-              if (
-                !shouldVerifyResumedLine({
-                  durableLineNumber: resumedHeadLineNumber,
-                  lineNumber,
-                  stride: resumeVerificationStride,
-                })
-              ) {
-                continue;
-              }
-
-              const stagedRow = await targetTable
-                .where("r")
-                .equals(lineNumber)
-                .first();
-
-              if (!stagedRow) {
-                restartFreshReason = `Missing staged row at line ${lineNumber}`;
-                break;
-              }
-
-              if (stagedRow.t !== line) {
-                restartFreshReason = `Staged row content mismatch at line ${lineNumber}`;
-                break;
-              }
-
-              continue;
-            }
-
-            const storedRow = createStoredRemoteRow({
-              listId,
-              lineNumber,
-              sourceText: line,
+            const fetchResult = await fetchFromRemoteSystem({
+              aliasManager: this.aliasManagerForStaticApi,
+              urlSuffix: `/lists/${listId}.jsonl`,
             });
 
-            rowsToStore.push(storedRow);
-
-            const interpretedRow = interpretStoredRow(
-              listId,
-              storedRow,
-              "remote",
-            );
-            if (interpretedRow.interpretation.success) {
-              context.definitionInfo.definition.adjustSummary(
-                mutableStagingSummary,
-                interpretedRow.interpretation.item,
-                1,
-              );
-            }
-
-            if (rowsToStore.length >= itemBatchSize) {
-              await flushBatch(true);
-            }
-          }
-
-          if (!restartFreshReason && lineNumber < upstreamInfo.itemCount) {
-            await flushBatch(true);
-            this.aliasManagerForStaticApi.markAliasAsUnavailable(
-              lastFetchedAliasBaseUrl,
-              "connectionFailed",
-            );
-            streamRetryCount += 1;
-
-            listLogger.warn(
-              "Stream ended at line {lineNumber}, expected {expectedLineCount} — marking alias unavailable (attempt {streamRetryCount}/{maxStreamRetries})",
-              {
-                expectedLineCount: upstreamInfo.itemCount,
-                lineNumber,
-                maxStreamRetries,
-                streamRetryCount,
-              },
-            );
-
-            if (streamRetryCount > maxStreamRetries) {
+            if (!fetchResult.success) {
               return {
                 success: false,
-                error: `Stream truncated at line ${lineNumber} of ${upstreamInfo.itemCount} after ${streamRetryCount} attempt(s)`,
+                error: `Failed to fetch list from static API (reason: ${fetchResult.reason})`,
               };
             }
 
-            continue;
-          }
+            lastFetchedAliasBaseUrl = fetchResult.aliasBaseUrl;
 
-          if (!restartFreshReason && lineNumber < resumedHeadLineNumber) {
-            restartFreshReason = `Remote list ended at line ${lineNumber} before staged prefix ${resumedHeadLineNumber}`;
-          }
-
-          if (
-            !restartFreshReason &&
-            resumedHeadLineNumber === upstreamInfo.itemCount &&
-            lineNumber !== resumedHeadLineNumber
-          ) {
-            restartFreshReason = `Remote list length changed during direct promotion verification (${lineNumber} !== ${resumedHeadLineNumber})`;
-          }
-
-          if (restartFreshReason) {
-            listLogger.warn(
-              "Selective resume verification failed, discarding staging and retrying fresh: {reason}",
-              { reason: restartFreshReason },
-            );
-            await this.discardRemoteStaging(listId);
-
-            if (shouldForceFreshRestart) {
-              return { success: false, error: restartFreshReason };
+            if (fetchResult.response.status !== 200) {
+              return {
+                success: false,
+                error: `Failed to fetch list from static API: ${fetchResult.response.status}`,
+              };
             }
 
-            shouldForceFreshRestart = true;
-            continue;
-          }
+            if (!fetchResult.response.body) {
+              return {
+                success: false,
+                error: "No response body from static API",
+              };
+            }
 
-          await flushBatch(false);
-          currentStage = "promote";
+            let lineNumber = 0;
+            let storedBatchCount = 0;
+            let storedRowCount = 0;
+            let rowsToStore: StoredRemoteRow[] = [];
+            let restartFreshReason: string | undefined;
 
-          await this.promoteRemoteStaging({
-            activeInstance,
-            listId,
-            startedAtIso,
-            summary: mutableStagingSummary,
-            targetInstance,
-            upstreamInfo,
-          });
+            const flushBatch = async (
+              shouldPersistStagingProgress: boolean,
+            ) => {
+              if (rowsToStore.length === 0) {
+                return;
+              }
 
-          if (resumedHeadLineNumber > 0 && storedRowCount === 0) {
-            listLogger.info(
-              "Verified and promoted completed staging without downloading new rows",
-            );
-          } else {
-            listLogger.info(
-              "Populated {storedRowCount} remote rows (batches: {storedBatchCount}, resumedFromLine: {resumedHeadLineNumber})",
-              {
-                resumedHeadLineNumber,
-                storedBatchCount,
-                storedRowCount,
-              },
-            );
-          }
+              currentStage = "writeRows";
+              const durableLineNumber = rowsToStore.at(-1)?.r ?? 0;
+              storedBatchCount += 1;
+              storedRowCount += rowsToStore.length;
+              await targetTable.bulkPut(rowsToStore);
+              rowsToStore = [];
 
-          return { success: true, data: "updated" };
-        } catch (error) {
-          const errorMessage = getErrorMessage(error);
+              if (!shouldPersistStagingProgress) {
+                return;
+              }
 
-          if (
-            await this.recordRemoteUpdateIssue({
-              error,
-              listId,
-              stage: currentStage,
-              upstreamInfo,
-            })
-          ) {
-            listLogger.error(
-              "Remote update is paused because storage quota was exceeded during {stage}: {error}",
-              { error: errorMessage, stage: currentStage },
-            );
+              const currentMetadata = this.getCurrentMetadata(listId);
+              if (!currentMetadata.remoteStaging) {
+                return;
+              }
 
-            return { success: false, error: errorMessage };
-          }
-
-          if (lastFetchedAliasBaseUrl) {
-            this.aliasManagerForStaticApi.markAliasAsUnavailable(
-              lastFetchedAliasBaseUrl,
-              "connectionFailed",
-            );
-            streamRetryCount += 1;
-
-            if (streamRetryCount <= maxStreamRetries) {
-              listLogger.warn(
-                "Error during {stage}, marking alias unavailable and retrying (attempt {streamRetryCount}/{maxStreamRetries}): {error}",
+              await this.persistMetadata(
+                listId,
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- this runtime update path works with an erased list id, but the summary was built from that same list's definition
                 {
-                  error: errorMessage,
+                  ...currentMetadata,
+                  remoteStaging: {
+                    ...currentMetadata.remoteStaging,
+                    durableLineNumber,
+                    updatedAt: isoDateTimeSchema.parse(Date.now()),
+                    summary: structuredClone(mutableStagingSummary),
+                  },
+                } as StaticListMetadata,
+              );
+            };
+
+            for await (const line of streamLines(fetchResult.response.body)) {
+              lineNumber += 1;
+
+              if (lineNumber <= resumedHeadLineNumber) {
+                if (
+                  !shouldVerifyResumedLine({
+                    durableLineNumber: resumedHeadLineNumber,
+                    lineNumber,
+                    stride: resumeVerificationStride,
+                  })
+                ) {
+                  continue;
+                }
+
+                const stagedRow = await targetTable
+                  .where("r")
+                  .equals(lineNumber)
+                  .first();
+
+                if (!stagedRow) {
+                  restartFreshReason = `Missing staged row at line ${lineNumber}`;
+                  break;
+                }
+
+                if (stagedRow.t !== line) {
+                  restartFreshReason = `Staged row content mismatch at line ${lineNumber}`;
+                  break;
+                }
+
+                continue;
+              }
+
+              const storedRow = createStoredRemoteRow({
+                listId,
+                lineNumber,
+                sourceText: line,
+              });
+
+              rowsToStore.push(storedRow);
+
+              const interpretedRow = interpretStoredRow(
+                listId,
+                storedRow,
+                "remote",
+              );
+              if (interpretedRow.interpretation.success) {
+                context.definitionInfo.definition.adjustSummary(
+                  mutableStagingSummary,
+                  interpretedRow.interpretation.item,
+                  1,
+                );
+              }
+
+              if (rowsToStore.length >= itemBatchSize) {
+                await flushBatch(true);
+              }
+            }
+
+            if (!restartFreshReason && lineNumber < upstreamInfo.itemCount) {
+              await flushBatch(true);
+              this.aliasManagerForStaticApi.markAliasAsUnavailable(
+                lastFetchedAliasBaseUrl,
+                "connectionFailed",
+              );
+              streamRetryCount += 1;
+
+              listLogger.warn(
+                "Stream ended at line {lineNumber}, expected {expectedLineCount} — marking alias unavailable (attempt {streamRetryCount}/{maxStreamRetries})",
+                {
+                  expectedLineCount: upstreamInfo.itemCount,
+                  lineNumber,
                   maxStreamRetries,
-                  stage: currentStage,
                   streamRetryCount,
                 },
               );
+
+              if (streamRetryCount > maxStreamRetries) {
+                return {
+                  success: false,
+                  error: `Stream truncated at line ${lineNumber} of ${upstreamInfo.itemCount} after ${streamRetryCount} attempt(s)`,
+                };
+              }
+
               continue;
             }
+
+            if (!restartFreshReason && lineNumber < resumedHeadLineNumber) {
+              restartFreshReason = `Remote list ended at line ${lineNumber} before staged prefix ${resumedHeadLineNumber}`;
+            }
+
+            if (
+              !restartFreshReason &&
+              resumedHeadLineNumber === upstreamInfo.itemCount &&
+              lineNumber !== resumedHeadLineNumber
+            ) {
+              restartFreshReason = `Remote list length changed during direct promotion verification (${lineNumber} !== ${resumedHeadLineNumber})`;
+            }
+
+            if (restartFreshReason) {
+              listLogger.warn(
+                "Selective resume verification failed, discarding staging and retrying fresh: {reason}",
+                { reason: restartFreshReason },
+              );
+              await this.discardRemoteStaging(listId);
+
+              if (shouldForceFreshRestart) {
+                return { success: false, error: restartFreshReason };
+              }
+
+              shouldForceFreshRestart = true;
+              continue;
+            }
+
+            await flushBatch(false);
+            currentStage = "promote";
+
+            await this.promoteRemoteStaging({
+              activeInstance,
+              listId,
+              startedAtIso,
+              summary: mutableStagingSummary,
+              targetInstance,
+              upstreamInfo,
+            });
+
+            if (resumedHeadLineNumber > 0 && storedRowCount === 0) {
+              listLogger.info(
+                "Verified and promoted completed staging without downloading new rows",
+              );
+            } else {
+              listLogger.info(
+                "Populated {storedRowCount} remote rows (batches: {storedBatchCount}, resumedFromLine: {resumedHeadLineNumber})",
+                {
+                  resumedHeadLineNumber,
+                  storedBatchCount,
+                  storedRowCount,
+                },
+              );
+            }
+
+            return { success: true, data: "updated" };
+          } catch (error) {
+            const errorMessage = getErrorMessage(error);
+
+            if (
+              await this.recordRemoteUpdateIssue({
+                error,
+                listId,
+                stage: currentStage,
+                upstreamInfo,
+              })
+            ) {
+              listLogger.error(
+                "Remote update is paused because storage quota was exceeded during {stage}: {error}",
+                { error: errorMessage, stage: currentStage },
+              );
+
+              return { success: false, error: errorMessage };
+            }
+
+            if (lastFetchedAliasBaseUrl) {
+              this.aliasManagerForStaticApi.markAliasAsUnavailable(
+                lastFetchedAliasBaseUrl,
+                "connectionFailed",
+              );
+              streamRetryCount += 1;
+
+              if (streamRetryCount <= maxStreamRetries) {
+                listLogger.warn(
+                  "Error during {stage}, marking alias unavailable and retrying (attempt {streamRetryCount}/{maxStreamRetries}): {error}",
+                  {
+                    error: errorMessage,
+                    maxStreamRetries,
+                    stage: currentStage,
+                    streamRetryCount,
+                  },
+                );
+                continue;
+              }
+            }
+
+            listLogger.error("Unexpected error while populating: {error}", {
+              error: errorMessage,
+            });
+
+            return { success: false, error: errorMessage };
           }
-
-          listLogger.error("Unexpected error while populating: {error}", {
-            error: errorMessage,
-          });
-
-          return { success: false, error: errorMessage };
         }
-      }
-    });
+      });
+
+    if (result.success && result.data === "updated") {
+      this.failedUpdateStateByListId.delete(listId);
+    } else if (!result.success) {
+      this.recordFailedUpdate(listId, upstreamInfo.generatedAt);
+    }
+
+    return result;
   }
 
   private async runRemotePopulateWithDeduping(
