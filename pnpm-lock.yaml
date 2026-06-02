@@ -43,8 +43,8 @@ importers:
         specifier: 3.12.0
         version: 3.12.0(react@19.2.7)
       '@webext-core/proxy-service':
-        specifier: 2.0.0
-        version: 2.0.0(@webext-core/messaging@3.0.1)(webextension-polyfill@0.12.0)
+        specifier: 2.0.1
+        version: 2.0.1(@webext-core/messaging@3.0.1)
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
@@ -2054,11 +2054,10 @@ packages:
   '@webext-core/messaging@3.0.1':
     resolution: {integrity: sha512-xZ1DTIm/ZHBqKUf1+DczTywbF9MKeJ9ib3iUQIilh9o/2ETYprDDL+Gk5p28GEF82YW5+M2G7LVGpySfcvNpkg==}
 
-  '@webext-core/proxy-service@2.0.0':
-    resolution: {integrity: sha512-yYUAmJQ0mIvFKwAjNUR7HFSYrXGHj4XdBUog/qQgMYiLJrI58U9OQnWBeCV6/zAQSohIrEa54hwJZtyytd5Efw==}
+  '@webext-core/proxy-service@2.0.1':
+    resolution: {integrity: sha512-xzOtMW/cFUqqmihj7y6ipdFy/kMSFH46jTn4ac0x/FXfrFq7gm/Gavo6et7JLBomTnFdpjJ08kdbqJ7fP1c2vQ==}
     peerDependencies:
       '@webext-core/messaging': '>=1.3.1'
-      webextension-polyfill: '>=0.10.0'
 
   '@wxt-dev/auto-icons@1.1.1':
     resolution: {integrity: sha512-Dw2NKK51CCFurE95NptiEheuxVtkeX4vTQwEbhCkFVP9LzXNxOZTX9C9NAsGe6OfahelXlS51TW74hTSzsMILw==}
@@ -4817,9 +4816,6 @@ packages:
   webextension-polyfill@0.10.0:
     resolution: {integrity: sha512-c5s35LgVa5tFaHhrZDnr3FpQpjj1BB+RXhLTYUxGqBVN460HkbM8TBtEqdXWbpTKfzwCcjAZVF7zXCYSKtcp9g==}
 
-  webextension-polyfill@0.12.0:
-    resolution: {integrity: sha512-97TBmpoWJEE+3nFBQ4VocyCdLKfw54rFaJ6EVQYLBCXqCIpLSZkwGgASpv4oPt9gdKCJ80RJlcmNzNn008Ag6Q==}
-
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
 
@@ -6592,10 +6588,9 @@ snapshots:
       '@aklinker1/zero-serialize-error': 1.0.2
       webextension-polyfill: 0.10.0
 
-  '@webext-core/proxy-service@2.0.0(@webext-core/messaging@3.0.1)(webextension-polyfill@0.12.0)':
+  '@webext-core/proxy-service@2.0.1(@webext-core/messaging@3.0.1)':
     dependencies:
       '@webext-core/messaging': 3.0.1
-      webextension-polyfill: 0.12.0
 
   '@wxt-dev/auto-icons@1.1.1(wxt@0.20.26(@types/node@25.9.1)(eslint@9.39.4(jiti@2.7.0))(jiti@2.7.0)(oxc-parser@0.130.0)(rolldown@1.0.2)(tsx@4.22.3)(yaml@2.9.0))':
     dependencies:
@@ -9688,8 +9683,6 @@ snapshots:
       - supports-color
 
   webextension-polyfill@0.10.0: {}
-
-  webextension-polyfill@0.12.0: {}
 
   webpack-virtual-modules@0.6.2: {}
 
