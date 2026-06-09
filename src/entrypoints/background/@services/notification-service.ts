@@ -21,7 +21,6 @@ import {
 } from "@/shared/@primitives/temporal";
 
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
-import { migrateGlobalNotificationsStateFromV1 } from "./legacy-v1-migration-helpers";
 
 const globalNotificationsStateSchema = z.readonly(
   z.object({
@@ -37,11 +36,9 @@ type GlobalNotificationsState = z.infer<typeof globalNotificationsStateSchema>;
 
 const logger = getBackgroundLogger(["notification-service"]);
 
-// TODO: Remove `migrateDataFromV1` after the v1 -> v2 upgrade window closes.
 const globalNotificationsStore = defineStoreWithSchema(
   "sync:global-notifications",
   globalNotificationsStateSchema,
-  { migrateDataFromV1: migrateGlobalNotificationsStateFromV1 },
 );
 
 const defaultGlobalNotificationsState: GlobalNotificationsState = {

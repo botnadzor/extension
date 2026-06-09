@@ -32,15 +32,12 @@ import {
   OrpcErrorRemoteSystemUnavailable,
 } from "../@service-helpers/orpc";
 import { defineStoreWithSchema } from "../@service-helpers/store-with-schema";
-import { migrateAuthInputFromV1 } from "./legacy-v1-migration-helpers";
 
 const logger = getBackgroundLogger(["auth-service"]);
 
-// TODO: Remove `migrateDataFromV1` after the v1 -> v2 upgrade window closes.
 const authInputStore = defineStoreWithSchema(
   "sync:auth-input",
   authInputSchema,
-  { migrateDataFromV1: migrateAuthInputFromV1 },
 );
 
 const minRefetchIntervalAfterAuthCheckInMs = 5 * 60 * 1000;
@@ -182,7 +179,7 @@ export class AuthService {
   }
 
   private async initialize(): Promise<void> {
-    await this.waitUntilAuthInputReady();
+    await this.pollAuthInput(undefined);
 
     const authInput = await this.getAuthInput();
     await this.hydratePersistedAuthState(authInput);
@@ -201,11 +198,6 @@ export class AuthService {
 
     await this.checkAuthAfterInitialization({ force: false });
     this.initialized = true;
-  }
-
-  // TODO: Remove this method after the v1 -> v2 upgrade window closes.
-  async waitUntilAuthInputReady(): Promise<void> {
-    await this.pollAuthInput(undefined);
   }
 
   pollAuthStatus(
