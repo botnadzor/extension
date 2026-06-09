@@ -5,8 +5,12 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@base-ui/react': 92c38112061c6e5770d861c01ba922d0de89d3fbe8c06a7d0d15bb4827bb3d0b
-  lodash: 3988be7bdab0757690c4da375c7bea87fa35b3a284f60c7a43503856b9f6af96
+  '@base-ui/react':
+    hash: 92c38112061c6e5770d861c01ba922d0de89d3fbe8c06a7d0d15bb4827bb3d0b
+    path: patches/@base-ui__react.patch
+  lodash:
+    hash: 3988be7bdab0757690c4da375c7bea87fa35b3a284f60c7a43503856b9f6af96
+    path: patches/lodash.patch
 
 importers:
 
