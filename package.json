@@ -56,7 +56,7 @@
     "@logtape/logtape": "2.1.3",
     "@orpc/client": "1.14.4",
     "@orpc/contract": "1.14.4",
-    "@tailwindcss/typography": "0.5.19",
+    "@tailwindcss/typography": "0.5.20",
     "@visx/axis": "3.12.0",
     "@visx/grid": "3.12.0",
     "@visx/group": "3.12.0",
