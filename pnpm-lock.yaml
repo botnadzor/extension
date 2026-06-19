@@ -15,8 +15,8 @@ importers:
         specifier: 1.5.0
         version: 1.5.0(patch_hash=92c38112061c6e5770d861c01ba922d0de89d3fbe8c06a7d0d15bb4827bb3d0b)(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@logtape/logtape':
-        specifier: 2.1.3
-        version: 2.1.3
+        specifier: 2.1.5
+        version: 2.1.5
       '@orpc/client':
         specifier: 1.14.4
         version: 1.14.4
@@ -1254,8 +1254,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@logtape/logtape@2.1.3':
-    resolution: {integrity: sha512-DgFWjTYG403/FYbe2rIN6oEE20aN34r5UBC4wktCsM+qSF1L9HMZErvH+u+urNuDQX4bcnLm5UYgX+wWE79U3g==}
+  '@logtape/logtape@2.1.5':
+    resolution: {integrity: sha512-59fyskQ9hR5mYQP9YMznZDtwRS4gIN7VIJkoRe0SLTmU+BQGaSP1s+ve8r+Binj1m6jNpwlF7yu9fz2/asSFLw==}
 
   '@napi-rs/wasm-runtime@1.1.5':
     resolution: {integrity: sha512-AWPoBRJ9tsnVhor4sjO7rkni+7p+2IAEFj6cx06UgP10jkQHqay/36uRV/bFkgrh18D9vb4cr8Q0Pthskgzy+Q==}
@@ -5901,7 +5901,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@logtape/logtape@2.1.3': {}
+  '@logtape/logtape@2.1.5': {}
 
   '@napi-rs/wasm-runtime@1.1.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
     dependencies:
