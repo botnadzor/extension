@@ -64,7 +64,7 @@
     "@visx/shape": "4.0.0",
     "@webext-core/proxy-service": "2.0.1",
     "class-variance-authority": "0.7.1",
-    "dexie": "4.4.3",
+    "dexie": "4.4.4",
     "es-toolkit": "1.47.0",
     "immer": "11.1.8",
     "intl-messageformat": "11.2.8",
