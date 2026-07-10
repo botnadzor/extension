@@ -66,7 +66,7 @@
     "class-variance-authority": "0.7.1",
     "dexie": "4.4.4",
     "es-toolkit": "1.47.1",
-    "immer": "11.1.9",
+    "immer": "11.1.11",
     "intl-messageformat": "11.2.9",
     "jsonrepair": "3.14.1",
     "lru-cache": "11.5.1",
