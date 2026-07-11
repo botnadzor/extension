@@ -69,7 +69,7 @@
     "immer": "11.1.11",
     "intl-messageformat": "11.2.10",
     "jsonrepair": "3.14.1",
-    "lru-cache": "11.5.1",
+    "lru-cache": "11.5.2",
     "lucide-react": "1.17.0",
     "lucide-static": "1.17.0",
     "marked-react": "4.0.0",
