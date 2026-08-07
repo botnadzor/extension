@@ -99,7 +99,7 @@
     "@types/react-dom": "19.2.3",
     "@types/semver": "7.7.1",
     "@vitejs/plugin-react": "6.0.5",
-    "@wxt-dev/auto-icons": "1.1.1",
+    "@wxt-dev/auto-icons": "1.1.2",
     "@wxt-dev/module-react": "1.2.2",
     "babel-plugin-react-compiler": "1.0.0",
     "cspell": "10.0.1",
