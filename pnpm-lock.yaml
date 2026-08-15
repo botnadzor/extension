@@ -13,7 +13,7 @@ importers:
     dependencies:
       '@base-ui/react':
         specifier: 1.5.0
-        version: 1.5.0(patch_hash=92c38112061c6e5770d861c01ba922d0de89d3fbe8c06a7d0d15bb4827bb3d0b)(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 1.5.0(patch_hash=92c38112061c6e5770d861c01ba922d0de89d3fbe8c06a7d0d15bb4827bb3d0b)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@logtape/logtape':
         specifier: 2.1.5
         version: 2.1.5
@@ -28,19 +28,19 @@ importers:
         version: 0.5.20(tailwindcss@4.3.3)
       '@visx/axis':
         specifier: 4.0.0
-        version: 4.0.0(@types/react@19.2.17)(react@19.2.8)
+        version: 4.0.0(@types/react@19.2.18)(react@19.2.8)
       '@visx/grid':
         specifier: 4.0.0
-        version: 4.0.0(@types/react@19.2.17)(react@19.2.8)
+        version: 4.0.0(@types/react@19.2.18)(react@19.2.8)
       '@visx/group':
         specifier: 4.0.0
-        version: 4.0.0(@types/react@19.2.17)(react@19.2.8)
+        version: 4.0.0(@types/react@19.2.18)(react@19.2.8)
       '@visx/scale':
         specifier: 4.0.0
         version: 4.0.0
       '@visx/shape':
         specifier: 4.0.0
-        version: 4.0.0(@types/react@19.2.17)(react@19.2.8)
+        version: 4.0.0(@types/react@19.2.18)(react@19.2.8)
       '@webext-core/proxy-service':
         specifier: 2.0.1
         version: 2.0.1(@webext-core/messaging@4.0.0)
@@ -136,11 +136,11 @@ importers:
         specifier: 6.10.1
         version: 6.10.1(jiti@2.7.0)
       '@types/react':
-        specifier: 19.2.17
-        version: 19.2.17
+        specifier: 19.2.18
+        version: 19.2.18
       '@types/react-dom':
-        specifier: 19.2.3
-        version: 19.2.3(@types/react@19.2.17)
+        specifier: 19.2.4
+        version: 19.2.4(@types/react@19.2.18)
       '@types/semver':
         specifier: 7.7.1
         version: 7.7.1
@@ -1919,13 +1919,13 @@ packages:
   '@types/node@26.2.0':
     resolution: {integrity: sha512-5IviulTZeRNp2vAJ514cc/HUlY5nZ9fCbq9DMyC52BrhFZACo3nI0R7qBxhQmo/d27NFe96ur/b7Wwxklda+kg==}
 
-  '@types/react-dom@19.2.3':
-    resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
+  '@types/react-dom@19.2.4':
+    resolution: {integrity: sha512-Bsc+QHgp+P/F02XDzNCY9jnZNCUuLki36KT7VKrTXXLdHf+vHMNZnW1rVu5DNW/rCK+fya3DATySbLM4yhtKUw==}
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react@19.2.17':
-    resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
+  '@types/react@19.2.18':
+    resolution: {integrity: sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w==}
 
   '@types/semver@7.7.1':
     resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
@@ -5315,19 +5315,19 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@base-ui/react@1.5.0(patch_hash=92c38112061c6e5770d861c01ba922d0de89d3fbe8c06a7d0d15bb4827bb3d0b)(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@base-ui/react@1.5.0(patch_hash=92c38112061c6e5770d861c01ba922d0de89d3fbe8c06a7d0d15bb4827bb3d0b)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@babel/runtime': 7.29.7
-      '@base-ui/utils': 0.2.9(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@base-ui/utils': 0.2.9(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@floating-ui/react-dom': 2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@floating-ui/utils': 0.2.12
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
       use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
-      '@types/react': 19.2.17
+      '@types/react': 19.2.18
 
-  '@base-ui/utils@0.2.9(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@base-ui/utils@0.2.9(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@babel/runtime': 7.29.7
       '@floating-ui/utils': 0.2.12
@@ -5336,7 +5336,7 @@ snapshots:
       reselect: 5.2.0
       use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
-      '@types/react': 19.2.17
+      '@types/react': 19.2.18
 
   '@cspell/cspell-bundled-dicts@10.0.1':
     dependencies:
@@ -6618,11 +6618,11 @@ snapshots:
     dependencies:
       undici-types: 8.3.0
 
-  '@types/react-dom@19.2.3(@types/react@19.2.17)':
+  '@types/react-dom@19.2.4(@types/react@19.2.18)':
     dependencies:
-      '@types/react': 19.2.17
+      '@types/react': 19.2.18
 
-  '@types/react@19.2.17':
+  '@types/react@19.2.18':
     dependencies:
       csstype: 3.2.3
 
@@ -6788,40 +6788,40 @@ snapshots:
     dependencies:
       valibot: 1.4.2(typescript@6.0.3)
 
-  '@visx/axis@4.0.0(@types/react@19.2.17)(react@19.2.8)':
+  '@visx/axis@4.0.0(@types/react@19.2.18)(react@19.2.8)':
     dependencies:
-      '@visx/group': 4.0.0(@types/react@19.2.17)(react@19.2.8)
+      '@visx/group': 4.0.0(@types/react@19.2.18)(react@19.2.8)
       '@visx/point': 4.0.0
       '@visx/scale': 4.0.0
-      '@visx/shape': 4.0.0(@types/react@19.2.17)(react@19.2.8)
-      '@visx/text': 4.0.0(@types/react@19.2.17)(react@19.2.8)
+      '@visx/shape': 4.0.0(@types/react@19.2.18)(react@19.2.8)
+      '@visx/text': 4.0.0(@types/react@19.2.18)(react@19.2.8)
       classnames: 2.5.1
       react: 19.2.8
     optionalDependencies:
-      '@types/react': 19.2.17
+      '@types/react': 19.2.18
 
   '@visx/curve@4.0.0':
     dependencies:
       '@visx/vendor': 4.0.0
 
-  '@visx/grid@4.0.0(@types/react@19.2.17)(react@19.2.8)':
+  '@visx/grid@4.0.0(@types/react@19.2.18)(react@19.2.8)':
     dependencies:
       '@visx/curve': 4.0.0
-      '@visx/group': 4.0.0(@types/react@19.2.17)(react@19.2.8)
+      '@visx/group': 4.0.0(@types/react@19.2.18)(react@19.2.8)
       '@visx/point': 4.0.0
       '@visx/scale': 4.0.0
-      '@visx/shape': 4.0.0(@types/react@19.2.17)(react@19.2.8)
+      '@visx/shape': 4.0.0(@types/react@19.2.18)(react@19.2.8)
       classnames: 2.5.1
       react: 19.2.8
     optionalDependencies:
-      '@types/react': 19.2.17
+      '@types/react': 19.2.18
 
-  '@visx/group@4.0.0(@types/react@19.2.17)(react@19.2.8)':
+  '@visx/group@4.0.0(@types/react@19.2.18)(react@19.2.8)':
     dependencies:
       classnames: 2.5.1
       react: 19.2.8
     optionalDependencies:
-      '@types/react': 19.2.17
+      '@types/react': 19.2.18
 
   '@visx/point@4.0.0': {}
 
@@ -6829,24 +6829,24 @@ snapshots:
     dependencies:
       '@visx/vendor': 4.0.0
 
-  '@visx/shape@4.0.0(@types/react@19.2.17)(react@19.2.8)':
+  '@visx/shape@4.0.0(@types/react@19.2.18)(react@19.2.8)':
     dependencies:
       '@visx/curve': 4.0.0
-      '@visx/group': 4.0.0(@types/react@19.2.17)(react@19.2.8)
+      '@visx/group': 4.0.0(@types/react@19.2.18)(react@19.2.8)
       '@visx/scale': 4.0.0
       '@visx/vendor': 4.0.0
       classnames: 2.5.1
       react: 19.2.8
     optionalDependencies:
-      '@types/react': 19.2.17
+      '@types/react': 19.2.18
 
-  '@visx/text@4.0.0(@types/react@19.2.17)(react@19.2.8)':
+  '@visx/text@4.0.0(@types/react@19.2.18)(react@19.2.8)':
     dependencies:
       classnames: 2.5.1
       react: 19.2.8
       reduce-css-calc: 1.3.0
     optionalDependencies:
-      '@types/react': 19.2.17
+      '@types/react': 19.2.18
 
   '@visx/vendor@4.0.0':
     dependencies:
