@@ -67,7 +67,7 @@
     "dexie": "4.4.5",
     "es-toolkit": "1.47.1",
     "immer": "11.1.18",
-    "intl-messageformat": "11.2.13",
+    "intl-messageformat": "11.2.14",
     "jsonrepair": "3.14.1",
     "lru-cache": "11.5.2",
     "lucide-react": "1.17.0",
