@@ -92,7 +92,7 @@
     "@stylistic/eslint-plugin": "5.10.0",
     "@tailwindcss/vite": "4.3.3",
     "@tsconfig/node-ts": "23.6.4",
-    "@tsconfig/node24": "24.0.4",
+    "@tsconfig/node24": "24.0.5",
     "@tsconfig/strictest": "2.0.8",
     "@types/eslint-plugin-jsx-a11y": "6.10.1",
     "@types/react": "19.2.18",
