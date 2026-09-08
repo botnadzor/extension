@@ -78,7 +78,7 @@
     "react-dom": "19.2.8",
     "semver": "7.8.5",
     "tailwind-merge": "3.6.0",
-    "zod": "4.4.3"
+    "zod": "4.5.4"
   },
   "devDependencies": {
     "@cspell/dict-ru_ru": "2.3.2",
