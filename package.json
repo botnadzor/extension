@@ -65,7 +65,7 @@
     "@webext-core/proxy-service": "3.0.2",
     "class-variance-authority": "0.7.1",
     "dexie": "4.4.5",
-    "es-toolkit": "1.47.1",
+    "es-toolkit": "1.52.0",
     "immer": "11.1.18",
     "intl-messageformat": "11.2.14",
     "jsonrepair": "3.14.1",
