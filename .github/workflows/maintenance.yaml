@@ -25,7 +25,7 @@ jobs:
         ## pnpm/setup installs node itself, but unlike actions/setup-node it cannot read
         ## .tool-versions. Passing the version in keeps that file the single source of truth.
       - name: Read node version from .tool-versions
-        run: echo "NODE_VERSION=$(awk '$1 == \"nodejs\" { print $2 }' .tool-versions)" >> "$GITHUB_ENV"
+        run: awk '$1 == "nodejs" { print "NODE_VERSION=" $2 }' .tool-versions >> "$GITHUB_ENV"
 
         ## This also runs `pnpm install`, so no separate step for it is needed
       - name: Setup pnpm and node
