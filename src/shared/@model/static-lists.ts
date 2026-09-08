@@ -51,8 +51,13 @@ export type StaticListsDataIssueState =
   | { kind: "initialDataUnavailable" }
   | { kind: "updatesBlockedButExistingDataUsable" };
 
+/** @public */
 export type { AccountListItem } from "./static-lists/=accounts";
+/** @public */
 export type { AnnouncementListItem } from "./static-lists/=announcements";
+/** @public */
 export type { InsertionListItem } from "./static-lists/=insertions";
+/** @public */
 export type { TagListItem } from "./static-lists/=tags";
+/** @public */
 export type { WallListItem } from "./static-lists/=walls";
