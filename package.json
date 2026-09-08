@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",
-    "@logtape/logtape": "2.1.5",
+    "@logtape/logtape": "2.3.3",
     "@orpc/client": "1.14.15",
     "@orpc/contract": "1.14.15",
     "@tailwindcss/typography": "0.5.20",
