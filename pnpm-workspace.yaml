@@ -5,8 +5,6 @@ allowBuilds:
   sharp: false
   spawn-sync: true ## @v1, dependency of web-ext-run
 
-ignorePatchFailures: false
-
 nodeLinker: isolated
 
 patchedDependencies:
