@@ -1,5 +1,6 @@
 add-ons
 autoload
+awk
 bbox
 bivariance
 botnadzor
