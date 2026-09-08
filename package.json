@@ -103,7 +103,7 @@
     "@wxt-dev/auto-icons": "1.1.2",
     "@wxt-dev/module-react": "1.2.2",
     "babel-plugin-react-compiler": "1.0.0",
-    "cspell": "10.2.1",
+    "cspell": "10.2.2",
     "eslint": "9.39.5",
     "eslint-plugin-better-tailwindcss": "4.7.0",
     "eslint-plugin-import": "2.32.0",
