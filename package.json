@@ -62,7 +62,7 @@
     "@visx/group": "4.0.0",
     "@visx/scale": "4.0.0",
     "@visx/shape": "4.0.0",
-    "@webext-core/proxy-service": "2.0.1",
+    "@webext-core/proxy-service": "3.0.2",
     "class-variance-authority": "0.7.1",
     "dexie": "4.4.5",
     "es-toolkit": "1.47.1",
