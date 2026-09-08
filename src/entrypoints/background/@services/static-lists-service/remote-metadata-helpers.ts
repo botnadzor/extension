@@ -6,7 +6,6 @@ export function omitRemoteStaging<ListId extends StaticListId>(
 ): StaticListMetadata<ListId> {
   const { remoteStaging: remoteStagingOmitted, ...metadataWithoutRemote } =
     metadata;
-  void remoteStagingOmitted;
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- removing an exact-optional property via rest is correct at runtime but TS loses that shape
   return metadataWithoutRemote as StaticListMetadata<ListId>;
 }
