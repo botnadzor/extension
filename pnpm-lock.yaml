@@ -42,8 +42,8 @@ importers:
         specifier: 4.0.0
         version: 4.0.0(@types/react@19.2.18)(react@19.2.8)
       '@webext-core/proxy-service':
-        specifier: 2.0.1
-        version: 2.0.1(@webext-core/messaging@4.0.0)
+        specifier: 3.0.2
+        version: 3.0.2(@webext-core/messaging@4.0.0)
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
@@ -2166,8 +2166,8 @@ packages:
       '@types/chrome':
         optional: true
 
-  '@webext-core/proxy-service@2.0.1':
-    resolution: {integrity: sha512-xzOtMW/cFUqqmihj7y6ipdFy/kMSFH46jTn4ac0x/FXfrFq7gm/Gavo6et7JLBomTnFdpjJ08kdbqJ7fP1c2vQ==}
+  '@webext-core/proxy-service@3.0.2':
+    resolution: {integrity: sha512-Cfdxsd+VaFh7ZOvCUzbdqEHIZopRn64BemXcJv3aGQgq98rQ0IVAsLG8M/9yqVcBGtATUvM/Mk2gsVaNcFrZFA==}
     peerDependencies:
       '@webext-core/messaging': '>=1.3.1'
 
@@ -6962,7 +6962,7 @@ snapshots:
     dependencies:
       '@aklinker1/zero-serialize-error': 1.0.2
 
-  '@webext-core/proxy-service@2.0.1(@webext-core/messaging@4.0.0)':
+  '@webext-core/proxy-service@3.0.2(@webext-core/messaging@4.0.0)':
     dependencies:
       '@webext-core/messaging': 4.0.0
 
