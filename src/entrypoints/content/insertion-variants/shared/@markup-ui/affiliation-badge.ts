@@ -19,9 +19,7 @@ export function mountUiWithAffiliationBadge({
     }>
   | undefined {
   const { element } = createInsertionUi({
-    className: cn(
-      "bn:relative bn:text-[13px] bn:text-muted-foreground bn:italic",
-    ),
+    className: cn("bn:relative bn:text-[13px] bn:text-muted-foreground"),
     dxLabel: "affiliationBadge",
     placement,
     rootElement,
