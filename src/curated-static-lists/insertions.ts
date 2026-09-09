@@ -1817,7 +1817,7 @@ export default [
       edits: [
         {
           // Ensures parent element of affiliation highlight defines its position
-          selector: "a + div + div, [class*='vkitReview__stretched']",
+          selector: "a + div",
           style: { position: "relative" },
         },
         {
@@ -1838,7 +1838,7 @@ export default [
           style: { paddingLeft: "4px", fontStyle: "normal" },
         },
         affiliationHighlight: {
-          selector: "[class*='vkitReview__stretched'], a + div + div",
+          selector: "a + div",
           position: "prepend",
           style: { inset: "-2px", left: "-6px" },
         },
