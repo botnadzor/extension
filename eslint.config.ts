@@ -270,7 +270,7 @@ export default defineConfig(
       "unicorn/prefer-top-level-await": "off", // https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2149
       "unicorn/prevent-abbreviations": "off",
 
-      // Suppressed after upgrading eslint-plugin-unicorn from v64 to v74; needs triaging.
+      // Suppressed after upgrading eslint-plugin-unicorn from v64 to v74; needs review.
       "unicorn/consistent-boolean-name": "off",
       "unicorn/consistent-class-member-order": "off",
       "unicorn/consistent-compound-words": "off",
