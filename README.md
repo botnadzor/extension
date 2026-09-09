@@ -19,58 +19,49 @@ _For the English version of this README, [see it on Google Translate](https://tr
 
 <img src="docs/assets/botnadzor-extension-insertions.png" alt="Подсветка ботов в VK и вставка карточек" width="600">
 
-- Подсвечивает ботов на сайтах VK: ([m.](https://m.vk.ru))[vk.ru](https://vk.ru), ([m.](https://m.vkvideo.ru))[vkvideo.ru](https://vkvideo.ru), а также на прежнем домене ([m.](https://m.vk.com))[vk.com](https://vk.com) и в веб-архиве [web.archive.org](https://web.archive.org), включая снимки старых доменов `vkontakte.ru` и `m.vkontakte.ru`
-- Упрощает вставку [карточек ботов](https://botnadzor.org/docs/how-to-help#cards) в ответ на их комментарии
-- Позволяет узнавать дату регистрации аккаунтов VK
-- Позволяет изучать подозрительную активность аккаунтов с помощью встроенного инспектора
-- Позволяет отправлять подозрительные аккаунты на проверку администраторам Ботнадзора
+- Подсвечивает ботов на сайтах VK: [vk.ru](https://vk.ru), [vkvideo.ru](https://vkvideo.ru), [vk.com](https://vk.com) и их мобильных версиях, а также в [веб-архиве](https://web.archive.org)
+- Помогает вставлять [карточки ботов](https://botnadzor.org/docs/how-to-help#cards) в ответ на их комментарии
+- Показывает дату регистрации аккаунтов VK
+- Помогает изучать подозрительную активность с помощью встроенного инспектора
+- Помогает отправлять подозрительные аккаунты на проверку администраторам Ботнадзора
 
 ## Установка из магазина браузера
 
-Для большинства пользователей рекомендуется установка стабильной версии расширения из магазина браузера.
+Большинству пользователей подойдёт стабильная версия из магазина браузера.
 
 ### Браузеры на&nbsp;базе&nbsp;Chromium
 
-_**Chrome**, **Edge**, **Yandex**, **Opera**, **Brave**, **Lemur** и&nbsp;т.д._  
-_для Windows, Android, macOS и Linux_
+Инструкция подходит для **Chrome**, **Edge**, **Yandex**, **Opera**, **Brave**, **Lemur** и других браузеров на Windows, Android, macOS и Linux.
 
 1.  Перейдите на [страницу расширения в каталоге Chrome](https://chromewebstore.google.com/detail/%D0%91%D0%BE%D1%82%D0%BD%D0%B0%D0%B4%D0%B7%D0%BE%D1%80%20%28botnadzor.org%29/loemeolcemafljepnnmgjcoibcbocoma)
 
 1.  В правом верхнем углу страницы нажмите кнопку _«Добавить»_  
     _Надпись на кнопке может быть немного другой, она зависит от браузера_
 
-1.  Откройте VK-паблик, где часто бывают боты  
-    _например, [ria](https://vk.ru/ria), [rt_russian](https://vk.ru/rt_russian), [vesti](https://vk.ru/vesti), [mash](https://vk.ru/mash)_
-
-    Теперь вы видите ботов в комментариях и&nbsp;профилях&nbsp;VK!
-
-    Пожалуйста, [поддержите наш проект](https://botnadzor.org/docs/how-to-help) донатом, а&nbsp;также оставляйте [карточки ботов в&nbsp;VK](https://botnadzor.org/docs/how-to-help#cards) и&nbsp;подпишитесь на&nbsp;наши&nbsp;соцсети: [Telegram](https://t.me/botnadzor_org),&nbsp;[VK](https://vk.ru/botnadzor).
-
 ### Firefox
 
-_В том числе **TOR Browser**_
+Инструкция также подходит для **Tor Browser**.
 
 1.  Перейдите на [страницу расширения в каталоге Firefox](https://addons.mozilla.org/ru/firefox/addon/botnadzor-org/)
 
 1.  Нажмите кнопку _«Добавить в Firefox»_
 
-1.  Откройте VK-паблик, где часто бывают боты  
-    _например, [ria](https://vk.ru/ria), [rt_russian](https://vk.ru/rt_russian), [vesti](https://vk.ru/vesti), [mash](https://vk.ru/mash)_
+### После установки
 
-    Теперь вы видите ботов в комментариях и&nbsp;профилях&nbsp;VK!
+Откройте VK-паблик, где часто встречаются боты, например [ria](https://vk.ru/ria), [rt_russian](https://vk.ru/rt_russian), [vesti](https://vk.ru/vesti) или [mash](https://vk.ru/mash). Расширение подсветит ботов в комментариях и профилях VK.
 
-    Пожалуйста, [поддержите наш проект](https://botnadzor.org/docs/how-to-help) донатом, а&nbsp;также оставляйте [карточки ботов в&nbsp;VK](https://botnadzor.org/docs/how-to-help#cards) и&nbsp;подпишитесь на&nbsp;наши&nbsp;соцсети: [Telegram](https://t.me/botnadzor_org),&nbsp;[VK](https://vk.ru/botnadzor).
+Вы можете [поддержать проект](https://botnadzor.org/docs/how-to-help) донатом, оставлять [карточки ботов в VK](https://botnadzor.org/docs/how-to-help#cards) и подписаться на наши соцсети: [Telegram](https://t.me/botnadzor_org) и [VK](https://vk.ru/botnadzor).
 
 ## Установка из GitHub Releases
 
-Этот способ подходит тем, кто хочет помочь с поиском ошибок в экспериментальных версиях.
+Этот способ подходит тем, кто хочет тестировать экспериментальные версии и помогать искать ошибки.
 
-1.  Откройте страницу релизов ([github.com/botnadzor/extension/releases](https://github.com/botnadzor/extension/releases)) и выберите нужную версию (скорее всего, наиболее свежую).
+1.  Откройте [страницу релизов](https://github.com/botnadzor/extension/releases) и выберите нужную версию — обычно самую свежую.
 
     В блоке `Assets` релиза найдите архив для вашего браузера и скачайте его:  
     `botnadzor-for-BROWSER-VERSION.zip`
 
-    ℹ️ `chrome` подходит для всех браузеров на базе Chromium: **Chrome**, **Edge**, **Yandex**, **Opera**, **Brave**, **Lemur** и&nbsp;т.д.
+    ℹ️ Архив `chrome` подходит для всех браузеров на базе Chromium: **Chrome**, **Edge**, **Yandex**, **Opera**, **Brave**, **Lemur** и других.
 
     ⚠️ Если в релизе есть файл `botnadzor-sources-VERSION.zip`, он _не нужен_ для установки. Это архив с исходным кодом для публикации расширения в магазине.
 
@@ -94,13 +85,13 @@ _В том числе **TOR Browser**_
 1.  После установки откройте попап Ботнадзора (иконка расширения) и проверьте версию.
     Она должна совпадать с релизом, который вы скачали (например, `2.0.0-beta.1`).
 
-1.  Если захотите вернуться на стабильную версию из магазина, удалите или отключите экспериментальную версию, затем снова включите магазинную.
+1.  Чтобы вернуться на стабильную версию, удалите или отключите экспериментальную и снова включите расширение из магазина.
 
 ## Архитектура
 
-Расширение построено на [WXT](https://wxt.dev) с использованием [React](https://react.dev), [TypeScript](https://www.typescriptlang.org) и [TailwindCSS](https://tailwindcss.com).
+Расширение построено на [WXT](https://wxt.dev), [React](https://react.dev), [TypeScript](https://www.typescriptlang.org) и [TailwindCSS](https://tailwindcss.com).
 Интерфейсные компоненты основаны на [Shadcn UI](https://ui.shadcn.com) и [Base UI](https://base-ui.com).
-Данные обрабатываются при помощи [Zod](https://zod.dev), [Dexie](https://dexie.org) и [ORPC](https://orpc.dev).
+Для обработки данных используются [Zod](https://zod.dev), [Dexie](https://dexie.org) и [ORPC](https://orpc.dev).
 Иконки взяты из [Lucide](https://lucide.dev).
 
 У расширения три основных точки входа:
@@ -109,7 +100,7 @@ _В том числе **TOR Browser**_
 - **Content script** — модифицирует DOM на страницах VK через систему вставок (_insertions_) — модульных DOM-модификаций с автоматической очисткой
 - **Popup** — показывает меню расширения с настройками, объявлениями и статистикой
 
-Связь _background_ с _content script_ и _popup_ реализована через библиотеку [`@webext-core/proxy-service`](https://www.npmjs.com/package/@webext-core/proxy-service).
+_Background_, _content script_ и _popup_ взаимодействуют через библиотеку [`@webext-core/proxy-service`](https://www.npmjs.com/package/@webext-core/proxy-service).
 
 Подробное описание архитектуры, паттернов и соглашений — в [AGENTS.md](AGENTS.md) (на английском).
 
@@ -117,8 +108,8 @@ _В том числе **TOR Browser**_
 
 ### Требования
 
-- [Node.js](https://nodejs.org/en/download) 24 или 26 (точная версия указана в `.tool-versions`, но подойдёт любая версия ≥ 24.0)
-- [pnpm](https://pnpm.io/installation) 10 или 11 (точная версия указана в `package.json` → `packageManager`, но подойдёт любая версия ≥ 10.0)
+- [Node.js](https://nodejs.org/en/download) ≥ 24 (рекомендуемая версия указана в `.tool-versions`)
+- [pnpm](https://pnpm.io/installation) ≥ 10 (рекомендуемая версия указана в поле `packageManager` файла `package.json`)
 
 ### Установка зависимостей
 
@@ -133,10 +124,7 @@ pnpm dev:chrome  # Chrome с живой перезагрузкой измене�
 pnpm dev:firefox # Firefox с живой перезагрузкой изменений
 ```
 
-Сервер разработки автоматически запускает чистую копию браузера и открывает тестовую страницу на сайте VK.
-
-Файлы сборки доступны в директории `dist/`.
-При желании эти файлы можно добавить как временное расширение в свой основной браузер.
+Сервер разработки автоматически запускает отдельный профиль браузера и открывает тестовую страницу VK.
 
 ### Локальная сборка
 
@@ -146,8 +134,7 @@ pnpm build:chrome  # только Chrome
 pnpm build:firefox # только Firefox
 ```
 
-Файлы сборки доступны в директории `dist/`.
-При желании эти файлы можно добавить как временное расширение в свой основной браузер.
+Файлы появятся в директории `dist/`. Их можно установить как временное расширение в основной браузер.
 
 ### Линтинг (статические проверки кода)
 
@@ -174,12 +161,12 @@ CI запускается для пулл-реквестов и для новы�
 - _build_ (сборка расширения)
 - _lint and test_ (прогон всех линтеров и юнит-тестов)
 
-Ручной запуск линтеров и юнит-тестов локально позволяет заранее поймать проблемы, которые могут возникнуть в CI.
+Локальный запуск линтеров и юнит-тестов помогает найти проблемы до CI.
 
 ## Обратная связь и вклад
 
-Если вы нашли ошибку или хотите предложить улучшение, создайте [issue](https://github.com/botnadzor/extension/issues) или дополните уже существующее.
-Если вы хотите внести изменения в код или документацию, создайте [pull request](https://github.com/botnadzor/extension/pulls).
+Нашли ошибку или хотите предложить улучшение? Создайте [issue](https://github.com/botnadzor/extension/issues) или дополните уже существующее.
+Чтобы внести изменения в код или документацию, создайте [pull request](https://github.com/botnadzor/extension/pulls).
 
 Подробнее о проекте Ботнадзор и о способах связи — на странице [botnadzor.org/docs](https://botnadzor.org/docs).
 Если сайт недоступен, воспользуйтесь нашим телеграм-ботом [@botnadzor_org_bot](https://t.me/botnadzor_org_bot), чтобы получить ссылку на зеркало.
