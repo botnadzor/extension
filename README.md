@@ -1,6 +1,6 @@
 # Расширение Ботнадзор<br><em>Botnadzor extension</em>
 
-_Botnadzor browser extension highlights bots on [vk.com](https://vk.com) and VK-related sites.  
+_Botnadzor browser extension highlights bots on [vk.ru](https://vk.ru) and VK-related sites.  
 Learn more at [botnadzor.org/extension](https://botnadzor.org/extension) (ru)._
 
 _For the English version of this README, [see it on Google Translate](https://translate.google.com/translate?sl=ru&tl=en&u=https://github.com/botnadzor/extension/blob/main/README.md)._
@@ -12,14 +12,14 @@ _For the English version of this README, [see it on Google Translate](https://tr
 [![License: BSD-3-Clause](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/botnadzor/extension/ci.yaml?branch=main&label=CI)](https://github.com/botnadzor/extension/actions/workflows/ci.yaml)
 
-Браузерное расширение Ботнадзор подсвечивает ботов на [vk.com](https://vk.com) и связанных сайтах.  
+Браузерное расширение Ботнадзор подсвечивает ботов на [vk.ru](https://vk.ru) и связанных сайтах.  
 Подробнее о расширении: [botnadzor.org/extension](https://botnadzor.org/extension).
 
 ## Что делает расширение
 
 <img src="docs/assets/botnadzor-extension-insertions.png" alt="Подсветка ботов в VK и вставка карточек" width="600">
 
-- Подсвечивает ботов на сайтах VK: ([m.](https://m.vk.com))[vk.com](https://vk.com), ([m.](https://m.vk.ru))[vk.ru](https://vk.ru), ([m.](https://m.vkvideo.ru))[vkvideo.ru](https://vkvideo.ru), а также на веб-архиве: [web.archive.org](https://web.archive.org)
+- Подсвечивает ботов на сайтах VK: ([m.](https://m.vk.ru))[vk.ru](https://vk.ru), ([m.](https://m.vkvideo.ru))[vkvideo.ru](https://vkvideo.ru), а также на прежнем домене ([m.](https://m.vk.com))[vk.com](https://vk.com) и в веб-архиве [web.archive.org](https://web.archive.org), включая снимки старых доменов `vkontakte.ru` и `m.vkontakte.ru`
 - Упрощает вставку [карточек ботов](https://botnadzor.org/docs/how-to-help#cards) в ответ на их комментарии
 - Позволяет узнавать дату регистрации аккаунтов VK
 - Позволяет изучать подозрительную активность аккаунтов с помощью встроенного инспектора
@@ -40,11 +40,11 @@ _для Windows, Android, macOS и Linux_
     _Надпись на кнопке может быть немного другой, она зависит от браузера_
 
 1.  Откройте VK-паблик, где часто бывают боты  
-    _например, [ria](https://vk.com/ria), [rt_russian](https://vk.com/rt_russian), [vesti](https://vk.com/vesti), [mash](https://vk.com/mash)_
+    _например, [ria](https://vk.ru/ria), [rt_russian](https://vk.ru/rt_russian), [vesti](https://vk.ru/vesti), [mash](https://vk.ru/mash)_
 
     Теперь вы видите ботов в комментариях и&nbsp;профилях&nbsp;VK!
 
-    Пожалуйста, [поддержите наш проект](https://botnadzor.org/docs/how-to-help) донатом, а&nbsp;также оставляйте [карточки ботов в&nbsp;VK](https://botnadzor.org/docs/how-to-help#cards) и&nbsp;подпишитесь на&nbsp;наши&nbsp;соцсети: [Telegram](https://t.me/botnadzor_org),&nbsp;[VK](https://vk.com/botnadzor).
+    Пожалуйста, [поддержите наш проект](https://botnadzor.org/docs/how-to-help) донатом, а&nbsp;также оставляйте [карточки ботов в&nbsp;VK](https://botnadzor.org/docs/how-to-help#cards) и&nbsp;подпишитесь на&nbsp;наши&nbsp;соцсети: [Telegram](https://t.me/botnadzor_org),&nbsp;[VK](https://vk.ru/botnadzor).
 
 ### Firefox
 
@@ -55,11 +55,11 @@ _В том числе **TOR Browser**_
 1.  Нажмите кнопку _«Добавить в Firefox»_
 
 1.  Откройте VK-паблик, где часто бывают боты  
-    _например, [ria](https://vk.com/ria), [rt_russian](https://vk.com/rt_russian), [vesti](https://vk.com/vesti), [mash](https://vk.com/mash)_
+    _например, [ria](https://vk.ru/ria), [rt_russian](https://vk.ru/rt_russian), [vesti](https://vk.ru/vesti), [mash](https://vk.ru/mash)_
 
     Теперь вы видите ботов в комментариях и&nbsp;профилях&nbsp;VK!
 
-    Пожалуйста, [поддержите наш проект](https://botnadzor.org/docs/how-to-help) донатом, а&nbsp;также оставляйте [карточки ботов в&nbsp;VK](https://botnadzor.org/docs/how-to-help#cards) и&nbsp;подпишитесь на&nbsp;наши&nbsp;соцсети: [Telegram](https://t.me/botnadzor_org),&nbsp;[VK](https://vk.com/botnadzor).
+    Пожалуйста, [поддержите наш проект](https://botnadzor.org/docs/how-to-help) донатом, а&nbsp;также оставляйте [карточки ботов в&nbsp;VK](https://botnadzor.org/docs/how-to-help#cards) и&nbsp;подпишитесь на&nbsp;наши&nbsp;соцсети: [Telegram](https://t.me/botnadzor_org),&nbsp;[VK](https://vk.ru/botnadzor).
 
 ## Установка из GitHub Releases
 

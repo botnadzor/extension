@@ -40,11 +40,11 @@ function normalizeSourceToken(value: string): string | undefined {
   }
 
   const withoutQuery = sanitizedValue.replaceAll(/[?#].*$/g, "");
-  if (!URL.canParse(withoutQuery, "https://vk.com")) {
+  if (!URL.canParse(withoutQuery, "https://vk.ru")) {
     return withoutQuery;
   }
 
-  const normalizedUrl = new URL(withoutQuery, "https://vk.com");
+  const normalizedUrl = new URL(withoutQuery, "https://vk.ru");
   return normalizedUrl.pathname || withoutQuery;
 }
 

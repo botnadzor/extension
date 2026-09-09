@@ -55,7 +55,7 @@ export type CommentInnerData = {
 /**
  * Supports values like:
  * - /wall-123_456?reply=789
- * - https://vk.com/photo-123_456?reply=789
+ * - https://vk.ru/photo-123_456?reply=789
  * - https://m.vk.ru/video123_456?reply=789
  * - ... replyClick('wall-123_456', 798 ...
  * - ... replyClick('123_456', 798 ...
@@ -71,7 +71,7 @@ async function extractCommentIdentifierFromMarkup(
     commentIdentifierSelector,
     instanceLogger,
     (value) => {
-      // Try URL format: /wall-123_456?reply=789 or https://vk.com/photo-123_456?reply=789
+      // Try URL format: /wall-123_456?reply=789 or https://vk.ru/photo-123_456?reply=789
       const urlRegexp =
         /(?:https?:\/\/[^/]+)?\/(photo|video|wall)(-?\d+)_(\d+)/;
       const urlMatch = urlRegexp.exec(value);

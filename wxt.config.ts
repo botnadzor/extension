@@ -149,7 +149,7 @@ export default defineConfig({
   }),
 
   webExt: {
-    startUrls: ["https://vk.com/ria"],
+    startUrls: ["https://vk.ru/ria"],
   },
 
   zip: {
