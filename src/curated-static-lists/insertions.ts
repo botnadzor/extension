@@ -489,13 +489,18 @@ export default [
     id: "desktopProfileHeader",
     variant: "account",
     appliesTo: "desktopVkWebsite",
-    selector: ".ProfileHeader__in",
+    selector: ".ProfileHeader__in, [data-testid='profile-header']",
     markup: {
       data: {
         accountAvatar: ".page_avatar_img img",
         accountIdentifier: [
           {
-            selector: ".ProfileHeader__ava > div > div",
+            selector: ".ProfileHeader__ava > div",
+            attribute: "id",
+            valuePattern: "[_](\\d+)",
+          },
+          {
+            selector: "[data-testid='profile-avatar']",
             attribute: "id",
             valuePattern: "[_](\\d+)",
           },
@@ -505,7 +510,7 @@ export default [
             attribute: "href",
           },
         ],
-        accountName: "#owner_page_name",
+        accountName: "#owner_page_name, [data-testid='profile-owner-name']",
       },
       edits: [
         {
@@ -561,15 +566,17 @@ export default [
     id: "mobileProfileHeader",
     variant: "account",
     appliesTo: "mobileVkWebsite",
-    selector: ".ProfileInfo__main",
+    selector: ".ProfileInfo__main, [data-testid='profile_info_content']",
     markup: {
       data: {
         accountAvatar: "[data-testid='profile-avatar'] > img",
         accountIdentifier: {
           ancestorSelector: "html",
-          selector: ".vkuiPanelHeader__contentIn > span",
+          selector:
+            ".vkuiPanelHeader__contentIn > span, .vkuiEllipsisText__content",
         },
-        accountName: ".ProfileInfoName",
+        accountName:
+          ".ProfileInfoName, [data-testid='profile_info_content'] > div > div > h2",
       },
       edits: [
         {
@@ -695,7 +702,7 @@ export default [
     variant: "account",
     appliesTo: "desktopAndMobileVkWebsite",
     selector:
-      '[data-testid="post"] > .vkuiDiv__host > [class*="vkitPostHeader__container"]',
+      '[data-testid="post"] > .vkuiDiv__host > [class*="vkitPostHeader__container"], [data-testid="post-header"]',
     markup: {
       data: {
         accountAvatar: "[data-testid='post-header-avatar'] img",
@@ -742,7 +749,7 @@ export default [
         affiliationBadge: {
           selector: "[data-testid='post-header-title']",
           position: "append",
-          style: { paddingLeft: "4px" },
+          style: { paddingLeft: "4px", fontStyle: "normal" },
         },
         affiliationHighlight: {
           selector: "",
@@ -912,6 +919,10 @@ export default [
           selector: "[class*='RichCell__children']",
           style: { overflow: "visible" },
         },
+        {
+          selector: "",
+          style: { position: "relative" },
+        },
       ],
       ui: {
         actionBar: [
@@ -927,7 +938,8 @@ export default [
           },
         ],
         affiliationBadge: {
-          selector: "[class*='vkitUserRichCell__name']",
+          selector:
+            "[class*='vkitUserRichCell__name'], [data-testid='userrichcell-name']",
           position: "append",
           style: { marginLeft: "3px" },
         },
@@ -959,7 +971,8 @@ export default [
     id: "desktopAndMobileLikeCell",
     variant: "account",
     appliesTo: "desktopAndMobileVkWebsite",
-    selector: "[class*='vkitVirtualizedList'] > * > .vkuiSimpleCell__host",
+    selector:
+      "[class*='vkitVirtualizedList'] > * > .vkuiSimpleCell__host, [data-testid='reactions_modal_reacted_user_cell']",
     markup: {
       data: {
         accountAvatar:
@@ -1016,6 +1029,7 @@ export default [
         affiliationBadge: {
           selector: "[data-bn-insertion-ui-element='actionBar']",
           position: "before",
+          style: { fontStyle: "normal" },
         },
         affiliationHighlight: {
           selector: ".vkuiSimpleCell__middle",
@@ -1130,7 +1144,11 @@ export default [
         affiliationBadge: {
           selector: "[data-bn-insertion-ui-element='actionBar']",
           position: "before",
-          style: { paddingLeft: "2px", position: "relative" },
+          style: {
+            paddingLeft: "2px",
+            position: "relative",
+            fontStyle: "normal",
+          },
         },
         affiliationHighlight: {
           selector: "",
@@ -1331,12 +1349,12 @@ export default [
           {
             selector: "[data-testid='comment-avatar'] + * a[href^='/']",
             position: "after",
-            style: { paddingLeft: "2px", top: "1px" },
+            style: { paddingLeft: "2px", fontStyle: "normal" },
           },
           {
             selector: "[data-testid='comment-avatar']",
             position: "after",
-            style: { paddingLeft: "2px", top: "1px" },
+            style: { paddingLeft: "2px", fontStyle: "normal" },
           },
         ],
         affiliationHighlight: {
@@ -1799,7 +1817,7 @@ export default [
       edits: [
         {
           // Ensures parent element of affiliation highlight defines its position
-          selector: "a + div + div",
+          selector: "a + div + div, [class*='vkitReview__stretched']",
           style: { position: "relative" },
         },
         {
@@ -1817,10 +1835,10 @@ export default [
         affiliationBadge: {
           selector: "a:has([data-testid='review-name'])",
           position: "after",
-          style: { paddingLeft: "4px" },
+          style: { paddingLeft: "4px", fontStyle: "normal" },
         },
         affiliationHighlight: {
-          selector: "a + div + div",
+          selector: "[class*='vkitReview__stretched'], a + div + div",
           position: "prepend",
           style: { inset: "-2px", left: "-6px" },
         },
@@ -1855,7 +1873,7 @@ export default [
       edits: [
         {
           // Ensures parent element of affiliation highlight defines its position
-          selector: "a + div + div",
+          selector: "[class*='vkitReview__stretched']",
           style: { position: "relative" },
         },
         {
@@ -1876,7 +1894,7 @@ export default [
           style: { paddingLeft: "4px" },
         },
         affiliationHighlight: {
-          selector: "a + div + div",
+          selector: "[class*='vkitReview__stretched']",
           position: "prepend",
           style: { inset: "-2px", left: "-6px" },
         },
