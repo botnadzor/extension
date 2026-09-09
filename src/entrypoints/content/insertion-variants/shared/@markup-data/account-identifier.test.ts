@@ -65,12 +65,12 @@ describe("parseAccountIdentifier", () => {
     ["/public123", communityId(123)],
     ["/video/@id123", accountId(123)],
     ["/video/id123", accountId(123)],
-    ["https://vk.com/id123", accountId(123)],
-    ["https://vk.com/id123?hello=world", accountId(123)],
-    ["https://vk.com/id123#fragment", accountId(123)],
-    ["https://vk.com/public123", communityId(123)],
-    ["https://vk.com/video/@id123", accountId(123)],
-    ["https://vk.com/video/id123", accountId(123)],
+    ["https://vk.ru/id123", accountId(123)],
+    ["https://vk.ru/id123?hello=world", accountId(123)],
+    ["https://vk.ru/id123#fragment", accountId(123)],
+    ["https://vk.ru/public123", communityId(123)],
+    ["https://vk.ru/video/@id123", accountId(123)],
+    ["https://vk.ru/video/id123", accountId(123)],
     ["/testing", nickname("testing")],
 
     // Plain id

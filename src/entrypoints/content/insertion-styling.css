@@ -181,7 +181,7 @@
   }
 }
 
-/* space_gray is used on m.vk.com for dark theme */
+/* space_gray is used on m.vk.ru for dark theme */
 @custom-variant dark ([scheme="vkcom_dark"] &,
                       [scheme="space_gray"] &
                     );

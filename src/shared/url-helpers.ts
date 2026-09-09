@@ -57,17 +57,18 @@ export function generateUrl(
   return `${baseUrl}${generateHref(pathname, searchParams ?? {}, hash)}`;
 }
 
-export const defaultVkBaseUrl = "https://vk.com";
+export const defaultVkBaseUrl = "https://vk.ru";
 
 export function detectVkBaseUrl(url: string): string {
-  const [officialMatch] = /^https:\/\/(?:m\.)?vk\.(com|ru)/.exec(url) ?? [];
+  const [officialMatch] =
+    /^https:\/\/(?:m\.)?vk\.(?:ru|com)(?=\/|$)/.exec(url) ?? [];
 
   if (officialMatch) {
     return officialMatch;
   }
 
   const [webArchiveMatch] =
-    /^https:\/\/web\.archive\.org\/web\/\d+\/https?:\/\/((?:m\.)?vk\.(com|ru)|vkontakte\.ru)/.exec(
+    /^https:\/\/web\.archive\.org\/web\/\d+(?:[a-z]{2}_)?\/https?:\/\/(?:(?:m\.)?vk\.(?:ru|com)|(?:m\.)?vkontakte\.ru)(?=\/|$)/.exec(
       url,
     ) ?? [];
 

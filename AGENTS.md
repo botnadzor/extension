@@ -1,6 +1,6 @@
 # Botnadzor extension development guide
 
-Browser extension for vk.com (bot/spam detection).
+Browser extension for vk.ru (bot/spam detection).
 Built with WXT, React, TypeScript, TailwindCSS.
 
 ## Key architecture

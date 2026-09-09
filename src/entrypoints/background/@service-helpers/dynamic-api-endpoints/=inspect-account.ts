@@ -39,7 +39,7 @@ const legacyCommentSchema = z.readonly(
     count: z.exactOptional(z.nullable(z.number())), // e.g 547
     name: z.string(), // e.g "АСТ-54"
     color: z.exactOptional(z.nullable(z.string())), // e.g "rgba(253, 167, 223, 0.6)"
-    link: z.url(), // e.g "https://vk.com/club31101527"
+    link: z.url(), // e.g "https://vk.ru/club31101527"
     photo: legacyNullableUrlSchema, // e.g. "https://sun9-23.userapi.com/s/v1/ig2/A2eBnT_ucMlAPFnfMWL72CpaRMJgeo8LINkbyDeGB7sL4nIgtcfwYgybnjPa_Vb1pXdgVfmL3Dea__ofaRp6Tv3U.jpg?quality=95&crop=36,76,320,320&as=32x32,48x48,72x72,108x108,160x160,240x240&ava=1&cs=200x200"
     mark: z.exactOptional(z.nullable(z.xor([z.string(), z.number()]))),
     reg_name: z.exactOptional(z.nullable(z.string())), // e.g "Алтайский край"
@@ -48,7 +48,7 @@ const legacyCommentSchema = z.readonly(
 
 const legacyLikeLinkSchema = z.readonly(
   z.object({
-    url: z.string(), // e.g "https://vk.com/wall-20351570_215747?reply=215779&thread=215762",
+    url: z.string(), // e.g "https://vk.ru/wall-20351570_215747?reply=215779&thread=215762",
     title: z.string(), // e.g "Иван Иванов",
     src: legacyNullableUrlSchema, // аватарка группы, где лайкнули коммент
     data: z.string(), // e.g "1. group_slug"

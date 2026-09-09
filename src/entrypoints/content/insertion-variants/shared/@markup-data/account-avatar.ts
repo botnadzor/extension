@@ -8,6 +8,6 @@ export function extractAccountAvatarUrlFromMarkup(
 ): string {
   return (
     resolveImageUrlSelector(rootElement, accountAvatarSelector) ??
-    "https://vk.com/images/camera_200.png"
+    "https://vk.ru/images/camera_200.png"
   );
 }

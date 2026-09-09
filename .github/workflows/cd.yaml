@@ -71,7 +71,7 @@ jobs:
           {
             echo "notes<<NOTES_EOF"
             printf '%s\n' "<!--"
-            printf '%s\n' "Анонс:  [Сайт](https://botnadzor.org/news/??) • [TG](https://t.me/botnadzor_org/??) • [VK](https://vk.com/wall-187686148_??)"
+            printf '%s\n' "Анонс:  [Сайт](https://botnadzor.org/news/??) • [TG](https://t.me/botnadzor_org/??) • [VK](https://vk.ru/wall-187686148_??)"
             printf '%s\n' "-->"
             [[ -n "$DIFF_LINE" ]] && printf '%s\n' "$DIFF_LINE"
             printf '%s\n' "[Инструкция по установке](${INSTALL_URL})"

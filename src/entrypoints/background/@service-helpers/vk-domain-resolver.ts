@@ -61,7 +61,7 @@ export class VkDomainResolver {
 
     let pageText: string | undefined;
     let timeoutId: NodeJS.Timeout | undefined;
-    const urlToFetch = `https://vk.com/${vkNickname}`;
+    const urlToFetch = `https://vk.ru/${vkNickname}`;
 
     try {
       const controller = new AbortController();

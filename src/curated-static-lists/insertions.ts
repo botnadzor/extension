@@ -13,7 +13,7 @@ export default [
   /**
    * Follower (user card tile) on desktop (React-based UI: tabs have outlines and shadows)
    * Examples:
-   * - https://vk.com/ria → followers (needs login)
+   * - https://vk.ru/ria → followers (needs login)
    */
   {
     id: "desktopDialogFollower",
@@ -107,7 +107,7 @@ export default [
    * Followers (user card tiles) on desktop (pre-React UI: tabs have border-bottom)
    *
    * Examples:
-   * - https://vk.com/durov → click "followers"
+   * - https://vk.ru/durov → click "followers"
    */
   {
     id: "desktopPreReactDialogFollower",
@@ -207,7 +207,7 @@ export default [
   /**
    * Followers (list of user cards) on desktop (React-based UI: tabs have outlines and shadows)
    * Examples:
-   * - https://vk.com/ria → followers (needs login)
+   * - https://vk.ru/ria → followers (needs login)
    */
   {
     id: "desktopDialogFollowers",
@@ -267,15 +267,15 @@ export default [
   /*
    * Desktop reactions dialog (Pre-React UI: list of user cards instead of a list)
    * Examples:
-   * - post (logged out): https://vk.com/ria?w=likes%2Fwall-15755094_48295538
-   * - comment (logged out): https://vk.com/wall-173277106_4892265?w=likes%2Fwall_reply-173277106_4892462
-   * - followers (logged in): https://vk.com/durov → click "followers"
+   * - post (logged out): https://vk.ru/ria?w=likes%2Fwall-15755094_48295538
+   * - comment (logged out): https://vk.ru/wall-173277106_4892265?w=likes%2Fwall_reply-173277106_4892462
+   * - followers (logged in): https://vk.ru/durov → click "followers"
    */
   {
     id: "desktopPreReactDialogReactions",
     variant: "accountList",
     appliesTo: "desktopVkWebsite",
-    // Excluding .ui_search to not match Subscriptions dialog - e.g. https://vk.com/id558910327 → click "subscriptions"
+    // Excluding .ui_search to not match Subscriptions dialog - e.g. https://vk.ru/id558910327 → click "subscriptions"
     selector:
       "#box_layer_wrap:has(.fans_rows):not(:has(.ui_search)),#wk_layer_wrap:has(.fans_rows)",
     markup: {
@@ -330,8 +330,8 @@ export default [
   /*
    * Desktop reactions dialog
    * Examples:
-   * - post (logged in): https://vk.com/wall-173277106_4892265?reply=4892462&w=likes%2Fwall-173277106_4892265
-   * - comment (logged in): https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
+   * - post (logged in): https://vk.ru/wall-173277106_4892265?reply=4892462&w=likes%2Fwall-173277106_4892265
+   * - comment (logged in): https://vk.ru/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
    */
   {
     id: "desktopDialogReactions",
@@ -388,8 +388,8 @@ export default [
   /**
    * Desktop reaction (user card tile) in Pre-React UI reactions dialog
    * Examples:
-   * - https://vk.com/ria?w=likes%2Fwall-15755094_48295538
-   * - https://vk.com/ria?w=likes%2Fwall_reply-15755094_49579807
+   * - https://vk.ru/ria?w=likes%2Fwall-15755094_48295538
+   * - https://vk.ru/ria?w=likes%2Fwall_reply-15755094_49579807
    */
   {
     id: "desktopPreReactDialogReaction",
@@ -481,9 +481,9 @@ export default [
   /**
    * Desktop profile page header
    * Examples:
-   * - https://vk.com/id1
-   * - https://vk.com/durov
-   * - https://m.vk.com/id1034309676
+   * - https://vk.ru/id1
+   * - https://vk.ru/durov
+   * - https://m.vk.ru/id1034309676
    */
   {
     id: "desktopProfileHeader",
@@ -553,9 +553,9 @@ export default [
   /**
    * Mobile profile page header
    * Examples:
-   * - https://m.vk.com/id1
-   * - https://m.vk.com/durov
-   * - https://m.vk.com/id1034309676
+   * - https://m.vk.ru/id1
+   * - https://m.vk.ru/durov
+   * - https://m.vk.ru/id1034309676
    */
   {
     id: "mobileProfileHeader",
@@ -621,8 +621,8 @@ export default [
   /**
    * Legacy desktop post header (wall page posts)
    * Examples:
-   * - Posts on user/community walls (vk.com/wall-*)
-   * - https://vk.com/wall1034309676_77
+   * - Posts on user/community walls (vk.ru/wall-*)
+   * - https://vk.ru/wall1034309676_77
    */
 
   // or without login regular post
@@ -685,10 +685,10 @@ export default [
   /**
    * Modern desktop feed posts ([data-testid="post"])
    * Examples:
-   * - Posts in VK feed (vk.com/feed)
+   * - Posts in VK feed (vk.ru/feed)
    * - Posts on user/community walls with modern layout
-   * - https://vk.com/wall1034309676_77
-   * - https://m.vk.com/wall1034309676_77
+   * - https://vk.ru/wall1034309676_77
+   * - https://m.vk.ru/wall1034309676_77
    */
   {
     id: "desktopAndMobilePost",
@@ -763,8 +763,8 @@ export default [
   /**
    * Mobile page posts ([data-testid="post"])
    * Examples:
-   * - Posts on m.vk.com user/community walls
-   * - https://m.vk.com/wall1034309676_77 (without login)
+   * - Posts on m.vk.ru user/community walls
+   * - https://m.vk.ru/wall1034309676_77 (without login)
    */
   {
     id: "mobilePreReactPost",
@@ -837,7 +837,7 @@ export default [
    * Desktop repost headers
    * Examples:
    * - Repost content on walls/feeds
-   * - https://vk.com/wall1034309676_77 (without login)
+   * - https://vk.ru/wall1034309676_77 (without login)
    */
   {
     id: "desktopPreReactRepost",
@@ -885,7 +885,7 @@ export default [
   /**
    * Desktop search results (people / communities)
    * Examples:
-   * - https://vk.com/search?c%5Bsection%5D=people
+   * - https://vk.ru/search?c%5Bsection%5D=people
    */
   {
     id: "desktopAndMobilePeopleList",
@@ -952,8 +952,8 @@ export default [
 
   /*
    * Examples:
-   * - https://m.vk.com/wall-140899168_3954792?reply=3955042 -- TODO: Fix  link or annotate it with instructions (relationship to this insertion is unclear)
-   * - https://vk.com/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
+   * - https://m.vk.ru/wall-140899168_3954792?reply=3955042 -- TODO: Fix  link or annotate it with instructions (relationship to this insertion is unclear)
+   * - https://vk.ru/wall-173277106_4892265?reply=4892462&w=reactions-173277106_4892462%3Ftype%3Dcomment
    */
   {
     id: "desktopAndMobileLikeCell",
@@ -1032,7 +1032,7 @@ export default [
     },
   },
 
-  // - https://m.vk.com/incident22?act=members
+  // - https://m.vk.ru/incident22?act=members
   {
     id: "mobileSubCell",
     variant: "account",
@@ -1090,7 +1090,7 @@ export default [
    * Desktop community post author (expanded text)
    * Examples:
    * - Author links in expanded community post text
-   * - https://vk.com/wall-60212615_5184695
+   * - https://vk.ru/wall-60212615_5184695
    */
 
   {
@@ -1221,7 +1221,7 @@ export default [
     },
   },
 
-  // - https://m.vk.com/video-85596321_456270337?reply=182214
+  // - https://m.vk.ru/video-85596321_456270337?reply=182214
   {
     id: "mobileWindowComment",
     variant: "comment",
@@ -1278,7 +1278,7 @@ export default [
   /**
    * Modern desktop comments
    * Examples:
-   * - New VK wall post comments (vk.com/ria)
+   * - New VK wall post comments (vk.ru/ria)
    */
   {
     id: "desktopComment",
@@ -1358,7 +1358,7 @@ export default [
   /**
    * Legacy desktop wall groups comments (.reply._post)
    * Examples:
-   * - Wall posts with groups comments without login (vk.com/ria)
+   * - Wall posts with groups comments without login (vk.ru/ria)
    */
 
   // TODO: photo comment too - need to build comment id
@@ -1459,8 +1459,8 @@ export default [
   /**
    * Desktop video comments
    * Examples:
-   * - Comments on video pages (vk.com/video*)
-   * - https://vk.com/video-85596321_456270337?reply=182214
+   * - Comments on video pages (vk.ru/video*)
+   * - https://vk.ru/video-85596321_456270337?reply=182214
    */
   {
     id: "desktopVideoComment",
@@ -1530,7 +1530,7 @@ export default [
   /**
    * Legacy mobile comments (without login)
    * Examples:
-   * - https://m.vk.com/wall-20169232_9024015
+   * - https://m.vk.ru/wall-20169232_9024015
    */
   {
     id: "mobileComment",
@@ -1599,8 +1599,8 @@ export default [
   /**
    * Modern mobile feed comments (with login)
    * Examples:
-   * - New mobile VK feed wall post comments (m.vk.com)
-   * - https://m.vk.com/wall-20169232_9024015
+   * - New mobile VK feed wall post comments (m.vk.ru)
+   * - https://m.vk.ru/wall-20169232_9024015
    */
   {
     id: "mobileCommentNew",
@@ -1736,7 +1736,7 @@ export default [
   /**
    * Reply form in pre-React UI, e.g. in popovers with photos
    * Examples:
-   * - https://vk.com/ria?z=photo-15755094_459774936
+   * - https://vk.ru/ria?z=photo-15755094_459774936
    */
   {
     id: "desktopPreReactReplyForm",
@@ -1776,7 +1776,7 @@ export default [
 
   /**
    * Examples:
-   * - https://vk.com/reviews-187080127
+   * - https://vk.ru/reviews-187080127
    */
   {
     id: "desktopReview",
@@ -1835,7 +1835,7 @@ export default [
 
   /**
    * Examples:
-   * - https://m.vk.com/reviews-187080127
+   * - https://m.vk.ru/reviews-187080127
    */
   {
     id: "mobileReview",

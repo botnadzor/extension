@@ -1,11 +1,14 @@
 import {
-  type ContentScriptHost,
+  type ArchivedContentScriptHost,
+  archivedContentScriptHosts,
   contentScriptHosts,
 } from "./hosts-and-matches";
 
 export type WebsiteVariant = "mobileVkWebsite" | "desktopVkWebsite";
 
-function getMatchedHost(location: Location): ContentScriptHost | undefined {
+function getMatchedHost(
+  location: Pick<Location, "host" | "pathname">,
+): ArchivedContentScriptHost | undefined {
   const directMatch = contentScriptHosts.find((host) => location.host === host);
 
   if (directMatch) {
@@ -16,11 +19,12 @@ function getMatchedHost(location: Location): ContentScriptHost | undefined {
     return undefined;
   }
 
-  for (const host of contentScriptHosts) {
+  for (const host of archivedContentScriptHosts) {
+    const escapedHost = host.replaceAll(".", String.raw`\.`);
     if (
-      new RegExp(String.raw`^/web/\d+/https?://${host}/`).test(
-        location.pathname,
-      )
+      new RegExp(
+        String.raw`^/web/\d+(?:[a-z]{2}_)?/https?://${escapedHost}/`,
+      ).test(location.pathname)
     ) {
       return host;
     }
@@ -35,7 +39,7 @@ export type DerivedPageInfo = {
 };
 
 export function derivePageInfo(
-  location: Location,
+  location: Pick<Location, "host" | "pathname">,
 ): DerivedPageInfo | undefined {
   const matchedHost = getMatchedHost(location);
 

@@ -35,7 +35,7 @@ export function ToastWithWelcomeMessage() {
             label: "Сайт проекта",
           },
           {
-            href: "https://vk.com/botnadzor",
+            href: "https://vk.ru/botnadzor",
             Icon: VkIcon,
             label: "Группа VK: botnadzor",
           },

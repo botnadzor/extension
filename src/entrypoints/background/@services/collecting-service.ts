@@ -53,8 +53,8 @@ type CommentToCollect = {
   commentVkId: PositiveVkId;
 
   /**
-   * @example vk.com/id123 -> commenterVkDomain = "id123"
-   * @example vk.com/someone -> commenterVkDomain = "someone"
+   * @example vk.ru/id123 -> commenterVkDomain = "id123"
+   * @example vk.ru/someone -> commenterVkDomain = "someone"
    */
   commenterVkDomain: VkDomain;
 

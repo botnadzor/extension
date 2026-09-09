@@ -210,7 +210,7 @@ function LikeRow({ like }: { like: LikeToBot }) {
             )}
           >
             <a
-              href={`https://vk.com/id${like.bot_id}`}
+              href={`https://vk.ru/id${like.bot_id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="u-link whitespace-nowrap"
