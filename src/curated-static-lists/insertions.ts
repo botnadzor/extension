@@ -635,7 +635,7 @@ export default [
         accountAvatar: "[data-testid='profile-avatar'] > img",
         accountIdentifier: {
           selector: "",
-          reactProp: "CProvider:ownerId",
+          reactProp: "*:ownerId",
         },
         accountName: ".vkuiTitle__level2",
       },
@@ -1364,12 +1364,71 @@ export default [
     },
   },
 
-  // - https://m.vk.ru/video-85596321_456270337?reply=182214
+  // - https://m.vkvideo.ru/video-85596321_456270337?reply=182214
+  // - https://m.vkvideo.ru/clip-61165643_456247177 → кнопка «комментарии»
   {
     id: "mobileWindowComment",
     variant: "comment",
     appliesTo: "mobileVkWebsite",
-    selector: "[data-testid='comment']",
+    selector: "[data-testid='comment'][class*='vkit-']",
+    markup: {
+      data: {
+        accountAvatar: "[data-testid='comment-avatar'] > img",
+        accountIdentifier: {
+          selector: "[data-testid='comment-owner']",
+          attribute: "href",
+        },
+        accountName: "[data-testid='comment-owner'] > span > span",
+        commentIdentifier: [
+          {
+            selector: "",
+            attribute: "id",
+          },
+        ],
+        postCommentCount: {
+          ancestorSelector: ".vkuiModalPage__children",
+          selector: ".vkuiPanelHeader__contentIn > div > div",
+        },
+      },
+      edits: [
+        {
+          selector: ":scope > div",
+          style: { position: "relative" },
+        },
+        {
+          selector: ":scope > div > *",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector: "[data-testid='comment-more']",
+          position: "after",
+          style: { marginBottom: "-2px", marginLeft: "-4px" },
+        },
+        affiliationBadge: {
+          selector: "[data-testid='comment-owner']",
+          position: "after",
+        },
+        affiliationHighlight: {
+          selector: ":scope > div",
+          position: "prepend",
+          style: { left: "4px", bottom: "-2px" },
+        },
+        regDate: {
+          selector: "[data-testid='comment-text']",
+          position: "before",
+          style: { fontSize: "13px" },
+        },
+      },
+    },
+  },
+
+  {
+    id: "mobileWindowCommentPre2026Q3",
+    variant: "comment",
+    appliesTo: "mobileVkWebsite",
+    selector: "[data-testid='comment']:not([class*='vkit-'])", // adding vkit- class as a marker for the newer design which contains same data-testid
     markup: {
       data: {
         accountAvatar: "[data-testid='comment-avatar'] > img",
@@ -1604,12 +1663,75 @@ export default [
    * Examples:
    * - Comments on video pages (vk.ru/video*)
    * - https://vk.ru/video-85596321_456270337?reply=182214
+   * - https://vkvideo.ru/video-85596321_456270337
    */
   {
     id: "desktopVideoComment",
     variant: "comment",
     appliesTo: "desktopVkWebsite",
-    selector: "[data-testid='comment']",
+    selector: "[data-testid='comment'][class*='vkit-']",
+    markup: {
+      data: {
+        accountAvatar: "[data-testid='comment-avatar'] img",
+        accountIdentifier: {
+          selector: "[data-testid='comment-owner']",
+          reactProp: "*:owner/id",
+        },
+        accountName: "[data-testid='comment-owner']",
+        commentIdentifier: false,
+        postCommentCount: {
+          ancestorSelector: "section",
+          selector: "[data-testid='video-comments-count']",
+        },
+      },
+      edits: [
+        {
+          selector: "[data-testid='comment-avatar'] + *",
+          style: { position: "relative" },
+        },
+        {
+          // Static overflow edit (legacy was dynamic)
+          selector: ":has(>[data-testid='comment-text'])",
+          style: { overflow: "visible" },
+        },
+      ],
+      ui: {
+        actionBar: [
+          {
+            selector: "[data-testid='comment-text'] + div",
+            position: "append",
+            style: { marginBottom: "-2px" },
+          },
+        ],
+        affiliationBadge: {
+          selector: "[data-testid='comment-owner']",
+          position: "after",
+          style: { paddingLeft: "2px" },
+        },
+        affiliationHighlight: {
+          selector: "[data-testid='comment-avatar'] + *",
+          position: "prepend",
+          style: {
+            top: "0",
+            right: "0",
+            marginBottom: "-2px",
+            marginLeft: "2px",
+          },
+        },
+        regDate: {
+          selector: "[class*='vkitCommentBase__title']",
+          position: "append",
+          style: { marginLeft: "4px" },
+        },
+      },
+    },
+  },
+
+  {
+    id: "desktopVideoCommentPre2026Q3",
+    variant: "comment",
+    appliesTo: "desktopVkWebsite",
+    selector: "[data-testid='comment']:not([class*='vkit-'])", // adding vkit- class as a marker for the newer design which contains same data-testid
     markup: {
       data: {
         accountAvatar: "[data-testid='comment-avatar'] img",
