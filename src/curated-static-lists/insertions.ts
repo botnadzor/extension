@@ -489,16 +489,11 @@ export default [
     id: "desktopProfileHeader",
     variant: "account",
     appliesTo: "desktopVkWebsite",
-    selector: ".ProfileHeader__in, [data-testid='profile-header']",
+    selector: "[data-testid='profile-header'] > div + div",
     markup: {
       data: {
-        accountAvatar: ".page_avatar_img img",
+        accountAvatar: "[data-testid='profile-avatar']",
         accountIdentifier: [
-          {
-            selector: ".ProfileHeader__ava > div",
-            attribute: "id",
-            valuePattern: "[_](\\d+)",
-          },
           {
             selector: "[data-testid='profile-avatar']",
             attribute: "id",
@@ -510,7 +505,75 @@ export default [
             attribute: "href",
           },
         ],
-        accountName: "#owner_page_name, [data-testid='profile-owner-name']",
+        accountName: "[data-testid='profile-owner-name']",
+      },
+      edits: [
+        {
+          selector: "[data-testid='profile-info']",
+          style: { position: "relative" },
+        },
+        {
+          selector: "[data-testid='profile-info'] > *",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector: "[data-testid='profile-owner-name']",
+          position: "append",
+          style: { top: "2px" },
+        },
+        affiliationBadge: {
+          selector: "[data-bn-insertion-ui-element='actionBar']",
+          position: "before",
+          style: {
+            display: "inline-block",
+            top: "-2px",
+            marginBottom: "-4px",
+            align: "middle",
+            paddingLeft: "4px",
+            paddingRight: "4px",
+            fontWeight: "400",
+          },
+        },
+        affiliationHighlight: {
+          selector: "[data-testid='profile-info']",
+          position: "prepend",
+          style: { left: "-6px", right: "6px", top: "0", bottom: "-2px" },
+        },
+        regDate: {
+          selector: "[data-testid='profile-owner-name']",
+          position: "append",
+          style: { top: "1px", fontSize: "13px", fontWeight: "400" },
+        },
+      },
+    },
+  },
+
+  /**
+   * Desktop profile page header before summer 2026 VK refactoring
+   */
+  {
+    id: "desktopProfileHeaderBefore2026Q3",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    selector: ".ProfileHeader__in",
+    markup: {
+      data: {
+        accountAvatar: ".page_avatar_img img",
+        accountIdentifier: [
+          {
+            selector: ".ProfileHeader__ava > div > div",
+            attribute: "id",
+            valuePattern: "[_](\\d+)",
+          },
+          {
+            ancestorSelector: "html",
+            selector: "link[rel='alternate'][href*='android']",
+            attribute: "href",
+          },
+        ],
+        accountName: "#owner_page_name",
       },
       edits: [
         {
@@ -566,17 +629,79 @@ export default [
     id: "mobileProfileHeader",
     variant: "account",
     appliesTo: "mobileVkWebsite",
-    selector: ".ProfileInfo__main, [data-testid='profile_info_content']",
+    selector: "[data-testid='profile_info'] > div + div",
+    markup: {
+      data: {
+        accountAvatar: "[data-testid='profile-avatar'] > img",
+        accountIdentifier: {
+          selector: "",
+          reactProp: "CProvider:ownerId",
+        },
+        accountName: ".vkuiTitle__level2",
+      },
+      edits: [
+        {
+          selector: ":has(>[data-testid='profile-avatar']",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector: ":has(>[data-testid='profile-avatar']",
+          position: "append",
+          style: {
+            position: "absolute",
+            top: "auto",
+            right: "0",
+            bottom: "-18px",
+            left: "0",
+            zIndex: "1",
+            justifyContent: "center",
+          },
+        },
+        affiliationBadge: {
+          selector: ".vkuiTitle__level2",
+          position: "append",
+          style: {
+            fontWeight: "400",
+            position: "absolute",
+            paddingLeft: "6px",
+            top: "2px",
+          },
+        },
+        affiliationHighlight: {
+          selector: ".vkuiTitle__level2",
+          position: "prepend",
+          style: { inset: "0", zIndex: "-1", bottom: "-4px" },
+        },
+        regDate: {
+          selector: ":has(>.vkuiTitle__level2)",
+          position: "after",
+          style: {
+            position: "relative",
+            textAlign: "center",
+          },
+        },
+      },
+    },
+  },
+
+  /**
+   * Mobile profile page header before summer 2026 VK refactoring
+   */
+  {
+    id: "mobileProfileHeaderPre2026Q3",
+    variant: "account",
+    appliesTo: "mobileVkWebsite",
+    selector: ".ProfileInfo__main",
     markup: {
       data: {
         accountAvatar: "[data-testid='profile-avatar'] > img",
         accountIdentifier: {
           ancestorSelector: "html",
-          selector:
-            ".vkuiPanelHeader__contentIn > span, .vkuiEllipsisText__content",
+          selector: ".vkuiPanelHeader__contentIn > span",
         },
-        accountName:
-          ".ProfileInfoName, [data-testid='profile_info_content'] > div > div > h2",
+        accountName: ".ProfileInfoName",
       },
       edits: [
         {
