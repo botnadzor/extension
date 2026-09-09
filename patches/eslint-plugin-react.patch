@@ -1,0 +1,27 @@
+diff --git a/lib/util/version.js b/lib/util/version.js
+--- a/lib/util/version.js
++++ b/lib/util/version.js
+@@ -29,6 +29,10 @@ function resetDetectedVersion() {
+ function resolveBasedir(contextOrFilename) {
+   if (contextOrFilename) {
+-    const filename = typeof contextOrFilename === 'string' ? contextOrFilename : contextOrFilename.getFilename();
++    const filename = typeof contextOrFilename === 'string'
++      ? contextOrFilename
++      : typeof contextOrFilename.getFilename === 'function'
++        ? contextOrFilename.getFilename()
++        : contextOrFilename.filename;
+     const dirname = path.dirname(filename);
+     try {
+       if (fs.statSync(filename).isFile()) {
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -89,7 +89,7 @@
+     "typescript-eslint-parser": "^20.1.1"
+   },
+   "peerDependencies": {
+-    "eslint": "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7"
++    "eslint": "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7 || ^10"
+   },
+   "engines": {
+     "node": ">=4"

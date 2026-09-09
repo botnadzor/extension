@@ -1,0 +1,25 @@
+diff --git a/lib/core/sourceType.js b/lib/core/sourceType.js
+--- a/lib/core/sourceType.js
++++ b/lib/core/sourceType.js
+@@ -5,7 +5,7 @@ sourceType; /**
+              * @param {import('eslint').Rule.RuleContext} context
+              * @returns 'module' | 'script' | 'commonjs' | undefined
+-             */function sourceType(context) {if ('sourceType' in context.parserOptions) {return context.parserOptions.sourceType;}
+-  if ('languageOptions' in context && context.languageOptions) {
++             */function sourceType(context) {if ('languageOptions' in context && context.languageOptions) {
+     return context.languageOptions.sourceType;
+   }
++  if (context.parserOptions && 'sourceType' in context.parserOptions) {return context.parserOptions.sourceType;}
+ }
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -112,7 +112,7 @@
+     "typescript-eslint-parser": "^15 || ^20 || ^22"
+   },
+   "peerDependencies": {
+-    "eslint": "^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8 || ^9"
++    "eslint": "^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8 || ^9 || ^10"
+   },
+   "dependencies": {
+     "@rtsao/scc": "^1.1.0",

@@ -107,6 +107,8 @@ settings:
 
 patchedDependencies:
   '@base-ui/react': e3460db830f274f846c775ab1eff52f56a83ac3ae26e11e796d903ba8c2008f9
+  eslint-plugin-import: 305e1e5eea77998f456c948b3886d11c3a92fa8396f7b9f0b9557ecd0b0ea497
+  eslint-plugin-react: 24958dec7de9de1f5ff2845ec8428fd4a3e0731e965d89f0d2b5efc845ac11b0
 
 importers:
 
@@ -274,7 +276,7 @@ importers:
         version: 4.7.0(@typescript/typescript6@6.0.2)(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(tailwindcss@4.3.3)
       eslint-plugin-import:
         specifier: 2.32.0
-        version: 2.32.0(@typescript-eslint/parser@8.70.0(@typescript/typescript6@6.0.2)(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
+        version: 2.32.0(patch_hash=305e1e5eea77998f456c948b3886d11c3a92fa8396f7b9f0b9557ecd0b0ea497)(@typescript-eslint/parser@8.70.0(@typescript/typescript6@6.0.2)(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
       eslint-plugin-jsx-a11y:
         specifier: 6.10.2
         version: 6.10.2(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))
@@ -283,7 +285,7 @@ importers:
         version: 4.1.5(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))
       eslint-plugin-react:
         specifier: 7.37.5
-        version: 7.37.5(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))
+        version: 7.37.5(patch_hash=24958dec7de9de1f5ff2845ec8428fd4a3e0731e965d89f0d2b5efc845ac11b0)(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))
       eslint-plugin-react-hooks:
         specifier: 7.1.1
         version: 7.1.1(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
@@ -7040,7 +7042,7 @@ snapshots:
       - '@eslint/css'
       - typescript
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.70.0(@typescript/typescript6@6.0.2)(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0):
+  eslint-plugin-import@2.32.0(patch_hash=305e1e5eea77998f456c948b3886d11c3a92fa8396f7b9f0b9557ecd0b0ea497)(@typescript-eslint/parser@8.70.0(@typescript/typescript6@6.0.2)(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -7202,7 +7204,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react@7.37.5(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0)):
+  eslint-plugin-react@7.37.5(patch_hash=24958dec7de9de1f5ff2845ec8428fd4a3e0731e965d89f0d2b5efc845ac11b0)(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0)):
     dependencies:
       array-includes: 3.1.9
       array.prototype.findlast: 1.2.5

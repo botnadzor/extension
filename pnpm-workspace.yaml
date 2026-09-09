@@ -9,6 +9,8 @@ nodeLinker: isolated
 
 patchedDependencies:
   "@base-ui/react": patches/@base-ui__react.patch
+  eslint-plugin-import: patches/eslint-plugin-import.patch
+  eslint-plugin-react: patches/eslint-plugin-react.patch
 
 savePrefix: ""
 
