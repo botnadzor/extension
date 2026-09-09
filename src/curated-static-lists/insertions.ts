@@ -489,6 +489,74 @@ export default [
     id: "desktopProfileHeader",
     variant: "account",
     appliesTo: "desktopVkWebsite",
+    selector: "[data-testid='profile-header'] > div + div",
+    markup: {
+      data: {
+        accountAvatar: "[data-testid='profile-avatar']",
+        accountIdentifier: [
+          {
+            selector: "[data-testid='profile-avatar']",
+            attribute: "id",
+            valuePattern: "[_](\\d+)",
+          },
+          {
+            ancestorSelector: "html",
+            selector: "link[rel='alternate'][href*='android']",
+            attribute: "href",
+          },
+        ],
+        accountName: "[data-testid='profile-owner-name']",
+      },
+      edits: [
+        {
+          selector: "[data-testid='profile-info']",
+          style: { position: "relative" },
+        },
+        {
+          selector: "[data-testid='profile-info'] > *",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector: "[data-testid='profile-owner-name']",
+          position: "append",
+          style: { top: "2px" },
+        },
+        affiliationBadge: {
+          selector: "[data-bn-insertion-ui-element='actionBar']",
+          position: "before",
+          style: {
+            display: "inline-block",
+            top: "-2px",
+            marginBottom: "-4px",
+            align: "middle",
+            paddingLeft: "4px",
+            paddingRight: "4px",
+            fontWeight: "400",
+          },
+        },
+        affiliationHighlight: {
+          selector: "[data-testid='profile-info']",
+          position: "prepend",
+          style: { left: "-6px", right: "6px", top: "0", bottom: "-2px" },
+        },
+        regDate: {
+          selector: "[data-testid='profile-owner-name']",
+          position: "append",
+          style: { top: "1px", fontSize: "13px", fontWeight: "400" },
+        },
+      },
+    },
+  },
+
+  /**
+   * Desktop profile page header before summer 2026 VK refactoring
+   */
+  {
+    id: "desktopProfileHeaderBefore2026Q3",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
     selector: ".ProfileHeader__in",
     markup: {
       data: {
@@ -559,6 +627,70 @@ export default [
    */
   {
     id: "mobileProfileHeader",
+    variant: "account",
+    appliesTo: "mobileVkWebsite",
+    selector: "[data-testid='profile_info'] > div + div",
+    markup: {
+      data: {
+        accountAvatar: "[data-testid='profile-avatar'] > img",
+        accountIdentifier: {
+          selector: "",
+          reactProp: "*:ownerId",
+        },
+        accountName: ".vkuiTitle__level2",
+      },
+      edits: [
+        {
+          selector: ":has(>[data-testid='profile-avatar']",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector: ":has(>[data-testid='profile-avatar']",
+          position: "append",
+          style: {
+            position: "absolute",
+            top: "auto",
+            right: "0",
+            bottom: "-18px",
+            left: "0",
+            zIndex: "1",
+            justifyContent: "center",
+          },
+        },
+        affiliationBadge: {
+          selector: ".vkuiTitle__level2",
+          position: "append",
+          style: {
+            fontWeight: "400",
+            position: "absolute",
+            paddingLeft: "6px",
+            top: "2px",
+          },
+        },
+        affiliationHighlight: {
+          selector: ".vkuiTitle__level2",
+          position: "prepend",
+          style: { inset: "0", zIndex: "-1", bottom: "-4px" },
+        },
+        regDate: {
+          selector: ":has(>.vkuiTitle__level2)",
+          position: "after",
+          style: {
+            position: "relative",
+            textAlign: "center",
+          },
+        },
+      },
+    },
+  },
+
+  /**
+   * Mobile profile page header before summer 2026 VK refactoring
+   */
+  {
+    id: "mobileProfileHeaderPre2026Q3",
     variant: "account",
     appliesTo: "mobileVkWebsite",
     selector: ".ProfileInfo__main",
@@ -695,7 +827,7 @@ export default [
     variant: "account",
     appliesTo: "desktopAndMobileVkWebsite",
     selector:
-      '[data-testid="post"] > .vkuiDiv__host > [class*="vkitPostHeader__container"]',
+      '[data-testid="post"] > .vkuiDiv__host > [class*="vkitPostHeader__container"], [data-testid="post-header"]',
     markup: {
       data: {
         accountAvatar: "[data-testid='post-header-avatar'] img",
@@ -742,7 +874,7 @@ export default [
         affiliationBadge: {
           selector: "[data-testid='post-header-title']",
           position: "append",
-          style: { paddingLeft: "4px" },
+          style: { paddingLeft: "4px", fontStyle: "normal" },
         },
         affiliationHighlight: {
           selector: "",
@@ -912,6 +1044,10 @@ export default [
           selector: "[class*='RichCell__children']",
           style: { overflow: "visible" },
         },
+        {
+          selector: "",
+          style: { position: "relative" },
+        },
       ],
       ui: {
         actionBar: [
@@ -927,7 +1063,8 @@ export default [
           },
         ],
         affiliationBadge: {
-          selector: "[class*='vkitUserRichCell__name']",
+          selector:
+            "[class*='vkitUserRichCell__name'], [data-testid='userrichcell-name']",
           position: "append",
           style: { marginLeft: "3px" },
         },
@@ -959,7 +1096,8 @@ export default [
     id: "desktopAndMobileLikeCell",
     variant: "account",
     appliesTo: "desktopAndMobileVkWebsite",
-    selector: "[class*='vkitVirtualizedList'] > * > .vkuiSimpleCell__host",
+    selector:
+      "[class*='vkitVirtualizedList'] > * > .vkuiSimpleCell__host, [data-testid='reactions_modal_reacted_user_cell']",
     markup: {
       data: {
         accountAvatar:
@@ -1016,6 +1154,7 @@ export default [
         affiliationBadge: {
           selector: "[data-bn-insertion-ui-element='actionBar']",
           position: "before",
+          style: { fontStyle: "normal" },
         },
         affiliationHighlight: {
           selector: ".vkuiSimpleCell__middle",
@@ -1130,7 +1269,11 @@ export default [
         affiliationBadge: {
           selector: "[data-bn-insertion-ui-element='actionBar']",
           position: "before",
-          style: { paddingLeft: "2px", position: "relative" },
+          style: {
+            paddingLeft: "2px",
+            position: "relative",
+            fontStyle: "normal",
+          },
         },
         affiliationHighlight: {
           selector: "",
@@ -1221,12 +1364,71 @@ export default [
     },
   },
 
-  // - https://m.vk.ru/video-85596321_456270337?reply=182214
+  // - https://m.vkvideo.ru/video-85596321_456270337?reply=182214
+  // - https://m.vkvideo.ru/clip-61165643_456247177 → кнопка «комментарии»
   {
     id: "mobileWindowComment",
     variant: "comment",
     appliesTo: "mobileVkWebsite",
-    selector: "[data-testid='comment']",
+    selector: "[data-testid='comment'][class*='vkit-']",
+    markup: {
+      data: {
+        accountAvatar: "[data-testid='comment-avatar'] > img",
+        accountIdentifier: {
+          selector: "[data-testid='comment-owner']",
+          attribute: "href",
+        },
+        accountName: "[data-testid='comment-owner'] > span > span",
+        commentIdentifier: [
+          {
+            selector: "",
+            attribute: "id",
+          },
+        ],
+        postCommentCount: {
+          ancestorSelector: ".vkuiModalPage__children",
+          selector: ".vkuiPanelHeader__contentIn > div > div",
+        },
+      },
+      edits: [
+        {
+          selector: ":scope > div",
+          style: { position: "relative" },
+        },
+        {
+          selector: ":scope > div > *",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector: "[data-testid='comment-more']",
+          position: "after",
+          style: { marginBottom: "-2px", marginLeft: "-4px" },
+        },
+        affiliationBadge: {
+          selector: "[data-testid='comment-owner']",
+          position: "after",
+        },
+        affiliationHighlight: {
+          selector: ":scope > div",
+          position: "prepend",
+          style: { left: "4px", bottom: "-2px" },
+        },
+        regDate: {
+          selector: "[data-testid='comment-text']",
+          position: "before",
+          style: { fontSize: "13px" },
+        },
+      },
+    },
+  },
+
+  {
+    id: "mobileWindowCommentPre2026Q3",
+    variant: "comment",
+    appliesTo: "mobileVkWebsite",
+    selector: "[data-testid='comment']:not([class*='vkit-'])", // adding vkit- class as a marker for the newer design which contains same data-testid
     markup: {
       data: {
         accountAvatar: "[data-testid='comment-avatar'] > img",
@@ -1331,12 +1533,12 @@ export default [
           {
             selector: "[data-testid='comment-avatar'] + * a[href^='/']",
             position: "after",
-            style: { paddingLeft: "2px", top: "1px" },
+            style: { paddingLeft: "2px", fontStyle: "normal" },
           },
           {
             selector: "[data-testid='comment-avatar']",
             position: "after",
-            style: { paddingLeft: "2px", top: "1px" },
+            style: { paddingLeft: "2px", fontStyle: "normal" },
           },
         ],
         affiliationHighlight: {
@@ -1461,12 +1663,75 @@ export default [
    * Examples:
    * - Comments on video pages (vk.ru/video*)
    * - https://vk.ru/video-85596321_456270337?reply=182214
+   * - https://vkvideo.ru/video-85596321_456270337
    */
   {
     id: "desktopVideoComment",
     variant: "comment",
     appliesTo: "desktopVkWebsite",
-    selector: "[data-testid='comment']",
+    selector: "[data-testid='comment'][class*='vkit-']",
+    markup: {
+      data: {
+        accountAvatar: "[data-testid='comment-avatar'] img",
+        accountIdentifier: {
+          selector: "[data-testid='comment-owner']",
+          reactProp: "*:owner/id",
+        },
+        accountName: "[data-testid='comment-owner']",
+        commentIdentifier: false,
+        postCommentCount: {
+          ancestorSelector: "section",
+          selector: "[data-testid='video-comments-count']",
+        },
+      },
+      edits: [
+        {
+          selector: "[data-testid='comment-avatar'] + *",
+          style: { position: "relative" },
+        },
+        {
+          // Static overflow edit (legacy was dynamic)
+          selector: ":has(>[data-testid='comment-text'])",
+          style: { overflow: "visible" },
+        },
+      ],
+      ui: {
+        actionBar: [
+          {
+            selector: "[data-testid='comment-text'] + div",
+            position: "append",
+            style: { marginBottom: "-2px" },
+          },
+        ],
+        affiliationBadge: {
+          selector: "[data-testid='comment-owner']",
+          position: "after",
+          style: { paddingLeft: "2px" },
+        },
+        affiliationHighlight: {
+          selector: "[data-testid='comment-avatar'] + *",
+          position: "prepend",
+          style: {
+            top: "0",
+            right: "0",
+            marginBottom: "-2px",
+            marginLeft: "2px",
+          },
+        },
+        regDate: {
+          selector: "[class*='vkitCommentBase__title']",
+          position: "append",
+          style: { marginLeft: "4px" },
+        },
+      },
+    },
+  },
+
+  {
+    id: "desktopVideoCommentPre2026Q3",
+    variant: "comment",
+    appliesTo: "desktopVkWebsite",
+    selector: "[data-testid='comment']:not([class*='vkit-'])", // adding vkit- class as a marker for the newer design which contains same data-testid
     markup: {
       data: {
         accountAvatar: "[data-testid='comment-avatar'] img",
@@ -1799,7 +2064,7 @@ export default [
       edits: [
         {
           // Ensures parent element of affiliation highlight defines its position
-          selector: "a + div + div",
+          selector: "a + div",
           style: { position: "relative" },
         },
         {
@@ -1817,10 +2082,10 @@ export default [
         affiliationBadge: {
           selector: "a:has([data-testid='review-name'])",
           position: "after",
-          style: { paddingLeft: "4px" },
+          style: { paddingLeft: "4px", fontStyle: "normal" },
         },
         affiliationHighlight: {
-          selector: "a + div + div",
+          selector: "a + div",
           position: "prepend",
           style: { inset: "-2px", left: "-6px" },
         },
@@ -1855,7 +2120,7 @@ export default [
       edits: [
         {
           // Ensures parent element of affiliation highlight defines its position
-          selector: "a + div + div",
+          selector: "[class*='vkitReview__stretched']",
           style: { position: "relative" },
         },
         {
@@ -1876,7 +2141,7 @@ export default [
           style: { paddingLeft: "4px" },
         },
         affiliationHighlight: {
-          selector: "a + div + div",
+          selector: "[class*='vkitReview__stretched']",
           position: "prepend",
           style: { inset: "-2px", left: "-6px" },
         },
