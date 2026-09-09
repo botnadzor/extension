@@ -19,7 +19,7 @@ _For the English version of this README, [see it on Google Translate](https://tr
 
 <img src="docs/assets/botnadzor-extension-insertions.png" alt="Подсветка ботов в VK и вставка карточек" width="600">
 
-- Подсвечивает ботов на сайтах VK: [vk.ru](https://vk.ru), [vkvideo.ru](https://vkvideo.ru), [vk.com](https://vk.com) и их мобильных версиях, а также в [веб-архиве](https://web.archive.org)
+- Подсвечивает ботов на сайтах VK: [vk.ru](https://vk.ru), [vkvideo.ru](https://vkvideo.ru) и их мобильных версиях, а также в [веб-архиве](https://web.archive.org)
 - Помогает вставлять [карточки ботов](https://botnadzor.org/docs/how-to-help#cards) в ответ на их комментарии
 - Показывает дату регистрации аккаунтов VK
 - Помогает изучать подозрительную активность с помощью встроенного инспектора
@@ -31,16 +31,15 @@ _For the English version of this README, [see it on Google Translate](https://tr
 
 ### Браузеры на&nbsp;базе&nbsp;Chromium
 
-Инструкция подходит для **Chrome**, **Edge**, **Yandex**, **Opera**, **Brave**, **Lemur** и других браузеров на Windows, Android, macOS и Linux.
+Инструкция подходит для **Chrome**, **Edge**, **Yandex**, **Opera**, **Brave**, **Lemur** и других браузеров, которые поддерживают расширения из Chrome Web Store.
 
 1.  Перейдите на [страницу расширения в каталоге Chrome](https://chromewebstore.google.com/detail/%D0%91%D0%BE%D1%82%D0%BD%D0%B0%D0%B4%D0%B7%D0%BE%D1%80%20%28botnadzor.org%29/loemeolcemafljepnnmgjcoibcbocoma)
 
-1.  В правом верхнем углу страницы нажмите кнопку _«Добавить»_  
-    _Надпись на кнопке может быть немного другой, она зависит от браузера_
+1.  Нажмите кнопку _«Добавить»_. Её название может немного отличаться в вашем браузере.
 
 ### Firefox
 
-Инструкция также подходит для **Tor Browser**.
+Расширение можно установить и в **Tor Browser**, но [Tor Project предупреждает](https://support.torproject.org/tor-browser/features/plugins/), что сторонние расширения могут снизить анонимность.
 
 1.  Перейдите на [страницу расширения в каталоге Firefox](https://addons.mozilla.org/ru/firefox/addon/botnadzor-org/)
 
@@ -61,18 +60,18 @@ _For the English version of this README, [see it on Google Translate](https://tr
     В блоке `Assets` релиза найдите архив для вашего браузера и скачайте его:  
     `botnadzor-for-BROWSER-VERSION.zip`
 
-    ℹ️ Архив `chrome` подходит для всех браузеров на базе Chromium: **Chrome**, **Edge**, **Yandex**, **Opera**, **Brave**, **Lemur** и других.
+    ℹ️ Архив `chrome` предназначен для браузеров на базе Chromium.
 
     ⚠️ Если в релизе есть файл `botnadzor-sources-VERSION.zip`, он _не нужен_ для установки. Это архив с исходным кодом для публикации расширения в магазине.
 
 1.  Установите скачанный архив:
 
     **Браузеры на базе Chromium**
+    1.  Распакуйте скачанный архив.
     1.  Откройте `chrome://extensions`.
     1.  Включите **Режим разработчика** (переключатель обычно находится в правом верхнем углу).
     1.  Если у вас уже установлено наше расширение из магазина, _не удаляйте его_, а временно отключите.
-    1.  Перетащите zip-файл на страницу расширений.
-        Если этот способ не сработал, распакуйте архив, нажмите **«Загрузить распакованное расширение»** (Load unpacked) и укажите распакованную папку.
+    1.  Нажмите **«Загрузить распакованное расширение»** (Load unpacked) и выберите распакованную папку.
 
     **Firefox**
     1.  Если у вас уже установлено наше расширение из магазина, _не удаляйте его_, а временно отключите на странице `about:addons`.
@@ -108,8 +107,8 @@ _Background_, _content script_ и _popup_ взаимодействуют чер�
 
 ### Требования
 
-- [Node.js](https://nodejs.org/en/download) ≥ 24 (рекомендуемая версия указана в `.tool-versions`)
-- [pnpm](https://pnpm.io/installation) ≥ 10 (рекомендуемая версия указана в поле `packageManager` файла `package.json`)
+- [Node.js](https://nodejs.org/en/download) 24 (точная версия указана в `.tool-versions`)
+- [pnpm](https://pnpm.io/installation) 10–12 (при запуске pnpm автоматически выбирает версию из поля `packageManager` файла `package.json`)
 
 ### Установка зависимостей
 
@@ -154,7 +153,7 @@ pnpm test:unit --watch # запуск юнит-тестов в режиме на
 
 ## CI/CD <sup>[_что это?_](https://ru.wikipedia.org/wiki/CI/CD)</sup>
 
-CI запускается для пулл-реквестов и для новых коммитов в ветке `main`.
+CI запускается для пулл-реквестов, новых коммитов в ветке `main` и тегов.
 Используются [GitHub Actions](https://github.com/features/actions).
 Проверки состоят из двух параллельных задач:
 
