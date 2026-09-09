@@ -187,7 +187,6 @@ function omitRemoteStaging<ListId extends StaticListId>(
     remoteStaging: remoteStagingOmitted,
     ...metadataWithoutRemoteStaging
   } = metadata;
-  void remoteStagingOmitted;
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- removing an exact-optional property via rest is correct at runtime but TS loses that shape
   return metadataWithoutRemoteStaging as StaticListMetadata<ListId>;
 }
@@ -197,7 +196,6 @@ function omitRemoteActive<ListId extends StaticListId>(
 ): StaticListMetadata<ListId> {
   const { remoteActive: remoteActiveOmitted, ...metadataWithoutRemoteActive } =
     metadata;
-  void remoteActiveOmitted;
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- removing an exact-optional property via rest is correct at runtime but TS loses that shape
   return metadataWithoutRemoteActive as StaticListMetadata<ListId>;
 }
@@ -209,7 +207,6 @@ function omitRemoteUpdateIssue<ListId extends StaticListId>(
     remoteUpdateIssue: remoteUpdateIssueOmitted,
     ...metadataWithoutRemoteUpdateIssue
   } = metadata;
-  void remoteUpdateIssueOmitted;
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- removing an exact-optional property via rest is correct at runtime but TS loses that shape
   return metadataWithoutRemoteUpdateIssue as StaticListMetadata<ListId>;
 }

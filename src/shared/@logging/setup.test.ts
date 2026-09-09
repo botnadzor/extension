@@ -27,8 +27,10 @@ describe("getConsoleSnapshot", () => {
     for (const method of ["debug", "error", "info", "log", "warn"] as const) {
       const descriptor = Object.getOwnPropertyDescriptor(snapshot, method);
 
-      expect(descriptor?.value).toBe(snapshot[method]);
-      expect(snapshot[method]).not.toBe(globalThis.console[method]);
+      expect(descriptor?.value).toBe(Reflect.get(snapshot, method));
+      expect(Reflect.get(snapshot, method)).not.toBe(
+        Reflect.get(globalThis.console, method),
+      );
     }
   });
 });
