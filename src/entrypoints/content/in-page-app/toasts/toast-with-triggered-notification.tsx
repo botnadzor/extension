@@ -17,7 +17,6 @@ export function ToastWithTriggeredNotification({
   triggeredAt,
 }: NonNullable<TriggeredNotification> & {}) {
   let extensionName: "short" | "default" = "default";
-  let header: React.ReactNode;
   let children: React.ReactNode;
 
   const frontendBaseUrl = useFrontendBaseUrl();
@@ -148,7 +147,6 @@ export function ToastWithTriggeredNotification({
   return (
     <Toast
       extensionName={extensionName}
-      header={header}
       key={type}
       onClose={handleClose}
       triggeredAt={triggeredAt}
