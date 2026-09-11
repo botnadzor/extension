@@ -95,7 +95,7 @@
     "@tsconfig/node24": "24.0.5",
     "@tsconfig/strictest": "2.0.8",
     "@types/eslint-plugin-jsx-a11y": "6.10.1",
-    "@types/node": "24.13.3",
+    "@types/node": "24.13.4",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
     "@types/semver": "7.8.0",
