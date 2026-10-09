@@ -254,8 +254,8 @@ importers:
         version: 4.5.4
     devDependencies:
       '@cspell/dict-ru_ru':
-        specifier: 2.3.2
-        version: 2.3.2
+        specifier: 2.3.3
+        version: 2.3.3
       '@eslint-community/eslint-plugin-eslint-comments':
         specifier: 4.8.1
         version: 4.8.1(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))
@@ -717,8 +717,8 @@ packages:
   '@cspell/dict-r@2.1.1':
     resolution: {integrity: sha512-71Ka+yKfG4ZHEMEmDxc6+blFkeTTvgKbKAbwiwQAuKl3zpqs1Y0vUtwW2N4b3LgmSPhV3ODVY0y4m5ofqDuKMw==}
 
-  '@cspell/dict-ru_ru@2.3.2':
-    resolution: {integrity: sha512-wYGINTRjfKycUrXAASgnoBjiLlhn7EE7H5B5MMbTwhiLijfWOhyRiNajGpn0aY5H4UDWnfch3kGnQ1zr/wKzaw==}
+  '@cspell/dict-ru_ru@2.3.3':
+    resolution: {integrity: sha512-LjZGsi99nEwJYcbrXmW2HADGnmDmoGNY1fbsVX0ksFHUTSqgnNoP5f6cESqygL8UkZ+TWaVwBkjM50zD7HS4CQ==}
 
   '@cspell/dict-ruby@5.1.4':
     resolution: {integrity: sha512-Slw1dLY/pW5liJ5Fle+MIPphIdleZkIM6STDoXCN7sy298GfbfT34sJTcSZcXzZJVXiCEAvlLp+s1YNr6DuWNg==}
@@ -5847,7 +5847,7 @@ snapshots:
 
   '@cspell/dict-r@2.1.1': {}
 
-  '@cspell/dict-ru_ru@2.3.2': {}
+  '@cspell/dict-ru_ru@2.3.3': {}
 
   '@cspell/dict-ruby@5.1.4': {}
 
