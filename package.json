@@ -100,7 +100,7 @@
     "@types/react-dom": "19.2.7",
     "@types/semver": "7.8.0",
     "@typescript/native": "npm:typescript@7.0.2",
-    "@vitejs/plugin-react": "6.1.1",
+    "@vitejs/plugin-react": "6.1.2",
     "@wxt-dev/auto-icons": "1.1.2",
     "@wxt-dev/module-react": "1.2.2",
     "babel-plugin-react-compiler": "1.0.0",
