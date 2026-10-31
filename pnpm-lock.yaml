@@ -250,8 +250,8 @@ importers:
         specifier: 3.6.0
         version: 3.6.0
       zod:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.6.6
+        version: 4.6.6
     devDependencies:
       '@cspell/dict-ru_ru':
         specifier: 2.3.4
@@ -273,7 +273,7 @@ importers:
         version: 1.15.0
       '@orpc/zod':
         specifier: 1.15.0
-        version: 1.15.0(@orpc/contract@1.15.0)(@orpc/server@1.15.0)(zod@4.5.4)
+        version: 1.15.0(@orpc/contract@1.15.0)(@orpc/server@1.15.0)(zod@4.6.6)
       '@rolldown/plugin-babel':
         specifier: 0.2.4
         version: 0.2.4(@babel/core@7.29.7(supports-color@7.2.0))(@babel/runtime@7.29.10)(rolldown@1.2.15)(vite@8.3.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))
@@ -5490,8 +5490,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.5.4:
-    resolution: {integrity: sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
 snapshots:
 
@@ -6083,7 +6083,7 @@ snapshots:
       eslint: 10.10.0(jiti@2.7.0)(supports-color@7.2.0)
       ts-pattern: 5.9.2
       typescript: '@typescript/typescript6@6.0.2'
-      zod: 4.5.4
+      zod: 4.6.6
     transitivePeerDependencies:
       - supports-color
 
@@ -6489,7 +6489,7 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/zod@1.15.0(@orpc/contract@1.15.0)(@orpc/server@1.15.0)(zod@4.5.4)':
+  '@orpc/zod@1.15.0(@orpc/contract@1.15.0)(@orpc/server@1.15.0)(zod@4.6.6)':
     dependencies:
       '@orpc/contract': 1.15.0
       '@orpc/json-schema': 1.15.0
@@ -6498,7 +6498,7 @@ snapshots:
       '@orpc/shared': 1.15.0
       escape-string-regexp: 5.0.0
       wildcard-match: 5.1.6
-      zod: 4.5.4
+      zod: 4.6.6
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - crossws
@@ -8310,8 +8310,8 @@ snapshots:
       '@babel/parser': 7.29.11
       eslint: 10.10.0(jiti@2.7.0)(supports-color@7.2.0)
       hermes-parser: 0.25.1
-      zod: 4.5.4
-      zod-validation-error: 4.0.2(zod@4.5.4)
+      zod: 4.6.6
+      zod-validation-error: 4.0.2(zod@4.6.6)
     transitivePeerDependencies:
       - supports-color
 
@@ -9205,7 +9205,7 @@ snapshots:
       tinyglobby: 0.2.17
       unbash: 4.0.12
       yaml: 2.9.0
-      zod: 4.5.4
+      zod: 4.6.6
 
   ky@1.14.3: {}
 
@@ -10803,8 +10803,8 @@ snapshots:
       async: 3.2.6
       jszip: 3.10.1
 
-  zod-validation-error@4.0.2(zod@4.5.4):
+  zod-validation-error@4.0.2(zod@4.6.6):
     dependencies:
-      zod: 4.5.4
+      zod: 4.6.6
 
-  zod@4.5.4: {}
+  zod@4.6.6: {}
