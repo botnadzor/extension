@@ -93,7 +93,7 @@
     "@tailwindcss/vite": "4.3.3",
     "@tsconfig/node-ts": "23.6.5",
     "@tsconfig/node24": "24.0.6",
-    "@tsconfig/strictest": "2.0.8",
+    "@tsconfig/strictest": "2.0.9",
     "@types/eslint-plugin-jsx-a11y": "6.10.1",
     "@types/node": "24.13.6",
     "@types/react": "19.2.18",
