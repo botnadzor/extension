@@ -232,8 +232,8 @@ importers:
         specifier: 1.42.0
         version: 1.42.0
       marked-react:
-        specifier: 4.0.0
-        version: 4.0.0(react@19.2.8)
+        specifier: 4.0.1
+        version: 4.0.1(react@19.2.8)
       nanoid:
         specifier: 6.0.2
         version: 6.0.2
@@ -4363,8 +4363,8 @@ packages:
     resolution: {integrity: sha512-1DiZmDHPXMBgMRjeUtHy1q1VYmeJscHxhIAexX9z/zjRMP80+0ETuPfssi8z+kMY4DwUgsKuHqpjxgmeA9gBNA==}
     engines: {node: '>=18'}
 
-  marked-react@4.0.0:
-    resolution: {integrity: sha512-+Kp1FSK0gT6q6uKjXvwaIigj++BkyKFxiQlrhDTu10H/awBvs1K4K1Uenu/6N7Ci4u0FxYtFuZxtgAZkW6w8gg==}
+  marked-react@4.0.1:
+    resolution: {integrity: sha512-K9Kcdgipz9jH4xCtddV/zqCUN1SYU0h/AV0YnAqpEj9X7vt8pq/OObesGzyHyaHfVs3z8o+haCco2mZImeqKvw==}
     peerDependencies:
       react: ^16.8.0 || >=17.0.0
 
@@ -9608,7 +9608,7 @@ snapshots:
 
   many-keys-map@3.0.3: {}
 
-  marked-react@4.0.0(react@19.2.8):
+  marked-react@4.0.1(react@19.2.8):
     dependencies:
       html-entities: 2.6.0
       marked: 17.0.6

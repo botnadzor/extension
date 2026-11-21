@@ -72,7 +72,7 @@
     "lru-cache": "11.5.3",
     "lucide-react": "1.42.0",
     "lucide-static": "1.42.0",
-    "marked-react": "4.0.0",
+    "marked-react": "4.0.1",
     "nanoid": "6.0.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
