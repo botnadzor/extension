@@ -10,6 +10,7 @@ import { fetchFromAlias } from "../@service-helpers/fetch-from-alias";
 const logger = getBackgroundLogger(["frontend-service"]);
 
 const frontendAvailabilityCheckInterval = 1000 * 60 * 60; // 1 hour
+const frontendAvailabilityCheckTimeout = 10_000;
 const frontendFallbackBaseUrl = "https://botnadzor.org";
 
 export class FrontendService {
@@ -55,8 +56,27 @@ export class FrontendService {
     while ((aliasToUse = this.aliasManagerForFrontend.findAliasToUse())) {
       const fetchResult = await fetchFromAlias({
         alias: aliasToUse,
+        init: { cache: "no-store" },
+        signalOrTimeout: AbortSignal.timeout(frontendAvailabilityCheckTimeout),
         urlSuffix: "/ping",
       });
+
+      if (fetchResult.success) {
+        // Consume the body so a connection cut off after successful headers still fails the availability check
+        try {
+          await fetchResult.response.arrayBuffer();
+        } catch (error) {
+          logger.warn(
+            "Unable to read the complete ping response from {baseUrl}",
+            { baseUrl: aliasToUse.baseUrl, error },
+          );
+          this.aliasManagerForFrontend.markAliasAsUnavailable(
+            aliasToUse.baseUrl,
+            "connectionFailed",
+          );
+          continue;
+        }
+      }
 
       if (fetchResult.success || fetchResult.reason === "blockedByFirewall") {
         this.aliasManagerForFrontend.markAliasAsAvailable(aliasToUse.baseUrl);
