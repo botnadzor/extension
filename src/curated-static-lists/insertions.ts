@@ -1,5 +1,6 @@
 // cspell:ignoreRegExp /selector:.*/
 // cspell:ignoreRegExp /valuePattern:.*/
+// cspell:ignore lvl elementtiming
 
 import type { z } from "zod/mini";
 
@@ -9,6 +10,162 @@ export default [
   // ---------------------------------------------------------------------------
   // Variant: account
   // ---------------------------------------------------------------------------
+
+  /**
+   * Follower (user card tile) on desktop after autumn 2026 VK refactoring (data-testid were removed).
+   * Examples (logged in):
+   * - https://vk.ru/rt_russian → click "followers"
+   */
+  {
+    id: "desktopDialogFollower2026Q4",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    selector: "[class*='MembersListModal__gridItem']",
+    markup: {
+      data: {
+        accountAvatar: "a[href] img",
+        accountIdentifier: [
+          {
+            // Avatar link
+            selector: "a[href]",
+            attribute: "href",
+          },
+          {
+            // Name link
+            selector: "a[href]:not(:has(img))",
+            attribute: "href",
+          },
+        ],
+        accountName: "a[href]:not(:has(img))",
+      },
+      edits: [
+        {
+          selector: "",
+          style: {
+            position: "relative",
+          },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector: ":scope > div",
+          position: "append",
+          style: {
+            display: "flex",
+            height: "20px",
+            justifyContent: "center",
+            left: "0",
+            position: "absolute",
+            right: "0",
+            top: "84px", // bottom of avatar
+            "--bn-inline-action-background-color": "var(--bn-color-background)",
+          },
+        },
+        affiliationBadge: {
+          selector: "",
+          position: "append",
+          style: {
+            background:
+              "color-mix(in srgb, var(--bn-inline-affiliation-color) 70%, transparent)",
+            color: "var(--bn-color-foreground)",
+            left: "0px",
+            padding: "2px",
+            position: "absolute",
+            right: "0px",
+            textAlign: "center",
+            top: "54px", // 1/2 of avatar height + padding
+            transform: "translateY(-50%)",
+          },
+        },
+        affiliationHighlight: {
+          selector: "",
+          position: "prepend",
+          style: { borderLeft: "none", opacity: "50%" },
+        },
+        regDate: {
+          selector: ":scope > div",
+          position: "append",
+          style: {
+            background:
+              "color-mix(in srgb, var(--bn-color-background) 70%, transparent)",
+            color: "var(--bn-color-foreground)",
+            display: "block",
+            textAlign: "center",
+            fontSize: "11px",
+            lineHeight: "1.2",
+            padding: "2px",
+            position: "absolute",
+            top: "0px",
+            left: "0px",
+            right: "0px",
+          },
+        },
+      },
+    },
+  },
+
+  /**
+   * Followers (list of user cards) on desktop after autumn 2026 VK refactoring.
+   * Root is the dialog inside MembersListModal container: the container itself is still matched by
+   * desktopDialogFollowers, which can no longer resolve its data-testid based markup.
+   * Examples (logged in):
+   * - https://vk.ru/rt_russian → click "followers"
+   */
+  {
+    id: "desktopDialogFollowers2026Q4",
+    variant: "accountList",
+    appliesTo: "desktopVkWebsite",
+    selector: "[class*='MembersListModal__modalContainer'] > [role=dialog]",
+    markup: {
+      data: {
+        accountList: "[style*='--max-height-scroll']",
+        activeTab: "[role=tab][aria-selected=true]",
+        loadMoreButton: false,
+      },
+      edits: [
+        {
+          selector: "",
+          style: { "--bn-insertion-summary-height": "300px" },
+        },
+        {
+          // Scroll area; VK sets --max-height-scroll inline on it
+          selector: "[style*='--max-height-scroll']",
+          style: {
+            "--max-height-scroll":
+              "calc(100vh - var(--bn-insertion-summary-height) - var(--empty-space))",
+            position: "relative",
+          },
+        },
+      ],
+      ui: {
+        summary: {
+          // Dialog header with tabs
+          selector: ":scope > div:first-child",
+          position: "after",
+          style: {
+            height: "var(--bn-insertion-summary-height)",
+            flexShrink: "0",
+            padding: "4px",
+            paddingLeft: "10px",
+            paddingRight: "10px",
+          },
+        },
+        tableMeasurer: {
+          selector: "[style*='--max-height-scroll']",
+          position: "append",
+          style: {
+            backgroundColor: "var(--bn-color-background)",
+            borderBottomLeftRadius: "12px",
+            borderBottomRightRadius: "12px",
+            position: "absolute",
+            inset: "0",
+            padding: "4px",
+            paddingTop: "10px",
+          },
+        },
+      },
+    },
+  },
 
   /**
    * Follower (user card tile) on desktop (React-based UI: tabs have outlines and shadows)
@@ -385,6 +542,137 @@ export default [
     },
   },
 
+  /*
+   * Desktop reactions dialog after autumn 2026 VK refactoring (data-testid were removed).
+   * Examples (logged in):
+   * - post: https://vk.ru/wall-15755094_49557504 → click "Оценили N человек"
+   * - comment: https://vk.ru/wall-70079585_69750?reply=70234&w=likes%2Fwall_reply-70079585_70234
+   */
+  {
+    id: "desktopDialogReactions2026Q4",
+    variant: "accountList",
+    appliesTo: "desktopVkWebsite",
+    selector: "[role=dialog]:has(> [class*='ReactionsViewer__wrapper'])",
+    markup: {
+      data: {
+        accountList: "[class*='ReactionsViewer__modalBody']",
+        activeTab: "[role=tab][aria-selected=true]",
+        loadMoreButton: false,
+      },
+      edits: [
+        {
+          selector: "",
+          style: { "--bn-insertion-summary-height": "300px" },
+        },
+        {
+          selector: "[class*='ReactionsViewer__modalBody']",
+          style: {
+            position: "relative", // Ensure table measurer is positioned correctly
+          },
+        },
+      ],
+      ui: {
+        summary: {
+          // Dialog header with reaction tabs
+          selector: "[class*='ReactionsViewer__wrapper'] > div:first-child",
+          position: "after",
+          style: {
+            height: "var(--bn-insertion-summary-height)",
+            flexShrink: "0",
+            padding: "4px",
+            paddingLeft: "10px",
+            paddingRight: "10px",
+          },
+        },
+        tableMeasurer: {
+          selector: "[class*='ReactionsViewer__modalBody']",
+          position: "append",
+          style: {
+            backgroundColor: "var(--bn-color-background)",
+            borderBottomLeftRadius: "8px",
+            borderBottomRightRadius: "8px",
+            inset: "0",
+            padding: "4px",
+            paddingTop: "10px",
+            position: "absolute",
+          },
+        },
+      },
+    },
+  },
+
+  /**
+   * Desktop reacted user cell in reactions dialog after autumn 2026 VK refactoring.
+   * Examples: see desktopDialogReactions2026Q4
+   */
+  {
+    id: "desktopDialogReactionCell2026Q4",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    selector: "[class*='ReactionsViewer__modalBody'] a[data-user-id]",
+    markup: {
+      data: {
+        // First image is the avatar, second one is the reaction icon
+        accountAvatar: ":scope > div > div > img",
+        accountIdentifier: [
+          {
+            selector: "",
+            attribute: "data-user-id",
+          },
+          {
+            selector: "",
+            attribute: "href",
+          },
+        ],
+        accountName: ":scope > div + div span",
+      },
+      edits: [
+        {
+          // Cell middle part (name), next to avatar
+          selector: ":scope > div + div",
+          style: {
+            // Ensure highlight is placed relative to its parent
+            position: "relative",
+            // Ensure tooltips are not clipped
+            overflow: "visible",
+          },
+        },
+        {
+          // Prevent account name from going under highlight
+          selector: ":scope > div + div > :not([data-bn-insertion-ui-element])",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          // Highlight is also a div, so it is excluded explicitly
+          selector:
+            ":scope > div + div > div:not([data-bn-insertion-ui-element])",
+          position: "append",
+          style: { marginLeft: "2px" },
+          // Tooltip goes down because of overflow:scroll in the list
+          tooltipDirection: "down",
+        },
+        affiliationBadge: {
+          selector: "[data-bn-insertion-ui-element='actionBar']",
+          position: "before",
+          style: { fontStyle: "normal" },
+        },
+        affiliationHighlight: {
+          selector: ":scope > div + div",
+          position: "prepend",
+          style: { left: "-5px" },
+        },
+        regDate: {
+          selector:
+            ":scope > div + div > div:not([data-bn-insertion-ui-element])",
+          position: "after",
+          style: { marginTop: "-2px" },
+        },
+      },
+    },
+  },
+
   /**
    * Desktop reaction (user card tile) in Pre-React UI reactions dialog
    * Examples:
@@ -545,6 +833,87 @@ export default [
           selector: "[data-testid='profile-owner-name']",
           position: "append",
           style: { top: "1px", fontSize: "13px", fontWeight: "400" },
+        },
+      },
+    },
+  },
+
+  /**
+   * Desktop profile page header after autumn 2026 VK refactoring: no data-testid, hashed class names.
+   * Examples (logged in):
+   * - https://vk.ru/id809589093
+   */
+  {
+    id: "desktopProfileHeader2026Q4",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    // Older layouts are handled by desktopProfileHeader and desktopProfileHeaderBefore2026Q3
+    selector:
+      "section:has(#owner_page_name):not(:has(.ProfileHeader__in, [data-testid='profile-header']))",
+    markup: {
+      data: {
+        accountAvatar: "[id^='profile_avatar_'] img",
+        accountIdentifier: [
+          {
+            // id="profile_avatar_<id>"
+            selector: "[id^='profile_avatar_']",
+            attribute: "id",
+            valuePattern: "_(-?\\d+)$",
+          },
+          {
+            ancestorSelector: "html",
+            selector: "link[rel='alternate'][href*='android']",
+            attribute: "href",
+          },
+        ],
+        accountName: [
+          {
+            // Page title is the profile name; the name element also gets action bar and badge inside
+            ancestorSelector: "html",
+            selector: "head > title",
+          },
+          "#owner_page_name",
+        ],
+      },
+      edits: [
+        {
+          // Name, status and actions column
+          selector: ":has(> #owner_page_name)",
+          style: { position: "relative" },
+        },
+        {
+          selector:
+            ":has(> #owner_page_name) > :not([data-bn-insertion-ui-element])",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector: "#owner_page_name",
+          position: "append",
+          style: { top: "2px", marginLeft: "6px" },
+        },
+        affiliationBadge: {
+          selector: "[data-bn-insertion-ui-element='actionBar']",
+          position: "before",
+          style: {
+            display: "inline-block",
+            top: "-2px",
+            marginBottom: "-4px",
+            paddingLeft: "6px",
+            paddingRight: "4px",
+            fontWeight: "400",
+          },
+        },
+        affiliationHighlight: {
+          selector: ":has(> #owner_page_name)",
+          position: "prepend",
+          style: { left: "-6px", right: "6px", top: "0", bottom: "-2px" },
+        },
+        regDate: {
+          selector: "#owner_page_name",
+          position: "after",
+          style: { fontSize: "13px", fontWeight: "400", marginTop: "2px" },
         },
       },
     },
@@ -815,6 +1184,86 @@ export default [
   },
 
   /**
+   * Desktop post and repost headers after autumn 2026 VK refactoring: no data-testid, hashed class names.
+   * Header is the block with the author avatar link and the title heading (h3 for posts, h4 for shared posts)
+   * inside a post container ([data-post-nesting-lvl]).
+   * Examples (logged in):
+   * - https://vk.ru/wall1034309676_77 (post + repost)
+   * - https://vk.ru/wall-15755094_49557504
+   */
+  {
+    id: "desktopPost2026Q4",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    selector:
+      "[data-post-nesting-lvl] div:has(> div > a[href] > img):has(:is(h3, h4))",
+    markup: {
+      data: {
+        accountAvatar: ":scope > div > a[href] > img",
+        accountIdentifier: [
+          {
+            // Avatar links to the post author
+            selector: ":scope > div > a[href]",
+            attribute: "href",
+          },
+          {
+            selector: ":is(h3, h4) a[href]",
+            attribute: "href",
+          },
+        ],
+        accountName: ":is(h3, h4) a[href]",
+      },
+      edits: [
+        {
+          selector: "",
+          style: { position: "relative" },
+        },
+        {
+          selector: ":scope > *",
+          style: { position: "relative" },
+        },
+        {
+          // Title column and the name wrapper clip overflow (tooltips)
+          selector: ":scope > div:has(:is(h3, h4))",
+          style: { overflow: "visible" },
+        },
+        {
+          selector: ":scope > div:has(:is(h3, h4)) > div",
+          style: { overflow: "visible" },
+        },
+        {
+          selector: "[style*='--gradient-start']",
+          style: { overflow: "visible" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          // Name wrapper (with text overflow gradient)
+          selector: "[style*='--gradient-start']",
+          position: "append",
+          style: { marginLeft: "4px" },
+        },
+        affiliationBadge: {
+          selector: "[style*='--gradient-start'] > a[href]",
+          position: "after",
+          style: { paddingLeft: "4px", fontStyle: "normal" },
+        },
+        affiliationHighlight: {
+          selector: "",
+          position: "prepend",
+          style: { top: "-4px", bottom: "-4px" },
+        },
+        regDate: {
+          // Below the title
+          selector: ":has(> :is(h3, h4))",
+          position: "after",
+          style: { marginTop: "2px" },
+        },
+      },
+    },
+  },
+
+  /**
    * Modern desktop feed posts ([data-testid="post"])
    * Examples:
    * - Posts in VK feed (vk.ru/feed)
@@ -832,6 +1281,11 @@ export default [
       data: {
         accountAvatar: "[data-testid='post-header-avatar'] img",
         accountIdentifier: [
+          {
+            // Post author; MeProvider got renamed by minification after autumn 2026
+            selector: "",
+            reactProp: "*:feedItem/value/from_id",
+          },
           {
             selector: "",
             reactProp: "MeProvider:feedItem/id",
@@ -882,6 +1336,13 @@ export default [
           style: { top: "-4px", bottom: "-4px" },
         },
         regDate: [
+          {
+            // m.vk.ru after autumn 2026: no vkitPostHeaderActions; below the title
+            selector:
+              ":scope:not(:has([class*='vkitPostHeaderActions'])) > div:has([data-testid='post-header-title'])",
+            position: "append",
+            style: { marginTop: "2px" },
+          },
           {
             selector: "[class*='vkitPostHeaderActions']",
             position: "before",
@@ -1008,6 +1469,87 @@ export default [
         regDate: {
           selector: ".copy_post_header_info",
           position: "after",
+          style: { marginTop: "2px" },
+        },
+      },
+    },
+  },
+
+  /**
+   * Desktop user cells after autumn 2026 VK refactoring (data-testid were removed):
+   * friends, user followers, people search. Found by the avatar marked with elementtiming="friend-avatar".
+   * Examples (logged in):
+   * - https://vk.ru/friends?id=1096366246&section=all
+   * - https://vk.ru/search/people?q=Иван
+   */
+  {
+    id: "desktopUserRichCell2026Q4",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    selector:
+      ".vkuiInternalTappable:has(> .vkuiInternalTappable img[elementtiming='friend-avatar'])",
+    markup: {
+      data: {
+        accountAvatar: "img[elementtiming='friend-avatar']",
+        accountIdentifier: [
+          {
+            // Name link on friends pages
+            selector: "a[data-user-id]",
+            attribute: "data-user-id",
+          },
+          {
+            // "Write message" action, can be a span with href
+            selector: "[href*='/write']",
+            attribute: "href",
+            valuePattern: "write(\\d+)",
+          },
+          {
+            // Avatar link
+            selector: "a[href]:has(> img)",
+            attribute: "href",
+          },
+        ],
+        // Name link (no data-user-id in people search)
+        accountName:
+          "a[data-user-id], a[href]:not([aria-hidden='true']):has(> span)",
+      },
+      edits: [
+        {
+          selector: "",
+          style: { position: "relative" },
+        },
+        {
+          selector: ":scope > :not([data-bn-insertion-ui-element])",
+          style: { position: "relative" },
+        },
+        {
+          // Name wrapper clips overflow (tooltips)
+          selector: "div:has(> div > a[href]:not([aria-hidden='true']) > span)",
+          style: { overflow: "visible" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          selector:
+            "a[data-user-id], a[href]:not([aria-hidden='true']):has(> span)",
+          position: "after",
+          style: { marginLeft: "4px", top: "1px" },
+        },
+        affiliationBadge: {
+          selector:
+            "a[data-user-id], a[href]:not([aria-hidden='true']):has(> span)",
+          position: "after",
+          style: { paddingLeft: "4px", fontStyle: "normal" },
+        },
+        affiliationHighlight: {
+          selector: "",
+          position: "prepend",
+          style: { inset: "-2px", left: "-6px" },
+        },
+        regDate: {
+          // Text column next to the avatar
+          selector: ".vkuiInternalTappable > div:has(img[elementtiming]) + div",
+          position: "append",
           style: { marginTop: "2px" },
         },
       },
@@ -1220,6 +1762,78 @@ export default [
         regDate: {
           selector: ".ii_body",
           position: "append",
+        },
+      },
+    },
+  },
+
+  /**
+   * Desktop community post author signature ("От ...") after autumn 2026 VK refactoring.
+   * The signature is the link right after the spacing block at the end of the post text.
+   * Root is the whole post text: the signature link is clamped to one line (overflow hidden), so the
+   * reg date is placed after the text, while badge and action bar stay on the signature line.
+   * Examples (logged in):
+   * - https://vk.ru/wall-60212615_5184695
+   */
+  {
+    id: "desktopPostSigner2026Q4",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    selector:
+      "span[data-post-id]:has([data-vkit-show-more-text] [style*='spacing_gap_size'] + a[href])",
+    markup: {
+      data: {
+        // No avatar available
+        accountAvatar: "",
+        accountIdentifier: {
+          selector:
+            "[data-vkit-show-more-text] [style*='spacing_gap_size'] + a[href]",
+          attribute: "href",
+        },
+        accountName:
+          "[data-vkit-show-more-text] [style*='spacing_gap_size'] + a[href]",
+      },
+      edits: [
+        {
+          // Signature link: keep badge and action bar on the same line, position affiliation highlight
+          selector:
+            "[data-vkit-show-more-text] [style*='spacing_gap_size'] + a[href]",
+          style: {
+            position: "relative",
+            zIndex: "0",
+            display: "inline-block",
+            // Signature, badge and action bar are vertically centered on one line
+            verticalAlign: "middle",
+          },
+        },
+      ],
+      ui: {
+        actionBar: {
+          // Right after the signature link (outside of it, so that buttons are clickable)
+          selector:
+            "[data-vkit-show-more-text] [style*='spacing_gap_size'] + a[href]",
+          position: "after",
+          style: { marginLeft: "4px", verticalAlign: "middle" },
+        },
+        affiliationBadge: {
+          selector: "[data-bn-insertion-ui-element='actionBar']",
+          position: "before",
+          style: {
+            paddingLeft: "4px",
+            fontStyle: "normal",
+            verticalAlign: "middle",
+          },
+        },
+        affiliationHighlight: {
+          selector:
+            "[data-vkit-show-more-text] [style*='spacing_gap_size'] + a[href]",
+          position: "prepend",
+          style: { inset: "0", zIndex: "-1" },
+        },
+        regDate: {
+          selector: "",
+          position: "append",
+          style: { marginTop: "2px" },
         },
       },
     },
@@ -1478,14 +2092,102 @@ export default [
   },
 
   /**
-   * Modern desktop comments
-   * Examples:
-   * - New VK wall post comments (vk.ru/ria)
+   * Desktop comments after autumn 2026 VK refactoring: no data-testid, hashed class names.
+   * Comment root is found by the inline --comment-layout-level variable of its layout wrapper;
+   * inner parts are found by structure, link targets and roles (no React needed).
+   * Examples (logged in):
+   * - https://vk.ru/wall-15755094_49557504
+   * - https://vk.ru/wall-142531718_10614?reply=10616
+   * - https://vk.ru/wall-60212615_5184695
+   */
+  {
+    id: "desktopComment2026Q4",
+    variant: "comment",
+    appliesTo: "desktopVkWebsite",
+    // id="<author id>_<comment id>"; deleted comments have author id 0
+    selector:
+      "[class*='CommentsContainer__'] [style*='--comment-layout-level'] > div > div[id]:not([id^='0_'], [data-testid])",
+    markup: {
+      data: {
+        accountAvatar: ":scope > div > a[href]:first-child img",
+        accountIdentifier: [
+          {
+            selector: "",
+            attribute: "id",
+            valuePattern: "^(-?\\d+)_\\d+$",
+          },
+          {
+            selector: ":scope > div > a[href]:first-child",
+            attribute: "href",
+          },
+        ],
+        // First link in the comment header is the author name
+        accountName:
+          ":scope > div > a[href] + div > div:not([data-bn-insertion-ui-element]) a[href]",
+        commentIdentifier: {
+          // Date link in the footer row (next to "reply" / "share" buttons)
+          selector: ":has(> span[role='button']) a[href*='reply=']",
+          attribute: "href",
+        },
+        postCommentCount: {
+          ancestorSelector: "[data-post-id]",
+          selector: "[aria-label]:has([class*='vkuiIcon--comment'])",
+          attribute: "aria-label",
+        },
+      },
+      edits: [
+        {
+          // Comment content column (next to avatar)
+          selector: ":scope > div > a[href] + div",
+          style: { position: "relative" },
+        },
+        {
+          // Keep header, text and footer above affiliation highlight
+          selector:
+            ":scope > div > a[href] + div > :not([data-bn-insertion-ui-element])",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          // Footer row: date, "reply", "share"
+          selector: "div:has(> span[role='button'] + span[role='button'])",
+          position: "append",
+          style: { marginLeft: "4px" },
+        },
+        affiliationBadge: {
+          // Author block (name and emoji status), before reply-to owner
+          selector:
+            ":scope > div > a[href] + div > div:not([data-bn-insertion-ui-element]) > :first-child",
+          position: "append",
+          style: { paddingLeft: "4px", fontStyle: "normal" },
+        },
+        affiliationHighlight: {
+          selector: ":scope > div > a[href] + div",
+          position: "prepend",
+          style: { marginLeft: "4px" },
+        },
+        regDate: {
+          // Below comment header (highlight is also a div, so it is excluded explicitly)
+          selector:
+            ":scope > div > a[href] + div > div:not([data-bn-insertion-ui-element])",
+          position: "after",
+          style: { marginTop: "2px" },
+        },
+      },
+    },
+  },
+
+  /**
+   * Modern desktop comments before autumn 2026 VK refactoring.
+   * VK removed these data-testid attributes, so this markup is now expected only in archived snapshots.
+   * Live comments: see desktopComment2026Q4
    */
   {
     id: "desktopComment",
     variant: "comment",
     appliesTo: "desktopVkWebsite",
+    appliesToArchivedSnapshotsOnly: true,
     selector:
       "[data-testid='wall_comments_comment_root'], [data-testid='wall_comments_comment_in_thread']",
     markup: {
@@ -1718,11 +2420,20 @@ export default [
             marginLeft: "2px",
           },
         },
-        regDate: {
-          selector: "[class*='vkitCommentBase__title']",
-          position: "append",
-          style: { marginLeft: "4px" },
-        },
+        regDate: [
+          {
+            // vkvideo.ru after autumn 2026: no vkitCommentBase__title, place between header and text
+            selector:
+              "[data-testid='comment-avatar'] + :not(:has([class*='vkitCommentBase__title'])) > :has([data-testid='comment-text'])",
+            position: "before",
+            style: { marginTop: "2px" },
+          },
+          {
+            selector: "[class*='vkitCommentBase__title']",
+            position: "append",
+            style: { marginLeft: "4px" },
+          },
+        ],
       },
     },
   },
@@ -1910,20 +2621,106 @@ export default [
             style: { marginLeft: "4px", top: "2px" },
           },
         ],
-        affiliationBadge: {
-          selector: "[class*='vkitCommentBase__title'] > .vkuiFlex__host",
-          position: "append",
-          style: { top: "1px", fontSize: "14px" },
-        },
+        affiliationBadge: [
+          {
+            // m.vk.ru after autumn 2026: no vkitCommentBase__title; author block
+            selector:
+              ":scope:not(:has([class*='vkitCommentBase__title'])) div:has(> span > [data-testid='comment-owner'])",
+            position: "append",
+            style: { paddingLeft: "4px", fontStyle: "normal" },
+          },
+          {
+            selector: "[class*='vkitCommentBase__title'] > .vkuiFlex__host",
+            position: "append",
+            style: { top: "1px", fontSize: "14px" },
+          },
+        ],
         affiliationHighlight: {
           selector: "[data-testid='comment-avatar'] + *",
           position: "prepend",
           style: { inset: "0", marginLeft: "4px" },
         },
-        regDate: {
-          selector: "[data-bn-insertion-ui-element='affiliationBadge']",
+        regDate: [
+          {
+            // m.vk.ru after autumn 2026: below comment header row
+            selector:
+              ":scope:not(:has([class*='vkitCommentBase__title'])) div:has(> div > span > [data-testid='comment-owner'])",
+            position: "after",
+            style: { marginTop: "2px" },
+          },
+          {
+            selector: "[data-bn-insertion-ui-element='affiliationBadge']",
+            position: "after",
+            style: { marginTop: "-3px", fontSize: "14px" },
+          },
+        ],
+      },
+    },
+  },
+
+  /**
+   * Desktop profile popover shown on mention hover after autumn 2026 VK refactoring.
+   * Popover is a dialog with a profile cell and a group of buttons ("follow", "message").
+   * Examples (logged in):
+   * - https://vk.ru/wall-15755094_49557504 → hover a mention in comments
+   */
+  {
+    id: "desktopMentionProfilePopover2026Q4",
+    variant: "account",
+    appliesTo: "desktopVkWebsite",
+    selector:
+      "[role='dialog'] > div:has(> .vkuiInternalTappable [role='group'])",
+    markup: {
+      data: {
+        accountAvatar: ":scope > .vkuiInternalTappable img",
+        accountIdentifier: {
+          // No profile link in the popover; owner id is provided via React props
+          selector: "",
+          reactProp: "*:ownerId",
+        },
+        accountName: [
+          {
+            // Avatar alt is the account name
+            selector: ":scope > .vkuiInternalTappable img",
+            attribute: "alt",
+          },
+          ":scope > .vkuiInternalTappable > div + div div:not(:has(*)):not(:empty)",
+        ],
+      },
+      edits: [
+        {
+          selector: ":scope > .vkuiInternalTappable",
+          style: { position: "relative" },
+        },
+        {
+          selector:
+            ":scope > .vkuiInternalTappable > :not([data-bn-insertion-ui-element])",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          // Right after the name (first text-only element in the cell content)
+          selector:
+            ":scope > .vkuiInternalTappable > div + div div:not(:has(*)):not(:empty)",
           position: "after",
-          style: { marginTop: "-3px", fontSize: "14px" },
+          style: { marginLeft: "4px" },
+        },
+        affiliationBadge: {
+          selector: "[data-bn-insertion-ui-element='actionBar']",
+          position: "before",
+          style: { paddingLeft: "4px", fontStyle: "normal" },
+        },
+        affiliationHighlight: {
+          selector: ":scope > .vkuiInternalTappable",
+          position: "prepend",
+          style: { inset: "-2px" },
+        },
+        regDate: {
+          // Above the buttons
+          selector: ":has(> [role='group'])",
+          position: "before",
+          style: { marginBottom: "2px" },
         },
       },
     },
@@ -1972,6 +2769,40 @@ export default [
   // ---------------------------------------------------------------------------
   // Variant: reply form
   // ---------------------------------------------------------------------------
+
+  /**
+   * Desktop comment input after autumn 2026 VK refactoring (vkitCommentInput classes and data-testid were removed).
+   * Root carries inline --vkit_internal--comment_input_* variables.
+   * Examples (logged in):
+   * - https://vk.ru/wall-15755094_49557504 → "reply" under a comment
+   */
+  {
+    id: "desktopReplyForm2026Q4",
+    variant: "replyForm",
+    appliesTo: "desktopVkWebsite",
+    selector: "[style*='comment_input_before_avatar_size']",
+    markup: {
+      data: {
+        accountIdentifier: {
+          // "<author id>_<comment id>" of the comment being replied to
+          selector: "",
+          reactProp: "*:replyCommentId",
+        },
+        // One delete button per attachment
+        attachedItemCount: "[role='presentation'] button",
+        // "Attach" dropdown button
+        newAttachmentButtonPresence: "button[aria-expanded]",
+      },
+      edits: [],
+      ui: {
+        bnCardAttachmentButton: {
+          selector: "button[aria-expanded]",
+          position: "before",
+          style: { marginRight: "6px" },
+        },
+      },
+    },
+  },
 
   {
     id: "desktopReplyForm",
@@ -2038,6 +2869,79 @@ export default [
   // ---------------------------------------------------------------------------
   // Variant: review
   // ---------------------------------------------------------------------------
+
+  /**
+   * Desktop reviews after autumn 2026 VK refactoring: no data-testid, hashed class names.
+   * Examples (logged in):
+   * - https://vk.ru/reviews-187080127
+   */
+  {
+    id: "desktopReview2026Q4",
+    variant: "review",
+    appliesTo: "desktopVkWebsite",
+    // id="review-<wall id>_<review id>"; data-testid markup is handled by desktopReview
+    selector: "[id^='review-'][data-review-id]:not([data-testid])",
+    markup: {
+      data: {
+        accountAvatar: ":scope > div > a[href] img",
+        accountIdentifier: [
+          {
+            // Name link
+            selector: ":scope > div > a[href] + div a[href]",
+            attribute: "href",
+          },
+          {
+            // Avatar link
+            selector: ":scope > div > a[href]",
+            attribute: "href",
+          },
+        ],
+        accountName: ":scope > div > a[href] + div a[href]",
+        reviewIdentifier: {
+          selector: "",
+          attribute: "id",
+        },
+      },
+      edits: [
+        {
+          // Review content column (next to avatar)
+          selector: ":scope > div > a[href] + div",
+          style: { position: "relative" },
+        },
+        {
+          // Keep name, text, date and actions above affiliation highlight
+          selector:
+            ":scope > div > a[href] + div > :not([data-bn-insertion-ui-element])",
+          style: { position: "relative" },
+        },
+      ],
+      ui: {
+        actionBar: {
+          // Bottom row with date and "reply" action
+          selector: ":scope > div > a[href] + div > div:last-child",
+          position: "append",
+          style: { paddingLeft: "6px", marginTop: "-2px", top: "1px" },
+        },
+        affiliationBadge: {
+          selector: ":scope > div > a[href] + div a[href]",
+          position: "after",
+          style: { paddingLeft: "4px", fontStyle: "normal" },
+        },
+        affiliationHighlight: {
+          selector: ":scope > div > a[href] + div",
+          position: "prepend",
+          style: { inset: "-2px", left: "-6px" },
+        },
+        regDate: {
+          // Below name and rating (highlight is also a div, so it is excluded explicitly)
+          selector:
+            ":scope > div > a[href] + div > div:not([data-bn-insertion-ui-element])",
+          position: "after",
+          style: { marginTop: "2px" },
+        },
+      },
+    },
+  },
 
   /**
    * Examples:
