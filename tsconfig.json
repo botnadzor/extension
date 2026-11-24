@@ -1,6 +1,6 @@
 {
   "extends": [
-    "@tsconfig/node24",
+    "@tsconfig/node26",
     "@tsconfig/strictest",
     "@tsconfig/node-ts",
     "./.wxt/tsconfig.json"
