@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",
-    "@logtape/logtape": "2.3.7",
+    "@logtape/logtape": "2.4.2",
     "@orpc/client": "1.15.0",
     "@orpc/contract": "1.15.0",
     "@tailwindcss/typography": "0.5.20",
@@ -95,7 +95,7 @@
     "@tsconfig/node24": "24.0.6",
     "@tsconfig/strictest": "2.0.9",
     "@types/eslint-plugin-jsx-a11y": "6.10.1",
-    "@types/node": "24.13.6",
+    "@types/node": "26.6.6",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
     "@types/semver": "7.8.0",
