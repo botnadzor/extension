@@ -214,8 +214,8 @@ importers:
         specifier: 1.53.2
         version: 1.53.2
       immer:
-        specifier: 11.1.21
-        version: 11.1.21
+        specifier: 11.2.10
+        version: 11.2.10
       intl-messageformat:
         specifier: 12.2.1
         version: 12.2.1
@@ -3823,8 +3823,8 @@ packages:
   immediate@3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
 
-  immer@11.1.21:
-    resolution: {integrity: sha512-bZSadeCPGdaY5/qRLgr6mDSH1ra21rD3rqpiWk7+QTr4ayYPTE9qZYdLh/NdPhMe0wSrTvHD/Lk8q5EwhUs0aw==}
+  immer@11.2.10:
+    resolution: {integrity: sha512-pzANBj+0A9u+prdhBJ14DVi44vCvVUQzBa8DKt6I0AMCokPHtt722BK9IX5bFC70xUSU9TnzLRIJLTGqIzjEFw==}
 
   import-fresh@3.3.1:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
@@ -9074,7 +9074,7 @@ snapshots:
 
   immediate@3.0.6: {}
 
-  immer@11.1.21: {}
+  immer@11.2.10: {}
 
   import-fresh@3.3.1:
     dependencies:
